@@ -2,6 +2,7 @@ import React from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Features from './components/Features';
+import Showcase from './components/Showcase';
 import { Pricing2 } from './components/blocks/Pricing2';
 
 function App() {
@@ -10,8 +11,9 @@ function App() {
       <Navbar />
       <Hero />
       <Features />
+      <Showcase />
       <Pricing2 
-        heading="Choose your plan"
+        heading="Choose your minİK plan"
         description="Select the perfect plan for your business needs"
         plans={[
           {

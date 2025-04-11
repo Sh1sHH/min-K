@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { Users, Building2, Shield, Wallet } from 'lucide-react';
 
@@ -10,7 +12,7 @@ const Features = () => {
             Accelerate every part of your business
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Rippling brings all your employee systems and data together to make your job easier.
+            minİK brings all your employee systems and data together to make your job easier.
           </p>
         </div>
 

@@ -21,7 +21,7 @@ const Navbar = () => {
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center">
-            <a href="/" className="text-2xl font-bold text-brand-plum">Rippling</a>
+            <a href="/" className="text-2xl font-bold text-brand-plum">minİK</a>
           </div>
           
           <div className="hidden md:flex items-center space-x-8">

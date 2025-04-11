@@ -75,8 +75,8 @@ const defaultPlans = [
 ];
 
 const Pricing2 = ({
-  heading = "Simple, transparent pricing",
-  description = "Get the best value for your business with our flexible pricing plans",
+  heading = "Choose your minİK plan",
+  description = "Select the perfect plan for your business needs",
   plans = defaultPlans,
 }: Pricing2Props) => {
   const [isYearly, setIsYearly] = useState(false);

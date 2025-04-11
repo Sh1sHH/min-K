@@ -10,7 +10,7 @@ const Hero = () => {
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
               Employees Get<br />
               <span className="text-brand-plum">More Done with</span><br />
-              Rippling
+              minİK
             </h1>
             <p className="text-xl text-gray-300 mb-8 max-w-lg">
               Run your entire business on one platform — from payroll and benefits to devices and apps.
@@ -29,7 +29,7 @@ const Hero = () => {
             <div className="bg-white/10 backdrop-blur-lg rounded-lg p-6 shadow-xl">
               <img
                 src="https://picsum.photos/800/600?random=1"
-                alt="Rippling Dashboard"
+                alt="minİK Dashboard"
                 className="rounded-lg shadow-2xl w-full"
               />
             </div>
