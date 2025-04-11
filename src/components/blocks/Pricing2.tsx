@@ -40,49 +40,45 @@ interface Pricing2Props {
 
 const defaultPlans = [
   {
-    id: "standard",
-    name: "Standard",
-    description: "Perfect for small teams getting started",
+    id: "plus",
+    name: "Plus",
+    description: "Perfect for small teams",
     monthlyPrice: "$29",
     yearlyPrice: "$24",
     features: [
-      { text: "Up to 5 team members" },
-      { text: "Basic analytics" },
-      { text: "24/7 email support" },
-      { text: "10 GB storage" },
-      { text: "API access" }
-    ],
-    button: {
-      text: "Get Standard",
-      url: "#",
-    },
-    isPopular: false
-  },
-  {
-    id: "plus",
-    name: "Plus",
-    description: "Best for growing businesses",
-    monthlyPrice: "$79",
-    yearlyPrice: "$64",
-    features: [
-      { text: "Up to 20 team members" },
-      { text: "Advanced analytics" },
-      { text: "24/7 priority support" },
-      { text: "50 GB storage" },
-      { text: "API access" },
-      { text: "Custom integrations" },
-      { text: "Team training" }
+      { text: "Up to 10 team members" },
+      { text: "All basic features" },
+      { text: "Priority email support" },
+      { text: "5GB storage space" }
     ],
     button: {
       text: "Get Plus",
       url: "#",
     },
-    isPopular: true
+    isPopular: false
   },
   {
     id: "pro",
     name: "Pro",
-    description: "For large enterprises",
+    description: "For growing businesses",
+    monthlyPrice: "$79",
+    yearlyPrice: "$64",
+    features: [
+      { text: "Unlimited team members" },
+      { text: "Advanced analytics" },
+      { text: "24/7 priority support" },
+      { text: "50GB storage space" }
+    ],
+    button: {
+      text: "Get Pro",
+      url: "#",
+    },
+    isPopular: true
+  },
+  {
+    id: "enterprise",
+    name: "Enterprise",
+    description: "For large organizations",
     monthlyPrice: "$149",
     yearlyPrice: "$119",
     features: [
@@ -90,14 +86,11 @@ const defaultPlans = [
       { text: "Enterprise analytics" },
       { text: "24/7 VIP support" },
       { text: "Unlimited storage" },
-      { text: "API access" },
       { text: "Custom integrations" },
-      { text: "Team training" },
-      { text: "Custom features" },
       { text: "Dedicated account manager" }
     ],
     button: {
-      text: "Get Pro",
+      text: "Contact Sales",
       url: "#",
     },
     isPopular: false
@@ -146,33 +139,33 @@ const Pricing2 = ({
             <p className="text-neutral-300 lg:text-xl">{description}</p>
             
             {/* Modern Toggle Button */}
-            <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm rounded-full px-3 py-2 border border-white/10 relative w-fit text-sm">
+            <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm rounded-full px-4 py-2 border border-white/10 relative w-fit text-sm">
               <button
                 onClick={() => setIsYearly(false)}
                 className={`px-3 py-1.5 rounded-full transition-all duration-300 ${
-                  !isYearly ? 'text-white' : 'text-neutral-300'
+                  !isYearly ? 'text-white font-medium' : 'text-neutral-400'
                 }`}
               >
                 Monthly
               </button>
               <div 
                 onClick={() => setIsYearly(!isYearly)}
-                className="relative h-7 w-14 rounded-full bg-white/10 cursor-pointer transition-colors duration-300 hover:bg-white/20"
+                className="relative h-6 w-12 rounded-full bg-purple-900/50 cursor-pointer p-0.5 transition-colors duration-300"
               >
                 <div 
-                  className={`absolute top-1 h-5 w-5 rounded-full bg-purple-500 shadow-lg transition-all duration-500 ease-in-out ${
-                    isYearly ? 'left-[calc(100%-24px)]' : 'left-1'
-                  } hover:bg-purple-400`}
+                  className={`absolute h-5 w-5 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 shadow-lg transition-all duration-300 ease-out ${
+                    isYearly ? 'translate-x-6' : 'translate-x-0'
+                  }`}
                 />
               </div>
               <button
                 onClick={() => setIsYearly(true)}
                 className={`px-3 py-1.5 rounded-full transition-all duration-300 ${
-                  isYearly ? 'text-white' : 'text-neutral-300'
+                  isYearly ? 'text-white font-medium' : 'text-neutral-400'
                 }`}
               >
                 Yearly
-                <span className="ml-1 text-purple-300 text-xs">
+                <span className="ml-1 text-purple-400 text-xs font-medium">
                   (-20%)
                 </span>
               </button>
@@ -184,62 +177,47 @@ const Pricing2 = ({
                   key={plan.id}
                   onClick={() => setSelectedPlan(plan.id)}
                   className={`relative flex flex-col justify-between text-left backdrop-blur-sm transition-all duration-500 cursor-pointer hover:scale-105
+                    rounded-3xl
                     ${plan.id === selectedPlan 
-                      ? 'bg-purple-600/30 border-purple-400/70 scale-105 shadow-2xl' 
+                      ? 'bg-purple-600/30 border-purple-400/70 scale-105' 
                       : 'bg-white/5 border-white/20 hover:border-white/40'}`}
                 >
-                  {plan.isPopular && plan.id === selectedPlan && (
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                      <span className="bg-purple-500 text-white px-4 py-1 rounded-full text-sm font-medium">
-                        Most Popular
-                      </span>
-                    </div>
-                  )}
                   <CardHeader>
                     <CardTitle>
-                      <p className={`text-2xl font-bold ${plan.id === selectedPlan ? 'text-white' : 'text-neutral-300'}`}>
+                      <p className="text-2xl font-bold text-white">
                         {plan.name}
                       </p>
                     </CardTitle>
-                    <p className="text-sm text-neutral-300">
+                    <p className="text-sm text-neutral-400">
                       {plan.description}
                     </p>
-                    <span className={`text-4xl font-bold ${plan.id === selectedPlan ? 'text-white' : 'text-neutral-300'}`}>
+                    <span className="text-4xl font-bold text-white mt-4 block">
                       {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
-                      <span className="text-lg font-normal text-neutral-300">/mo</span>
+                      <span className="text-lg font-normal text-neutral-400">/mo</span>
                     </span>
-                    <p className="text-neutral-400">
-                      Billed{" "}
-                      {isYearly
-                        ? `$${Number(plan.yearlyPrice.slice(1)) * 12}`
-                        : `$${Number(plan.monthlyPrice.slice(1)) * 12}`}{" "}
-                      annually
+                    <p className="text-neutral-400 mt-1">
+                      Billed ${isYearly
+                        ? Number(plan.yearlyPrice.slice(1)) * 12
+                        : Number(plan.monthlyPrice.slice(1)) * 12} annually
                     </p>
                   </CardHeader>
                   <CardContent>
-                    <Separator className={`mb-6 ${plan.id === selectedPlan ? 'bg-purple-400/20' : 'bg-white/10'}`} />
+                    <Separator className="mb-6 bg-white/10" />
                     <ul className="space-y-4">
                       {plan.features.map((feature, index) => (
                         <li key={index} className="flex items-center gap-2">
-                          <CheckCircle className={`size-4 ${plan.id === selectedPlan ? 'text-purple-300' : 'text-white/70'}`} />
-                          <span className="text-neutral-300">{feature.text}</span>
+                          <CheckCircle className="size-4 text-white/70" />
+                          <span className="text-neutral-400">{feature.text}</span>
                         </li>
                       ))}
                     </ul>
                   </CardContent>
                   <CardFooter className="mt-auto">
                     <Button 
-                      asChild 
-                      className={`w-full transition-all duration-300 ${
-                        plan.id === selectedPlan
-                          ? 'bg-purple-500 hover:bg-purple-600 text-white'
-                          : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
-                      }`}
+                      className="w-full py-6 transition-all duration-300 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl"
+                      onClick={() => window.location.href = plan.button.url}
                     >
-                      <a href={plan.button.url}>
-                        {plan.button.text}
-                        <ArrowRight className="ml-2 size-4" />
-                      </a>
+                      {plan.button.text}
                     </Button>
                   </CardFooter>
                 </Card>

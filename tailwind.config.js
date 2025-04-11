@@ -28,7 +28,7 @@ export default {
         foreground: "hsl(var(--foreground))",
       },
       fontFamily: {
-        sans: ['Inter var', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       backgroundImage: {
         'gradient-brand': 'linear-gradient(to bottom, #440829, #3434ad)',
