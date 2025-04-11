@@ -1,102 +1,107 @@
 "use client";
 
 import React from 'react';
-import { Users, Building2, Shield, Wallet } from 'lucide-react';
+import { Users, Briefcase, Building2, Clock, Shield } from 'lucide-react';
 
 const Features = () => {
   return (
-    <section className="py-24 bg-white" id="features">
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4 text-brand-tyrian">
-            Accelerate every part of your business
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            minİK brings all your employee systems and data together to make your job easier.
-          </p>
+    <div className="relative bg-white py-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* First Card - Image Left */}
+        <div className="flex flex-col lg:flex-row gap-12 items-center mb-24">
+          <div className="w-full lg:w-1/2">
+            <img
+              src="/employee-benefits.jpg"
+              alt="Employee Benefits"
+              className="rounded-2xl object-cover w-full aspect-[4/3] shadow-lg"
+            />
+          </div>
+          <div className="w-full lg:w-1/2 lg:pl-8">
+            <h2 className="text-3xl font-semibold text-gray-900 mb-4">
+              Make a real difference with affordable employee benefits.
+            </h2>
+            <p className="text-lg text-gray-600 mb-6">
+              Support your team's health and well-being with comprehensive benefits that don't break the bank.
+            </p>
+            <a href="#" className="text-purple-600 font-medium hover:text-purple-700 inline-flex items-center group">
+              Learn more about employee benefits
+              <span className="ml-2 transform transition-transform group-hover:translate-x-1">→</span>
+            </a>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <FeatureCard
-            icon={<Users className="w-8 h-8 text-brand-persian" />}
-            title="HR Management"
-            description="Streamline your HR processes with automated workflows and employee self-service."
-          />
-          <FeatureCard
-            icon={<Building2 className="w-8 h-8 text-brand-persian" />}
-            title="IT Management"
-            description="Manage all your employee apps and devices from a single dashboard."
-          />
-          <FeatureCard
-            icon={<Shield className="w-8 h-8 text-brand-persian" />}
-            title="Benefits"
-            description="Offer competitive benefits packages and manage them all in one place."
-          />
-          <FeatureCard
-            icon={<Wallet className="w-8 h-8 text-brand-persian" />}
-            title="Payroll"
-            description="Run payroll in minutes with automated tax calculations and direct deposits."
-          />
+        {/* Second Card - Image Right */}
+        <div className="flex flex-col-reverse lg:flex-row gap-12 items-center mb-24">
+          <div className="w-full lg:w-1/2 lg:pr-8">
+            <h2 className="text-3xl font-semibold text-gray-900 mb-4">
+              Hire standout candidates and get them up to speed faster than ever.
+            </h2>
+            <p className="text-lg text-gray-600 mb-6">
+              Streamline your hiring process and onboard new team members efficiently with our integrated HR tools.
+            </p>
+            <a href="#" className="text-purple-600 font-medium hover:text-purple-700 inline-flex items-center group">
+              Explore our hiring solutions
+              <span className="ml-2 transform transition-transform group-hover:translate-x-1">→</span>
+            </a>
+          </div>
+          <div className="w-full lg:w-1/2">
+            <img
+              src="/team-meeting.jpg"
+              alt="Team Meeting"
+              className="rounded-2xl object-cover w-full aspect-[4/3] shadow-lg"
+            />
+          </div>
         </div>
 
-        {/* HR Impact Section */}
-        <div className="mt-24 bg-gradient-brand rounded-2xl p-12">
-          <h3 className="text-3xl font-bold text-brand-plum mb-8">
-            Maximize HR's impact
+        {/* "But wait, there's more" Section */}
+        <div className="text-center mt-32">
+          <h3 className="text-2xl font-semibold text-gray-900 mb-16">
+            But wait, there's more.
           </h3>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white/10 backdrop-blur rounded-lg p-6">
-              <h4 className="text-xl font-semibold text-brand-plum mb-2">
-                Employee Management
-              </h4>
-              <ul className="text-gray-300 space-y-2">
-                <li>• Performance Reviews</li>
-                <li>• Time Off Tracking</li>
-                <li>• Onboarding</li>
-                <li>• Training</li>
-              </ul>
+          
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 max-w-4xl mx-auto">
+            {/* Time & Attendance */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3">
+                <Clock className="w-6 h-6 text-purple-600" />
+              </div>
+              <span className="text-sm text-gray-600">Time & Attendance</span>
             </div>
-            <div className="bg-white/10 backdrop-blur rounded-lg p-6">
-              <h4 className="text-xl font-semibold text-brand-plum mb-2">
-                Compliance
-              </h4>
-              <ul className="text-gray-300 space-y-2">
-                <li>• Policy Management</li>
-                <li>• Document Storage</li>
-                <li>• Reporting</li>
-                <li>• Auditing</li>
-              </ul>
+
+            {/* HR Management */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3">
+                <Users className="w-6 h-6 text-purple-600" />
+              </div>
+              <span className="text-sm text-gray-600">HR Management</span>
             </div>
-            <div className="bg-white/10 backdrop-blur rounded-lg p-6">
-              <h4 className="text-xl font-semibold text-brand-plum mb-2">
-                Benefits & Compensation
-              </h4>
-              <ul className="text-gray-300 space-y-2">
-                <li>• Health Insurance</li>
-                <li>• 401(k) Plans</li>
-                <li>• Equity Management</li>
-                <li>• Compensation Planning</li>
-              </ul>
+
+            {/* Benefits Admin */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3">
+                <Shield className="w-6 h-6 text-purple-600" />
+              </div>
+              <span className="text-sm text-gray-600">Benefits Admin</span>
+            </div>
+
+            {/* Talent */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3">
+                <Briefcase className="w-6 h-6 text-purple-600" />
+              </div>
+              <span className="text-sm text-gray-600">Talent</span>
+            </div>
+
+            {/* Payroll */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3">
+                <Building2 className="w-6 h-6 text-purple-600" />
+              </div>
+              <span className="text-sm text-gray-600">Payroll</span>
             </div>
           </div>
         </div>
       </div>
-    </section>
-  );
-};
-
-const FeatureCard = ({ icon, title, description }: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) => {
-  return (
-    <div className="bg-gray-50 p-8 rounded-xl hover:shadow-lg transition group">
-      <div className="mb-4 transform group-hover:scale-110 transition-transform">
-        {icon}
-      </div>
-      <h3 className="text-xl font-semibold text-brand-tyrian mb-3">{title}</h3>
-      <p className="text-gray-600">{description}</p>
     </div>
   );
 };

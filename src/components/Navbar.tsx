@@ -1,61 +1,62 @@
-import React, { useState, useEffect } from 'react';
-import { Menu } from 'lucide-react';
+import React, { useState } from "react";
+import { HoveredLink, Menu, MenuItem, ProductItem } from "./ui/navbar-menu";
+import { cn } from "../lib/utils";
 
-const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
+interface NavbarProps {
+  className?: string;
+}
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      setIsScrolled(scrollPosition > 50);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+export default function Navbar({ className }: NavbarProps) {
+  const [active, setActive] = useState<string | null>(null);
 
   return (
-    <nav className={`fixed w-full z-50 transition-all duration-300 ${
-      isScrolled ? 'bg-brand-tyrian/30 backdrop-blur-lg shadow-lg' : 'bg-transparent'
-    }`}>
-      <div className="container mx-auto px-6">
-        <div className="flex items-center justify-between py-4">
-          <div className="flex items-center">
-            <a href="/" className="text-2xl font-bold text-brand-plum">minİK</a>
+    <div className={cn("fixed top-10 inset-x-0 max-w-2xl mx-auto z-50", className)}>
+      <Menu setActive={setActive}>
+        <MenuItem setActive={setActive} active={active} item="Services">
+          <div className="flex flex-col space-y-4 text-sm">
+            <HoveredLink href="/web-dev">Web Development</HoveredLink>
+            <HoveredLink href="/interface-design">Interface Design</HoveredLink>
+            <HoveredLink href="/seo">Search Engine Optimization</HoveredLink>
+            <HoveredLink href="/branding">Branding</HoveredLink>
           </div>
-          
-          <div className="hidden md:flex items-center space-x-8">
-            <NavLink href="#features">Features</NavLink>
-            <NavLink href="#solutions">Solutions</NavLink>
-            <NavLink href="#pricing">Pricing</NavLink>
-            <NavLink href="#resources">Resources</NavLink>
-            <NavLink href="#about">About</NavLink>
+        </MenuItem>
+        <MenuItem setActive={setActive} active={active} item="Products">
+          <div className="text-sm grid grid-cols-2 gap-10 p-4">
+            <ProductItem
+              title="Project Management"
+              href="/products/pm"
+              src="https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?w=800&auto=format&fit=crop&q=60"
+              description="Manage your projects efficiently with our tools."
+            />
+            <ProductItem
+              title="Design System"
+              href="/products/design"
+              src="https://images.unsplash.com/photo-1523726491678-bf852e717f6a?w=800&auto=format&fit=crop&q=60"
+              description="Beautiful and consistent design system for your brand."
+            />
+            <ProductItem
+              title="Analytics"
+              href="/products/analytics"
+              src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop&q=60"
+              description="Get insights into your business performance."
+            />
+            <ProductItem
+              title="Marketing"
+              href="/products/marketing"
+              src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=60"
+              description="Grow your business with our marketing solutions."
+            />
           </div>
-
-          <div className="flex items-center space-x-4">
-            <button className="hidden md:block text-white hover:text-brand-plum transition">
-              Sign In
-            </button>
-            <button className="bg-brand-plum text-brand-tyrian px-6 py-2 rounded-full font-semibold hover:bg-opacity-90 transition">
-              Get Started
-            </button>
-            <button className="md:hidden text-white">
-              <Menu size={24} />
-            </button>
+        </MenuItem>
+        <MenuItem setActive={setActive} active={active} item="Pricing">
+          <div className="flex flex-col space-y-4 text-sm">
+            <HoveredLink href="/pricing/starter">Starter</HoveredLink>
+            <HoveredLink href="/pricing/pro">Professional</HoveredLink>
+            <HoveredLink href="/pricing/team">Team</HoveredLink>
+            <HoveredLink href="/pricing/enterprise">Enterprise</HoveredLink>
           </div>
-        </div>
-      </div>
-    </nav>
+        </MenuItem>
+      </Menu>
+    </div>
   );
-};
-
-const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
-  <a
-    href={href}
-    className="text-white hover:text-brand-plum transition-colors duration-200"
-  >
-    {children}
-  </a>
-);
-
-export default Navbar; 
+} 
