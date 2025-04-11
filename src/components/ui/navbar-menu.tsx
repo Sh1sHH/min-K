@@ -1,5 +1,5 @@
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect } from "react";
+import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 
 const transition = {
   type: "spring",
@@ -40,7 +40,7 @@ export const MenuItem = ({
               <motion.div
                 transition={transition}
                 layoutId="active"
-                className="bg-black/80 dark:bg-black/80 backdrop-blur-md rounded-2xl overflow-hidden border border-white/[0.2] dark:border-white/[0.2] shadow-xl"
+                className="bg-black/95 dark:bg-black/95 backdrop-blur-md overflow-hidden border border-white/[0.2] dark:border-white/[0.2] shadow-xl"
               >
                 <motion.div
                   layout
@@ -64,13 +64,37 @@ export const Menu = ({
   setActive: (item: string | null) => void;
   children: React.ReactNode;
 }) => {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const { scrollY } = useScroll();
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    if (latest > 100) {
+      setIsScrolled(true);
+    } else {
+      setIsScrolled(false);
+    }
+  });
+
   return (
-    <nav
+    <motion.nav
+      initial={{ y: -2 }}
+      animate={{
+        y: isScrolled ? 0 : -2,
+        position: isScrolled ? "fixed" : "relative",
+        top: 0,
+        width: "100%",
+        zIndex: 50,
+      }}
+      transition={{ duration: 0.3 }}
       onMouseLeave={() => setActive(null)}
-      className="relative rounded-full border border-white/[0.2] bg-white/10 dark:bg-black/10 backdrop-blur-md shadow-lg flex justify-center space-x-8 px-16 py-6 min-w-[40rem]"
+      className={`border border-white/[0.2] bg-black/90 dark:bg-black/90 backdrop-blur-md shadow-lg flex justify-center items-center space-x-10 px-24 py-6 ${
+        isScrolled 
+          ? "fixed top-0 left-0 right-0 w-full"
+          : "relative max-w-[70rem] mx-auto rounded-xl"
+      }`}
     >
       {children}
-    </nav>
+    </motion.nav>
   );
 };
 
@@ -86,13 +110,13 @@ export const ProductItem = ({
   src: string;
 }) => {
   return (
-    <a href={href} className="flex space-x-2 hover:bg-black/20 p-2 rounded-xl transition-colors">
+    <a href={href} className="flex space-x-2 hover:bg-black/20 p-2 transition-colors">
       <img
         src={src}
         width={140}
         height={70}
         alt={title}
-        className="flex-shrink-0 rounded-md shadow-2xl"
+        className="flex-shrink-0 shadow-2xl"
       />
       <div>
         <h4 className="text-xl font-bold mb-1 text-white dark:text-white">
@@ -110,7 +134,7 @@ export const HoveredLink = ({ children, ...rest }: any) => {
   return (
     <a
       {...rest}
-      className="text-neutral-300 dark:text-neutral-200 hover:text-white hover:bg-black/20 rounded-lg px-3 py-2 transition-colors"
+      className="text-neutral-300 dark:text-neutral-200 hover:text-white hover:bg-black/20 px-3 py-2 transition-colors"
     >
       {children}
     </a>
