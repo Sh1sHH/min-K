@@ -4,6 +4,7 @@ import Hero from './components/Hero';
 import Features from './components/Features';
 import Showcase from './components/Showcase';
 import { Pricing2 } from './components/blocks/Pricing2';
+import Footer from './components/Footer';
 
 function App() {
   return (
@@ -113,6 +114,7 @@ function App() {
             },
           ]}
         />
+        <Footer />
       </div>
     </div>
   );
