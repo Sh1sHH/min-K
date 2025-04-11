@@ -17,17 +17,18 @@ export default {
         },
       },
       colors: {
-        primary: {
-          DEFAULT: '#FF6B2C',
-          dark: '#E65A1F',
-        },
-        plum: '#f7adee',
-        persian: '#3434ad',
-        tyrian: '#440829',
+        brand: {
+          plum: '#f7adee',
+          persian: '#3434ad',
+          tyrian: '#440829',
+        }
       },
       fontFamily: {
         sans: ['Inter var', 'sans-serif'],
       },
+      backgroundImage: {
+        'gradient-brand': 'linear-gradient(to bottom, #440829, #3434ad)',
+      }
     },
   },
   plugins: [],
