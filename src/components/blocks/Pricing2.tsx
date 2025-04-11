@@ -98,7 +98,7 @@ const defaultPlans = [
 ];
 
 const Pricing2 = ({
-  heading = "Choose your minİK plan",
+  heading = "1",
   description = "Select the perfect plan for your business needs",
   plans = defaultPlans,
 }: Pricing2Props) => {

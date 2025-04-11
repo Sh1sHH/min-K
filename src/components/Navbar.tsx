@@ -1,62 +1,120 @@
 import React, { useState } from "react";
-import { HoveredLink, Menu, MenuItem, ProductItem } from "./ui/navbar-menu";
-import { cn } from "../lib/utils";
+import { Menu, MenuItem, HoveredLink, ProductItem } from "./ui/navbar-menu";
+import { Calculator, FileText, HelpCircle, Home, LayoutGrid, MessageSquare, Package, Receipt, Users } from "lucide-react";
+import { Button } from "./ui/button";
 
-interface NavbarProps {
-  className?: string;
-}
-
-export default function Navbar({ className }: NavbarProps) {
+const Navbar = () => {
   const [active, setActive] = useState<string | null>(null);
 
   return (
-    <div className={cn("fixed top-10 inset-x-0 max-w-2xl mx-auto z-50", className)}>
+    <div className="relative w-full">
       <Menu setActive={setActive}>
-        <MenuItem setActive={setActive} active={active} item="Services">
+        <MenuItem setActive={setActive} active={active} item="Ana Sayfa">
           <div className="flex flex-col space-y-4 text-sm">
-            <HoveredLink href="/web-dev">Web Development</HoveredLink>
-            <HoveredLink href="/interface-design">Interface Design</HoveredLink>
-            <HoveredLink href="/seo">Search Engine Optimization</HoveredLink>
-            <HoveredLink href="/branding">Branding</HoveredLink>
+            <HoveredLink href="/tanitim">Tanıtım bölümü</HoveredLink>
+            <HoveredLink href="/avantajlar">Avantajlar</HoveredLink>
+            <HoveredLink href="/cta">Hemen Başla</HoveredLink>
           </div>
         </MenuItem>
-        <MenuItem setActive={setActive} active={active} item="Products">
-          <div className="text-sm grid grid-cols-2 gap-10 p-4">
+
+        <MenuItem setActive={setActive} active={active} item="Hizmetlerimiz">
+          <div className="grid grid-cols-2 gap-10 p-4">
             <ProductItem
-              title="Project Management"
-              href="/products/pm"
-              src="https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?w=800&auto=format&fit=crop&q=60"
-              description="Manage your projects efficiently with our tools."
+              title="Uzaktan İK Paketi"
+              description="Kapsamlı İK yönetim çözümü"
+              href="/uzaktan-ik"
+              src="/product-1.jpg"
             />
             <ProductItem
-              title="Design System"
-              href="/products/design"
-              src="https://images.unsplash.com/photo-1523726491678-bf852e717f6a?w=800&auto=format&fit=crop&q=60"
-              description="Beautiful and consistent design system for your brand."
+              title="Bordro Yorumlama"
+              description="Uzman bordro analizi"
+              href="/bordro"
+              src="/product-2.jpg"
             />
             <ProductItem
-              title="Analytics"
-              href="/products/analytics"
-              src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop&q=60"
-              description="Get insights into your business performance."
+              title="Danışmanlık"
+              description="Profesyonel İK danışmanlığı"
+              href="/danismanlik"
+              src="/product-3.jpg"
             />
             <ProductItem
-              title="Marketing"
-              href="/products/marketing"
-              src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=60"
-              description="Grow your business with our marketing solutions."
+              title="Şablon ve Evrak Setleri"
+              description="Hazır İK dökümanları"
+              href="/sablonlar"
+              src="/product-4.jpg"
             />
           </div>
         </MenuItem>
-        <MenuItem setActive={setActive} active={active} item="Pricing">
-          <div className="flex flex-col space-y-4 text-sm">
-            <HoveredLink href="/pricing/starter">Starter</HoveredLink>
-            <HoveredLink href="/pricing/pro">Professional</HoveredLink>
-            <HoveredLink href="/pricing/team">Team</HoveredLink>
-            <HoveredLink href="/pricing/enterprise">Enterprise</HoveredLink>
+
+        <MenuItem setActive={setActive} active={active} item="Hesaplama Araçları">
+          <div className="flex flex-col space-y-4 text-sm min-w-[200px]">
+            <HoveredLink href="/net-brut-maas">
+              <Calculator className="w-4 h-4 mr-2 inline-block" />
+              Net-Brüt Maaş
+            </HoveredLink>
+            <HoveredLink href="/kidem-ihbar">
+              <Receipt className="w-4 h-4 mr-2 inline-block" />
+              Kıdem / İhbar Tazminatı
+            </HoveredLink>
+            <HoveredLink href="/fazla-mesai">
+              <FileText className="w-4 h-4 mr-2 inline-block" />
+              Fazla Mesai
+            </HoveredLink>
+            <HoveredLink href="/isveren-maliyeti">
+              <Package className="w-4 h-4 mr-2 inline-block" />
+              İşveren Maliyeti
+            </HoveredLink>
           </div>
         </MenuItem>
+
+        <MenuItem setActive={setActive} active={active} item="Blog">
+          <div className="flex flex-col space-y-4 text-sm min-w-[200px]">
+            <HoveredLink href="/ik-rehberleri">İK rehberleri</HoveredLink>
+            <HoveredLink href="/ise-alim-tuyolari">İşe alım tüyoları</HoveredLink>
+            <HoveredLink href="/guncel-mevzuat">Güncel mevzuat</HoveredLink>
+          </div>
+        </MenuItem>
+
+        <MenuItem setActive={setActive} active={active} item="Soru-Cevap">
+          <div className="flex flex-col space-y-4 text-sm min-w-[220px]">
+            <HoveredLink href="/mini-danismanlik">
+              <MessageSquare className="w-4 h-4 mr-2 inline-block" />
+              Mini danışmanlık bölümü
+            </HoveredLink>
+            <HoveredLink href="/sss">
+              <HelpCircle className="w-4 h-4 mr-2 inline-block" />
+              Sıkça sorulan sorular
+            </HoveredLink>
+            <HoveredLink href="/soru-form">
+              <LayoutGrid className="w-4 h-4 mr-2 inline-block" />
+              "Siz sorun, minİK cevaplasın" formu
+            </HoveredLink>
+          </div>
+        </MenuItem>
+
+        <MenuItem setActive={setActive} active={active} item="Fiyatlandırma">
+          <div className="flex flex-col space-y-4 text-sm min-w-[200px]">
+            <HoveredLink href="/planlar">Planlar</HoveredLink>
+            <HoveredLink href="/abonelik">Abonelik detayları</HoveredLink>
+          </div>
+        </MenuItem>
+
+        <div className="ml-4 flex items-center gap-3" onMouseEnter={() => setActive(null)}>
+          <Button 
+            variant="ghost" 
+            className="text-white hover:text-white/90 hover:bg-white/10 rounded-full px-6 py-2 text-sm font-medium transition-colors"
+          >
+            Giriş Yap
+          </Button>
+          <Button 
+            className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white rounded-full px-6 py-2 text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-purple-500/25"
+          >
+            Kayıt Ol
+          </Button>
+        </div>
       </Menu>
     </div>
   );
-} 
+};
+
+export default Navbar; 

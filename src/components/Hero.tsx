@@ -39,31 +39,30 @@ const Hero = () => {
 
           <h1 className="text-center text-5xl md:text-7xl font-bold mb-6">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
-              Where work-life balance
-            </span>
+            İK süreçlerini dert etmeyin,</span>
             <br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-purple-600">
-              comes to rest
+            minİK halleder.
             </span>
           </h1>
           
           <p className="text-center text-xl md:text-2xl text-neutral-300 max-w-3xl mx-auto mb-12">
-            Take a break from the daily grind. We help teams find their perfect rhythm 
-            between productivity and well-being.
+          Zamanınızı bordrolarla, izin takibiyle ya da işe alım stresleriyle harcamayın.
+          minİK, sizin yerinize bu işleri yürütür. Üstelik uygun fiyatlarla ve tamamen dijital.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <Button 
               className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 rounded-full text-lg font-medium w-full sm:w-auto group"
             >
-              Start Your Journey
+              Hemen Başla
               <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
             </Button>
             <Button 
               variant="ghost"
               className="border border-white/10 hover:bg-white/5 text-white px-8 py-6 rounded-full text-lg font-medium w-full sm:w-auto"
             >
-              Watch Demo
+              Tanıtımı İzleyin
             </Button>
           </div>
 

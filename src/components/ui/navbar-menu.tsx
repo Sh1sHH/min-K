@@ -77,9 +77,9 @@ export const Menu = ({
 
   return (
     <motion.nav
-      initial={{ y: -2 }}
+      initial={{ y: 15 }}
       animate={{
-        y: isScrolled ? 0 : -2,
+        y: isScrolled ? 0 : 15,
         position: isScrolled ? "fixed" : "relative",
         top: 0,
         width: "100%",
@@ -87,10 +87,10 @@ export const Menu = ({
       }}
       transition={{ duration: 0.3 }}
       onMouseLeave={() => setActive(null)}
-      className={`border border-white/[0.2] bg-black/90 dark:bg-black/90 backdrop-blur-md shadow-lg flex justify-center items-center space-x-10 px-24 py-6 ${
+      className={`border border-white/[0.2] backdrop-blur-md shadow-lg flex justify-center items-center space-x-12 px-28 py-6 ${
         isScrolled 
-          ? "fixed top-0 left-0 right-0 w-full"
-          : "relative max-w-[70rem] mx-auto rounded-xl"
+          ? "fixed top-0 left-0 right-0 w-full bg-black/90 dark:bg-black/90"
+          : "relative max-w-[90rem] mx-auto rounded-xl bg-black/40 dark:bg-black/40 backdrop-blur-xl"
       }`}
     >
       {children}
