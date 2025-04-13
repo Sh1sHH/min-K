@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Check, ChevronRight, X, AlertTriangle, Info } from 'lucide-react';
+import { Bell, Check, ChevronRight, X, AlertTriangle, Info, ArrowRight } from 'lucide-react';
+import GlowCard from '../components/GlowCard';
+import { Button } from '../components/ui/moving-border';
 
 interface Card {
   id: number;
@@ -19,7 +21,7 @@ interface Notification {
 }
 
 const ComponentDemo = () => {
-  const [activeTab, setActiveTab] = useState('cards');
+  const [activeTab, setActiveTab] = useState('buttons');
   
   const cards: Card[] = [
     {
@@ -102,7 +104,7 @@ const ComponentDemo = () => {
 
         {/* Navigation */}
         <div className="flex space-x-4 mb-8">
-          {['cards', 'notifications', 'alerts'].map((tab) => (
+          {['buttons', 'hero', 'glow', 'cards', 'notifications', 'alerts'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -126,6 +128,228 @@ const ComponentDemo = () => {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
+            {activeTab === 'buttons' && (
+              <div className="space-y-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {/* Default Button */}
+                  <div className="flex flex-col items-center justify-center p-8 rounded-2xl bg-white/5">
+                    <Button className="bg-slate-900 text-white border-neutral-800">
+                      Default Button
+                    </Button>
+                    <p className="mt-4 text-sm text-gray-400">Default style with moving border</p>
+                  </div>
+
+                  {/* Purple Glow Button */}
+                  <div className="flex flex-col items-center justify-center p-8 rounded-2xl bg-white/5">
+                    <Button 
+                      className="bg-purple-900/80 text-white border-purple-800"
+                      borderClassName="bg-[radial-gradient(var(--purple-500)_40%,transparent_60%)]"
+                    >
+                      Purple Glow
+                    </Button>
+                    <p className="mt-4 text-sm text-gray-400">Purple variant with custom glow</p>
+                  </div>
+
+                  {/* Green Success Button */}
+                  <div className="flex flex-col items-center justify-center p-8 rounded-2xl bg-white/5">
+                    <Button 
+                      className="bg-green-900/80 text-white border-green-800"
+                      borderClassName="bg-[radial-gradient(var(--green-500)_40%,transparent_60%)]"
+                      duration={3000}
+                    >
+                      Success Action
+                    </Button>
+                    <p className="mt-4 text-sm text-gray-400">Success variant with slower animation</p>
+                  </div>
+
+                  {/* Wide Button */}
+                  <div className="flex flex-col items-center justify-center p-8 rounded-2xl bg-white/5">
+                    <Button 
+                      className="bg-slate-900 text-white border-neutral-800 !w-64"
+                      containerClassName="!w-64"
+                    >
+                      Wide Button
+                    </Button>
+                    <p className="mt-4 text-sm text-gray-400">Custom width variant</p>
+                  </div>
+
+                  {/* Rounded Button */}
+                  <div className="flex flex-col items-center justify-center p-8 rounded-2xl bg-white/5">
+                    <Button 
+                      borderRadius="9999px"
+                      className="bg-pink-900/80 text-white border-pink-800"
+                      borderClassName="bg-[radial-gradient(var(--pink-500)_40%,transparent_60%)]"
+                    >
+                      Rounded Style
+                    </Button>
+                    <p className="mt-4 text-sm text-gray-400">Fully rounded variant</p>
+                  </div>
+
+                  {/* Fast Animation */}
+                  <div className="flex flex-col items-center justify-center p-8 rounded-2xl bg-white/5">
+                    <Button 
+                      className="bg-blue-900/80 text-white border-blue-800"
+                      borderClassName="bg-[radial-gradient(var(--blue-500)_40%,transparent_60%)]"
+                      duration={1000}
+                    >
+                      Fast Border
+                    </Button>
+                    <p className="mt-4 text-sm text-gray-400">Faster animation speed</p>
+                  </div>
+                </div>
+
+                {/* Code Example */}
+                <div className="mt-12 p-6 rounded-xl bg-white/5">
+                  <h3 className="text-xl font-semibold mb-4">Usage Example</h3>
+                  <pre className="p-4 rounded-lg bg-black/30 overflow-x-auto">
+                    <code className="text-sm text-gray-300">
+{`<Button
+  className="bg-slate-900 text-white"
+  borderClassName="bg-[radial-gradient(var(--purple-500)_40%,transparent_60%)]"
+  duration={2000}
+>
+  Custom Button
+</Button>`}
+                    </code>
+                  </pre>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'hero' && (
+              <>
+                <div className="relative overflow-hidden rounded-2xl">
+                  {/* Animated Gradient Background */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-800 via-violet-900 to-purple-800 opacity-20" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-800 via-violet-900 to-purple-800 opacity-40 animate-[gradientMove_8s_ease-in-out_infinite]" 
+                    style={{
+                      '--tw-gradient-from': '#4F1C48',
+                      '--tw-gradient-via': '#2C0633',
+                      '--tw-gradient-to': '#1B0421',
+                      backgroundSize: '200% 200%',
+                      animation: 'gradientMove 8s ease-in-out infinite',
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-[url('/noise.png')] bg-repeat opacity-[0.02] mix-blend-overlay" />
+                  
+                  {/* Content */}
+                  <div className="relative px-6 py-24 sm:px-12 sm:py-32 lg:px-16">
+                    <div className="mx-auto max-w-2xl text-center">
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <h2 className="text-4xl font-bold tracking-tight sm:text-6xl bg-gradient-to-r from-white via-white to-white/70 bg-clip-text text-transparent">
+                          İK süreçlerini dert etmeyin
+                        </h2>
+                        <h2 className="mt-2 text-4xl font-bold tracking-tight sm:text-6xl bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                          minİK halleder.
+                        </h2>
+                      </motion.div>
+                      
+                      <motion.p
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="mt-6 text-lg leading-8 text-gray-300"
+                      >
+                        Zamanınızı bordrolarla, izin takibiyle ya da işe alım stresleriyle harcamayın.
+                      </motion.p>
+                      
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 }}
+                        className="mt-10 flex items-center justify-center gap-x-6"
+                      >
+                        <a
+                          href="#"
+                          className="rounded-full px-8 py-4 text-lg font-semibold text-white shadow-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 transition-all duration-300 hover:scale-105"
+                        >
+                          Hemen Başla
+                        </a>
+                        <a
+                          href="#"
+                          className="rounded-full px-8 py-4 text-lg font-semibold text-white/90 ring-1 ring-white/20 hover:ring-white/40 hover:bg-white/5 transition-all duration-300"
+                        >
+                          Tanıtımı İzleyin
+                        </a>
+                      </motion.div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Updated Card with Rotating Border */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="mt-12"
+                >
+                  <div className="animated-border">
+                    <div className="inner-card">
+                      <h2 className="text-3xl font-bold mb-8">
+                        İK Süreçlerinizi Kolaylaştırın
+                      </h2>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Left Column */}
+                        <div className="space-y-8">
+                          <div>
+                            <div className="text-5xl font-bold text-white mb-2">85%</div>
+                            <div className="text-gray-400">Zaman Tasarrufu</div>
+                          </div>
+                          
+                          <div>
+                            <div className="text-5xl font-bold text-pink-500">24/7</div>
+                            <div className="text-gray-400">Kesintisiz Hizmet</div>
+                          </div>
+                        </div>
+
+                        {/* Right Column */}
+                        <div className="space-y-6">
+                          <div className="flex items-start gap-3">
+                            <div className="p-2 rounded-lg bg-purple-500/20">
+                              <Check className="w-5 h-5 text-purple-400" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-white">Otomatik Bordro Hesaplama</h3>
+                              <p className="text-sm text-gray-400 mt-1">
+                                Dakikalar içinde bordro işlemlerinizi tamamlayın
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-3">
+                            <div className="p-2 rounded-lg bg-purple-500/20">
+                              <Check className="w-5 h-5 text-purple-400" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-white">İzin Yönetimi</h3>
+                              <p className="text-sm text-gray-400 mt-1">
+                                Tek tıklama talepleri ve onay süreci
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </>
+            )}
+
+            {activeTab === 'glow' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <GlowCard />
+              </motion.div>
+            )}
+
             {activeTab === 'cards' && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {cards.map((card) => (
