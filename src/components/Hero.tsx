@@ -4,29 +4,29 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, Shield, Zap } from 'lucide-react';
 import { FlipCard, FlipCardFront, FlipCardBack } from "@/components/ui/flip-card";
+import StarField from "@/components/ui/star-field";
 
 const Hero = () => {
   return (
-
-
-    
-    <div className="relative min-h-screen flex items-center">
+    <div className="relative min-h-screen flex items-center overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0">
-        {/* Main background image */}
+        {/* Star field effect */}
+        <StarField />
+        
+        {/* Background image */}
         <div className="absolute inset-0">
           <img 
             src="/herobg.png" 
             alt="Background" 
-            className="w-full h-full object-cover object-center"
+            className="w-full h-full object-cover object-center opacity-60"
           />
-          <div className="absolute inset-0 bg-black/40" /> {/* Overlay for better text readability */}
         </div>
         
-        {/* Subtle gradient overlay for depth */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/60" />
+        {/* Gradient overlays */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50" />
         
-        {/* Animated purple orbs */}
+        {/* Animated gradient orbs */}
         <div 
           className="absolute -top-[20%] -left-[10%] w-[900px] h-[900px] bg-purple-600/20 rounded-full filter blur-[130px] opacity-30 animate-float"
           style={{ animationDuration: '20s' }}
@@ -35,9 +35,6 @@ const Hero = () => {
           className="absolute top-[30%] -right-[15%] w-[700px] h-[700px] bg-purple-800/20 rounded-full filter blur-[120px] opacity-20 animate-float-delay"
           style={{ animationDuration: '15s' }}
         />
-        
-        {/* Noise texture */}
-        <div className="absolute inset-0 bg-[url('/noise.png')] bg-repeat opacity-[0.03] mix-blend-overlay" />
       </div>
 
       {/* Content */}
