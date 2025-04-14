@@ -70,7 +70,7 @@ const authenticateAdmin = async (req, res, next) => {
 };
 
 // Blog post'larını getir
-app.get('/posts', authenticateAdmin, async (req, res) => {
+app.get('/posts', async (req, res) => {
   try {
     console.log('Posts getiriliyor...');
     const postsSnapshot = await db.collection('posts')

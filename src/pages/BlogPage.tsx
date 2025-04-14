@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Clock, Calendar, User, Tag, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { getAuth } from 'firebase/auth';
 
 interface BlogPost {
   id: string;
@@ -31,24 +30,16 @@ const BlogPage = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const auth = getAuth();
-      const user = auth.currentUser;
-      const token = user ? await user.getIdToken() : null;
 
       const response = await fetch('https://us-central1-minik-a61c5.cloudfunctions.net/api/posts', {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json'
         }
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Yetkilendirme hatası. Lütfen giriş yapın.');
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`Blog yazıları alınamadı. Hata kodu: ${response.status}`);
       }
 
       const data = await response.json();
