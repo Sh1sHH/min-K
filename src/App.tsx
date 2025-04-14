@@ -10,6 +10,9 @@ import { Pricing2 } from './components/blocks/Pricing2';
 import Footer from './components/Footer';
 import AdminPanel from './pages/AdminPanel';
 import ComponentDemo from './pages/ComponentDemo';
+import Blog from './pages/Blog';
+import BlogManagement from './components/admin/BlogManagement';
+import BlogPage from './pages/BlogPage';
 
 function App() {
   const location = useLocation();
@@ -64,6 +67,7 @@ function App() {
           <Routes>
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/components" element={<ComponentDemo />} />
+            <Route path="/blog" element={<BlogPage />} />
             <Route path="/" element={
               <>
                 <Hero />

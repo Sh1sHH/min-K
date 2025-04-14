@@ -9,6 +9,7 @@ import {
   FileBox, MessageSquare, CreditCard, PieChart, Brain,
   LogOut, Home
 } from 'lucide-react';
+import BlogManagement from '@/components/admin/BlogManagement';
 
 interface UserRole {
   email: string;
@@ -266,7 +267,13 @@ const AdminPanel = () => {
               </div>
             )}
 
-            {activeSection !== 'users' && (
+            {activeSection === 'blog' && (
+              <div>
+                <BlogManagement />
+              </div>
+            )}
+
+            {activeSection !== 'users' && activeSection !== 'blog' && (
               <div className="bg-black/50 rounded-xl p-6 backdrop-blur-sm border border-white/5">
                 <h2 className="text-xl font-semibold mb-4">{activeSection} Yakında</h2>
                 <p className="text-gray-400">Bu bölüm yakında eklenecek...</p>
