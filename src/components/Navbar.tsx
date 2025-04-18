@@ -66,7 +66,7 @@ const Navbar = () => {
               {/* Logo */}
               <Link to="/" className="flex items-center gap-2">
                 <span className="text-xl font-semibold bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
-                  minİK
+                  İKyardim
                 </span>
               </Link>
 
