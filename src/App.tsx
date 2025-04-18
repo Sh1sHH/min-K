@@ -7,6 +7,7 @@ import Hero from './components/Hero';
 import AboutUs from './components/AboutUs';
 import Services from './components/Services';
 import Showcase from './components/Showcase';
+import FAQ from './components/FAQ';
 import BlogSection from './components/BlogSection';
 import { Pricing2 } from './components/blocks/Pricing2';
 import Footer from './components/Footer';
@@ -133,6 +134,7 @@ function App() {
                 <AboutUs />
                 <Services />
                 <Showcase />
+                <FAQ />
                 <BlogSection />
                 <Pricing2 
                   heading="İK Yardım Paketleri"

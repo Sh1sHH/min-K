@@ -6,32 +6,32 @@ const services = [
   {
     title: "Bordro Yönetimi",
     description: "Maaş, SGK, vergi hesaplamaları ve bordro süreçlerinizi otomatik olarak yönetin.",
-    image: "/hizmet1.png",
+    image: "/bordro2.png",
   },
   {
     title: "Online Danışmanlık",
     description: "Uzman İK danışmanlarımızla online görüşmeler yapın, sorularınıza anında yanıt alın.",
-    image: "/hizmet1.png",
+    image: "/danismanlik4.png",
   },
   {
     title: "İK Analitikleri",
     description: "Detaylı raporlar ve analizlerle İK süreçlerinizi optimize edin.",
-    image: "/hizmet1.png",
+    image: "/analitik2.png",
   },
   {
-    title: "Çalışan Yönetimi",
+    title: "Performans Yönetimi",
     description: "İzin, mesai, performans takibi gibi süreçleri tek platformdan yönetin.",
-    image: "/hizmet1.png",
+    image: "/performans.png",
   },
   {
-    title: "Eğitim Yönetimi",
+    title: "İşe Alım",
     description: "Çalışanlarınızın gelişimi için online eğitimler ve sertifikasyon programları.",
-    image: "/hizmet1.png",
+    image: "/isealim2.png",
   },
   {
-    title: "Eğitim Yönetimi",
+    title: "Mevzuatsal İşlemler",
     description: "Çalışanlarınızın gelişimi için online eğitimler ve sertifikasyon programları.",
-    image: "/hizmet1.png",
+    image: "/mevzuat.png",
   }
 ];
 
@@ -142,7 +142,7 @@ const Services = () => {
                   <motion.img 
                     src={service.image}
                     alt={service.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                     initial={{ scale: 1.1, opacity: 0 }}
                     whileInView={{ scale: 1, opacity: 1 }}
                     viewport={{ once: true }}

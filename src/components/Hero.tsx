@@ -9,19 +9,19 @@ import { motion } from 'framer-motion';
 const features = [
   {
     title: "Bordro Hesaplama",
-    image: "/cv.png",
+    image: "/hesaplama.png",
     icon: <Calculator className="w-12 h-12 text-[#4DA3FF]" />,
     description: "Gelişmiş algoritmalarımız ile maaş, izin, prim ve diğer tüm İK hesaplamalarınızı otomatik olarak yapın. Zaman kazanın, hata yapmayın."
   },
   {
-    title: "Personel Yönetimi",
-    image: "/hesaplama.png",
+    title: "Blog",
+    image: "/blog.png",
     icon: <Users className="w-12 h-12 text-[#4DA3FF]" />,
     description: "Çalışanlarınızın bilgilerini güvenle saklayın, performanslarını takip edin ve kariyer gelişimlerini planlayın. Tek platformda tüm İK süreçleri."
   },
   {
-    title: "İzin Takibi",
-    image: "/blog.png",
+    title: "Danışmanlık",
+    image: "/danismanlik.png",
     icon: <Calendar className="w-12 h-12 text-[#4DA3FF]" />,
     description: "Yıllık izin, hastalık izni ve diğer tüm izin türlerini kolayca yönetin. Otomatik hesaplama ve onay süreçleri ile işinizi kolaylaştırın."
   }
