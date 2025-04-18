@@ -2,12 +2,55 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, Shield, Zap } from 'lucide-react';
+import { ArrowRight, Calculator, Users, Calendar } from 'lucide-react';
 import { FlipCard, FlipCardFront, FlipCardBack } from "@/components/ui/flip-card";
+import { motion } from 'framer-motion';
+
+const features = [
+  {
+    title: "Bordro Hesaplama",
+    image: "/cv.png",
+    icon: <Calculator className="w-12 h-12 text-[#4DA3FF]" />,
+    description: "Gelişmiş algoritmalarımız ile maaş, izin, prim ve diğer tüm İK hesaplamalarınızı otomatik olarak yapın. Zaman kazanın, hata yapmayın."
+  },
+  {
+    title: "Personel Yönetimi",
+    image: "/hesaplama.png",
+    icon: <Users className="w-12 h-12 text-[#4DA3FF]" />,
+    description: "Çalışanlarınızın bilgilerini güvenle saklayın, performanslarını takip edin ve kariyer gelişimlerini planlayın. Tek platformda tüm İK süreçleri."
+  },
+  {
+    title: "İzin Takibi",
+    image: "/blog.png",
+    icon: <Calendar className="w-12 h-12 text-[#4DA3FF]" />,
+    description: "Yıllık izin, hastalık izni ve diğer tüm izin türlerini kolayca yönetin. Otomatik hesaplama ve onay süreçleri ile işinizi kolaylaştırın."
+  }
+];
 
 const Hero = () => {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.5
+      }
+    }
+  };
+
   return (
-    <div className="relative min-h-screen flex items-center overflow-hidden bg-white">
+    <section className="relative py-24 overflow-hidden bg-white">
       {/* Background Elements */}
       <div className="absolute inset-0">
         {/* Background image */}
@@ -18,8 +61,6 @@ const Hero = () => {
             className="w-full h-full object-cover object-center opacity-5"
           />
         </div>
-        
-
         
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-white" />
@@ -33,33 +74,41 @@ const Hero = () => {
           className="absolute top-[30%] -right-[15%] w-[700px] h-[700px] bg-[#B1E5D3]/5 rounded-full filter blur-[120px] opacity-20 animate-float-delay"
           style={{ animationDuration: '15s' }}
         />
-
-        
       </div>
 
-      
-
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-8">
-          
-          </div>
-
-          <h1 className="text-center text-5xl md:text-7xl font-bold mb-6">
+      <div className="relative z-10">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          className="max-w-5xl mx-auto"
+        >
+          <motion.h1 
+            variants={itemVariants}
+            className="text-center text-5xl md:text-6xl font-bold mb-6"
+          >
             <span className="text-[#1F2A44] drop-shadow-sm">
-            İK süreçlerinizde,</span>
-            <br />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#4DA3FF] to-[#1F2A44]">
-            ilkyardım bizden.
+              İK süreçlerinizde,
             </span>
-          </h1>
+            <br />
+            <span className="bg-clip-text text-transparent md:text-7xl bg-gradient-to-r from-[#4DA3FF] to-[#1F2A44]">
+              İlkyardım bizden.
+            </span>
+          </motion.h1>
           
-          <p className="text-center text-xl md:text-2xl text-[#1F2A44]/80 max-w-3xl mx-auto mb-12">
+          <motion.p 
+            variants={itemVariants}
+            className="text-center text-xl md:text-3xl text-[#1F2A44]/80 max-w-3xl mx-auto mb-12 font-bold"
+          >
             İKyardim.com, küçük ekipler ve yeni girişimler için hızlı, sade ve etkili çözümler sunar.
-          </p>
+          </motion.p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          <motion.div 
+            variants={itemVariants}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
+          >
             <Button 
               className="bg-[#4DA3FF] hover:bg-[#4DA3FF]/80 text-white px-8 py-6 rounded-full text-lg font-medium w-full sm:w-auto group shadow-lg shadow-[#4DA3FF]/20"
             >
@@ -72,74 +121,47 @@ const Hero = () => {
             >
               Tanıtımı İzleyin
             </Button>
-            
-          </div>
+          </motion.div>
 
           {/* Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <FlipCard className="h-[300px]">
-              <FlipCardFront className="bg-white shadow-lg rounded-2xl p-6 border border-[#1F2A44]/10">
-                <div className="w-12 h-12 bg-[#4DA3FF]/10 rounded-xl flex items-center justify-center mb-4">
-                  <Shield className="w-6 h-6 text-[#4DA3FF]" />
-                </div>
-                <h3 className="text-xl font-semibold text-[#1F2A44] mb-2">Enterprise Security</h3>
-                <p className="text-[#1F2A44]/70">
-                  Bank-grade security with end-to-end encryption and compliance features.
-                </p>
-              </FlipCardFront>
-              <FlipCardBack className="flex flex-col items-center justify-center rounded-2xl bg-[#4DA3FF] p-6 text-white">
-                <Shield className="w-12 h-12 mb-4" />
-                <h3 className="text-xl font-bold mb-2">Enterprise Security</h3>
-                <p className="text-center">
-                  Advanced encryption, regular security audits, and compliance with global standards.
-                </p>
-              </FlipCardBack>
-            </FlipCard>
-
-            <FlipCard className="h-[300px]">
-              <FlipCardFront className="bg-white shadow-lg rounded-2xl p-6 border border-[#1F2A44]/10">
-                <div className="w-12 h-12 bg-[#4DA3FF]/10 rounded-xl flex items-center justify-center mb-4">
-                  <Zap className="w-6 h-6 text-[#4DA3FF]" />
-                </div>
-                <h3 className="text-xl font-semibold text-[#1F2A44] mb-2">Lightning Fast</h3>
-                <p className="text-[#1F2A44]/70">
-                  Optimized performance with sub-second response times globally.
-                </p>
-              </FlipCardFront>
-              <FlipCardBack className="flex flex-col items-center justify-center rounded-2xl bg-[#4DA3FF] p-6 text-white">
-                <Zap className="w-12 h-12 mb-4" />
-                <h3 className="text-xl font-bold mb-2">Lightning Fast</h3>
-                <p className="text-center">
-                  Global CDN, optimized code, and smart caching for instant responses.
-                </p>
-              </FlipCardBack>
-            </FlipCard>
-
-            <FlipCard className="h-[300px]">
-              <FlipCardFront className="bg-white shadow-lg rounded-2xl p-6 border border-[#1F2A44]/10">
-                <div className="w-12 h-12 bg-[#4DA3FF]/10 rounded-xl flex items-center justify-center mb-4">
-                  <Sparkles className="w-6 h-6 text-[#4DA3FF]" />
-                </div>
-                <h3 className="text-xl font-semibold text-[#1F2A44] mb-2">AI-Powered</h3>
-                <p className="text-[#1F2A44]/70">
-                  Smart automation and insights powered by latest AI technology.
-                </p>
-              </FlipCardFront>
-              <FlipCardBack className="flex flex-col items-center justify-center rounded-2xl bg-[#4DA3FF] p-6 text-white">
-                <Sparkles className="w-12 h-12 mb-4" />
-                <h3 className="text-xl font-bold mb-2">AI-Powered</h3>
-                <p className="text-center">
-                  Advanced machine learning algorithms for intelligent automation and predictive analytics.
-                </p>
-              </FlipCardBack>
-            </FlipCard>
-          </div>
-        </div>
+          <motion.div 
+            variants={containerVariants}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          >
+            {features.map((feature, index) => (
+              <motion.div
+                key={index}
+                variants={itemVariants}
+              >
+                <FlipCard className="h-[365px]">
+                  <FlipCardFront className="bg-white shadow-lg rounded-2xl p-6 border border-[#1F2A44]/10">
+                    <div className="w-full h-60 mb-6 overflow-hidden rounded-xl">
+                      <img 
+                        src={feature.image}
+                        alt={feature.title}
+                        className="w-full h-full object-contain hover:scale-110 transition-transform duration-300"
+                      />
+                    </div>
+                    <h3 className="text-2xl font-semibold text-[#1F2A44] text-center">{feature.title}</h3>
+                  </FlipCardFront>
+                  <FlipCardBack className="flex flex-col items-center justify-center rounded-2xl bg-[#4DA3FF] p-8 text-white">
+                    <div className="mb-6">
+                      {feature.icon}
+                    </div>
+                    <h3 className="text-2xl font-bold mb-4">{feature.title}</h3>
+                    <p className="text-center text-lg">
+                      {feature.description}
+                    </p>
+                  </FlipCardBack>
+                </FlipCard>
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.div>
       </div>
       {/* Bottom glow light effect with animation */}
-<div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1300px] h-[2000px] bg-[#4DA3FF]/15 blur-[3px] rounded-full pointer-events-none z-0 animate-glowPulse" />
-
-    </div>
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1300px] h-[2000px] bg-[#4DA3FF]/15 blur-[3px] rounded-full pointer-events-none z-0 animate-glowPulse" />
+    </section>
   );
 };
 

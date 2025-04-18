@@ -4,8 +4,10 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
-import Features from './components/Features';
+import AboutUs from './components/AboutUs';
+import Services from './components/Services';
 import Showcase from './components/Showcase';
+import BlogSection from './components/BlogSection';
 import { Pricing2 } from './components/blocks/Pricing2';
 import Footer from './components/Footer';
 import AdminPanel from './pages/AdminPanel';
@@ -18,6 +20,63 @@ function App() {
   const location = useLocation();
   const isAdminRoute = location.pathname === '/admin';
   const isComponentDemo = location.pathname === '/components';
+
+  const pricingPlans = [
+    {
+      id: "plus",
+      name: "Plus",
+      description: "Perfect for small teams",
+      monthlyPrice: "$29",
+      yearlyPrice: "$24",
+      features: [
+        { text: "Up to 10 team members" },
+        { text: "All basic features" },
+        { text: "Priority email support" },
+        { text: "5GB storage space" },
+      ],
+      button: {
+        text: "Get Plus",
+        url: "#",
+      },
+    },
+    {
+      id: "pro",
+      name: "Pro",
+      description: "For growing businesses",
+      monthlyPrice: "$79",
+      yearlyPrice: "$65",
+      features: [
+        { text: "Unlimited team members" },
+        { text: "Advanced analytics" },
+        { text: "24/7 priority support" },
+        { text: "50GB storage space" },
+      ],
+      button: {
+        text: "Get Pro",
+        url: "#",
+      },
+      isPopular: true
+    },
+    {
+      id: "enterprise",
+      name: "Enterprise",
+      description: "For large organizations",
+      monthlyPrice: "$149",
+      yearlyPrice: "$129",
+      features: [
+        { text: "Unlimited team members" },
+        { text: "Enterprise analytics" },
+        { text: "24/7 VIP support" },
+        { text: "Unlimited storage" },
+        { text: "Custom integrations" },
+        { text: "Dedicated account manager" },
+      ],
+      button: {
+        text: "Contact Sales",
+        url: "#",
+      },
+    },
+  ];
 
   return (
     <AuthProvider>
@@ -71,67 +130,14 @@ function App() {
             <Route path="/" element={
               <>
                 <Hero />
-                <Features />
+                <AboutUs />
+                <Services />
                 <Showcase />
+                <BlogSection />
                 <Pricing2 
-                  heading="Choose your minİK plan"
-                  description="Select the perfect plan for your business needs"
-                  plans={[
-                    {
-                      id: "plus",
-                      name: "Plus",
-                      description: "Perfect for small teams",
-                      monthlyPrice: "$29",
-                      yearlyPrice: "$24",
-                      features: [
-                        { text: "Up to 10 team members" },
-                        { text: "All basic features" },
-                        { text: "Priority email support" },
-                        { text: "5GB storage space" },
-                      ],
-                      button: {
-                        text: "Get Plus",
-                        url: "#",
-                      },
-                    },
-                    {
-                      id: "pro",
-                      name: "Pro",
-                      description: "For growing businesses",
-                      monthlyPrice: "$79",
-                      yearlyPrice: "$65",
-                      features: [
-                        { text: "Unlimited team members" },
-                        { text: "Advanced analytics" },
-                        { text: "24/7 priority support" },
-                        { text: "50GB storage space" },
-                      ],
-                      button: {
-                        text: "Get Pro",
-                        url: "#",
-                      },
-                      isPopular: true
-                    },
-                    {
-                      id: "enterprise",
-                      name: "Enterprise",
-                      description: "For large organizations",
-                      monthlyPrice: "$149",
-                      yearlyPrice: "$129",
-                      features: [
-                        { text: "Unlimited team members" },
-                        { text: "Enterprise analytics" },
-                        { text: "24/7 VIP support" },
-                        { text: "Unlimited storage" },
-                        { text: "Custom integrations" },
-                        { text: "Dedicated account manager" },
-                      ],
-                      button: {
-                        text: "Contact Sales",
-                        url: "#",
-                      },
-                    },
-                  ]}
+                  heading="İK Yardım Paketleri"
+                  description="İhtiyaçlarınıza uygun planı seçin"
+                  plans={pricingPlans}
                 />
                 <Footer />
               </>

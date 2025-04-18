@@ -97,6 +97,10 @@ const Footer = () => {
             </div>
           </div>
         </div>
+
+{/* Bottom glow light effect with animation */}
+<div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[3000px] h-[950px] bg-[#4DA3FF]/15 blur-[3px] rounded-full pointer-events-none z-0 animate-glowPulse" />
+
       </div>
     </footer>
   );
