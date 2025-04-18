@@ -53,7 +53,13 @@ export default {
         'float-delay': 'float 8s ease-in-out infinite 2s',
         'float-slow': 'floatSlow 12s ease-in-out infinite 1s',
       },
+      
     },
   },
   plugins: [],
+
+
+
+
+  
 };

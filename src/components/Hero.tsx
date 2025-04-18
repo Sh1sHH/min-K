@@ -19,6 +19,8 @@ const Hero = () => {
           />
         </div>
         
+
+        
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-white" />
         
@@ -31,7 +33,11 @@ const Hero = () => {
           className="absolute top-[30%] -right-[15%] w-[700px] h-[700px] bg-[#B1E5D3]/5 rounded-full filter blur-[120px] opacity-20 animate-float-delay"
           style={{ animationDuration: '15s' }}
         />
+
+        
       </div>
+
+      
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4">
@@ -66,6 +72,7 @@ const Hero = () => {
             >
               Tanıtımı İzleyin
             </Button>
+            
           </div>
 
           {/* Features Grid */}
@@ -129,6 +136,9 @@ const Hero = () => {
           </div>
         </div>
       </div>
+      {/* Bottom glow light effect with animation */}
+<div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1300px] h-[2000px] bg-[#4DA3FF]/15 blur-[3px] rounded-full pointer-events-none z-0 animate-glowPulse" />
+
     </div>
   );
 };
