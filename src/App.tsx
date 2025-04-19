@@ -16,6 +16,7 @@ import ComponentDemo from './pages/ComponentDemo';
 import Blog from './pages/Blog';
 import BlogManagement from './components/admin/BlogManagement';
 import BlogPage from './pages/BlogPage';
+import BlogDetail from './pages/BlogDetail';
 
 function App() {
   const location = useLocation();
@@ -128,6 +129,7 @@ function App() {
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/components" element={<ComponentDemo />} />
             <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blog/:id" element={<BlogDetail />} />
             <Route path="/" element={
               <>
                 <Hero />

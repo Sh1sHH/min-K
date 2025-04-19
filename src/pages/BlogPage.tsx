@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Clock, Calendar, User, Tag, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface BlogPost {
   id: string;
@@ -16,6 +17,7 @@ interface BlogPost {
 }
 
 const BlogPage = () => {
+  const navigate = useNavigate();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -70,11 +72,11 @@ const BlogPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black/95 text-white p-8">
+      <div className="min-h-screen bg-white text-[#1F2A44] p-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div>
-            <p className="text-gray-400">Blog yazıları yükleniyor...</p>
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#4DA3FF]"></div>
+            <p className="text-[#1F2A44]/70">Blog yazıları yükleniyor...</p>
           </div>
         </div>
       </div>
@@ -83,14 +85,14 @@ const BlogPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-black/95 text-white p-8">
+      <div className="min-h-screen bg-white text-[#1F2A44] p-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
             <div className="text-red-500 text-center">
               <p>{error}</p>
               <button
                 onClick={fetchPosts}
-                className="mt-4 px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-md transition-colors"
+                className="mt-4 px-6 py-3 bg-[#4DA3FF] hover:bg-[#4DA3FF]/90 text-white rounded-full transition-colors"
               >
                 Tekrar Dene
               </button>
@@ -102,43 +104,89 @@ const BlogPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black/95 text-white p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <section className="relative min-h-screen bg-white text-[#1F2A44] pt-32 p-8 overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0">
+        {/* Background image */}
+        <div className="absolute inset-0">
+          <img 
+            src="/white2.png" 
+            alt="Background" 
+            className="w-full h-full object-cover object-center opacity-5"
+          />
+        </div>
+        
+        {/* Gradient overlays */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-white opacity-90" />
+        
+        {/* Decorative Shapes */}
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-20 animate-float mix-blend-multiply">
+          <img 
+            src="/shape2.svg" 
+            alt="Decorative Shape" 
+            className="w-full h-full object-contain"
+          />
+        </div>
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] opacity-20 animate-float-delay mix-blend-multiply">
+          <img 
+            src="/shape2.svg" 
+            alt="Decorative Shape" 
+            className="w-full h-full object-contain"
+          />
+        </div>
+        
+        {/* Subtle gradient orbs */}
+        <div 
+          className="absolute -top-[20%] -left-[10%] w-[500px] h-[500px] bg-[#4DA3FF]/10 rounded-full filter blur-[100px] opacity-40 animate-float mix-blend-multiply"
+          style={{ animationDuration: '15s' }}
+        />
+        <div 
+          className="absolute top-[30%] -right-[15%] w-[400px] h-[400px] bg-[#B1E5D3]/10 rounded-full filter blur-[90px] opacity-40 animate-float-delay mix-blend-multiply"
+          style={{ animationDuration: '12s' }}
+        />
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto space-y-12">
         {/* Header */}
         <div className="text-center space-y-4">
+          <div className="inline-block mb-4">
+            <span className="bg-[#4DA3FF]/10 text-[#4DA3FF] px-4 py-2 rounded-full text-sm font-medium">
+              BLOG
+            </span>
+          </div>
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-pink-500"
+            className="text-4xl md:text-5xl font-bold text-[#1F2A44]"
           >
-            Blog
+            İK Dünyasından Haberler
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-gray-400 max-w-2xl mx-auto"
+            className="text-[#1F2A44]/70 max-w-2xl mx-auto text-lg"
           >
-            Teknoloji, yazılım ve dijital dünya hakkında en güncel içerikler
+            İK süreçleri, dijital dönüşüm ve sektör trendleri hakkında güncel içerikler
           </motion.p>
         </div>
 
         {/* Filters */}
         <div className="grid md:grid-cols-2 gap-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#1F2A44]/40 h-4 w-4" />
             <Input
               type="text"
               placeholder="Blog yazılarında ara..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white/5 border-white/10 text-white"
+              className="pl-10 bg-white border-[#1F2A44]/10 text-[#1F2A44] placeholder:text-[#1F2A44]/40 focus:border-[#4DA3FF] focus:ring-[#4DA3FF]/20"
             />
           </div>
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="bg-white border border-[#1F2A44]/10 rounded-md px-4 py-2 text-[#1F2A44] focus:outline-none focus:ring-2 focus:ring-[#4DA3FF]/20 focus:border-[#4DA3FF]"
           >
             <option value="">Tüm Kategoriler</option>
             {categories.map(category => (
@@ -148,36 +196,37 @@ const BlogPage = () => {
         </div>
 
         {/* Blog Posts Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredPosts.map((post) => (
             <motion.article
               key={post.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               whileHover={{ y: -5 }}
-              className="bg-white/5 rounded-xl overflow-hidden border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-all duration-300"
+              className="bg-white rounded-3xl overflow-hidden border border-[#1F2A44]/10 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer"
+              onClick={() => navigate(`/blog/${post.id}`)}
             >
               <div className="relative h-48 overflow-hidden">
                 <img
                   src={post.image}
                   alt={post.title}
-                  className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-300"
+                  className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
                 />
-                <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full text-sm border border-white/10">
+                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm text-[#1F2A44] font-medium">
                   {post.category}
                 </div>
               </div>
               
               <div className="p-6 space-y-4">
-                <h2 className="text-xl font-semibold line-clamp-2 hover:text-purple-400 transition-colors">
+                <h2 className="text-xl font-semibold text-[#1F2A44] line-clamp-2 group-hover:text-[#4DA3FF] transition-colors">
                   {post.title}
                 </h2>
                 
-                <p className="text-gray-400 line-clamp-3">
+                <p className="text-[#1F2A44]/70 line-clamp-3">
                   {post.content}
                 </p>
 
-                <div className="flex items-center gap-4 text-sm text-gray-400">
+                <div className="flex items-center gap-4 text-sm text-[#1F2A44]/60">
                   <div className="flex items-center gap-1">
                     <User className="h-4 w-4" />
                     {post.author}
@@ -191,6 +240,18 @@ const BlogPage = () => {
                     {post.readTime}
                   </div>
                 </div>
+
+                <div className="pt-4 flex items-center text-[#4DA3FF] font-medium group-hover:text-[#B1E5D3] transition-colors duration-300">
+                  <span>Devamını Oku</span>
+                  <motion.div
+                    className="ml-2"
+                    initial={false}
+                    animate={{ x: 0 }}
+                    whileHover={{ x: 5 }}
+                  >
+                    →
+                  </motion.div>
+                </div>
               </div>
             </motion.article>
           ))}
@@ -199,11 +260,13 @@ const BlogPage = () => {
         {/* No Results */}
         {filteredPosts.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-400">Aramanızla eşleşen blog yazısı bulunamadı.</p>
+            <p className="text-[#1F2A44]/70 text-lg">
+              Aradığınız kriterlere uygun blog yazısı bulunamadı.
+            </p>
           </div>
         )}
       </div>
-    </div>
+    </section>
   );
 };
 
