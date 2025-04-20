@@ -47,7 +47,7 @@ export const Pricing2 = ({
   const [isYearly, setIsYearly] = useState(false);
 
   return (
-    <section className="relative py-24 overflow-hidden bg-white">
+    <section  id="price-section" className="relative py-24 overflow-hidden bg-white ">
       {/* Background Elements */}
       <div className="absolute inset-0">
         {/* Star field effect */}

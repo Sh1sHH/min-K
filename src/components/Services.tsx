@@ -58,7 +58,7 @@ const Services = () => {
   };
 
   return (
-    <section className="relative py-24 overflow-hidden bg-white">
+    <section id="services-section" className="relative py-24 overflow-hidden bg-white">
       {/* Background Elements */}
       <div className="absolute inset-0">
         {/* Background image */}

@@ -87,7 +87,7 @@ const Showcase = () => {
   };
 
   return (
-    <section className="relative py-24 overflow-hidden bg-white">
+    <section id="benefits-section" className="relative py-24 overflow-hidden bg-white">
       {/* Background Elements */}
       <div className="absolute inset-0">
         {/* Background image */}

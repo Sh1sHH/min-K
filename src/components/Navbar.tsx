@@ -68,6 +68,29 @@ const Navbar = () => {
     }
   };
 
+  const handleScrollToSection = (sectionId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    const section = document.getElementById(sectionId);
+    if (section) {
+      const navbarHeight = 80; // Navbar height
+      const elementPosition = section.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+    }
+  };
+
+  const handleScrollToTop = (e: React.MouseEvent) => {
+    e.preventDefault();
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  };
+
   return (
     <>
       <div 
@@ -82,18 +105,44 @@ const Navbar = () => {
           <div className="mx-8 px-8 py-4">
             <div className="flex items-center justify-between">
               {/* Logo */}
-              <Link to="/" className="flex items-center gap-2">
+              <button 
+                onClick={handleScrollToTop}
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              >
                 <span className="text-xl font-semibold bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
                   İKyardim
                 </span>
-              </Link>
+              </button>
 
               {/* Navigation Links */}
               <div className="hidden lg:flex items-center gap-8">
-                <NavLink href="/features">Features</NavLink>
-                <NavLink href="/pricing">Pricing</NavLink>
-                <NavLink href="/blog">Blog</NavLink>
-                <NavLink href="/contact">Contact</NavLink>
+                <button 
+                  onClick={(e) => handleScrollToSection('services-section', e)}
+                  className="text-sm text-white hover:text-white transition-colors"
+                >
+                  Hizmetler
+                </button>
+                <button 
+                  onClick={(e) => handleScrollToSection('benefits-section', e)}
+                  className="text-sm text-white hover:text-white transition-colors"
+                >
+                  Faydalar
+                </button>
+
+                <button 
+                  onClick={(e) => handleScrollToSection('sss-section', e)}
+                  className="text-sm text-white hover:text-white transition-colors"
+                >
+                  SSS
+                </button>
+
+                <button 
+                  onClick={(e) => handleScrollToSection('price-section', e)}
+                  className="text-sm text-white hover:text-white transition-colors"
+                >
+                  Abonelikler
+                </button>
+
               </div>
 
               {/* Auth Buttons */}
