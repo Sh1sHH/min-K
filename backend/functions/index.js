@@ -11,10 +11,12 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const express = require('express');
 const cors = require('cors')({ 
-  origin: true,
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  credentials: true,
+  preflightContinue: true,
+  optionsSuccessStatus: 204
 });
 
 // Initialize Firebase Admin
@@ -462,6 +464,165 @@ exports.listAdmins = functions.https.onRequest(async (req, res) => {
   });
 });
 
+// Admin yetkisi kaldırma
+exports.removeAdminRole = functions.https.onRequest(async (req, res) => {
+  // CORS için preflight kontrolü
+  if (req.method === 'OPTIONS') {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.status(204).send('');
+    return;
+  }
+
+  // Her istekte CORS başlıklarını ekle
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // CORS middleware
+  return cors(req, res, async () => {
+    try {
+      // Token'ı al
+      if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) {
+        return res.status(401).json({
+          error: 'Yetkilendirme hatası',
+          message: 'Yetkilendirme token\'ı bulunamadı'
+        });
+      }
+
+      const idToken = req.headers.authorization.split('Bearer ')[1];
+      
+      // Token'ı doğrula
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      
+      // Admin yetkisini kontrol et
+      const callerUser = await admin.auth().getUser(decodedToken.uid);
+      const callerClaims = callerUser.customClaims || {};
+      
+      if (!callerClaims.admin && !callerClaims.superAdmin) {
+        return res.status(403).json({
+          error: 'Yetki hatası',
+          message: 'Bu işlem için admin yetkisi gerekiyor'
+        });
+      }
+
+      // Request body'den email'i al
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({
+          error: 'Eksik bilgi',
+          message: 'Email adresi gerekli'
+        });
+      }
+
+      try {
+        // Email ile kullanıcıyı bul
+        const userRecord = await admin.auth().getUserByEmail(email);
+
+        // Mevcut claims'i al
+        const currentClaims = userRecord.customClaims || {};
+
+        // Eğer kullanıcı süper admin ise yetkisi kaldırılamaz
+        if (currentClaims.superAdmin) {
+          return res.status(403).json({
+            error: 'Yetki hatası',
+            message: 'Süper admin yetkisi kaldırılamaz'
+          });
+        }
+
+        // Eğer admin değilse hata ver
+        if (!currentClaims.admin) {
+          return res.status(400).json({
+            error: 'Yetki hatası',
+            message: 'Bu kullanıcı zaten admin değil'
+          });
+        }
+
+        // Custom claims güncelle (admin yetkisini kaldır)
+        const { admin: removedAdmin, ...remainingClaims } = currentClaims;
+        await admin.auth().setCustomUserClaims(userRecord.uid, remainingClaims);
+
+        return res.status(200).json({
+          success: true,
+          message: `${email} adresinin admin yetkisi kaldırıldı.`
+        });
+      } catch (userError) {
+        console.error('Kullanıcı bulunamadı:', userError);
+        return res.status(404).json({
+          error: 'Kullanıcı bulunamadı',
+          message: 'Bu email adresi ile kayıtlı kullanıcı bulunamadı.'
+        });
+      }
+    } catch (error) {
+      console.error('Admin yetkisi kaldırma hatası:', error);
+      return res.status(500).json({ 
+        error: 'Sunucu hatası',
+        message: 'Admin yetkisi kaldırma işlemi sırasında bir hata oluştu.'
+      });
+    }
+  });
+});
+
+// Tüm kullanıcıları listeleme fonksiyonu
+exports.listAllUsers = functions.https.onRequest(async (req, res) => {
+  // CORS için preflight kontrolü
+  if (req.method === 'OPTIONS') {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.status(204).send('');
+    return;
+  }
+
+  // CORS middleware
+  return cors(req, res, async () => {
+    try {
+      // Token'ı al
+      if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) {
+        throw new Error('Yetkilendirme token\'ı bulunamadı');
+      }
+
+      const idToken = req.headers.authorization.split('Bearer ')[1];
+      
+      // Token'ı doğrula
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      
+      // Admin yetkisini kontrol et
+      const userRecord = await admin.auth().getUser(decodedToken.uid);
+      const customClaims = userRecord.customClaims || {};
+      
+      if (!customClaims.admin && !customClaims.superAdmin) {
+        throw new Error('Bu işlem için admin yetkisi gerekiyor');
+      }
+
+      // Tüm kullanıcıları listele
+      const listUsersResult = await admin.auth().listUsers();
+      
+      // Kullanıcı bilgilerini düzenle
+      const users = listUsersResult.users.map(user => ({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        emailVerified: user.emailVerified,
+        disabled: user.disabled,
+        createdAt: user.metadata.creationTime,
+        lastSignIn: user.metadata.lastSignInTime,
+        customClaims: user.customClaims || {}
+      }));
+
+      res.json(users);
+    } catch (error) {
+      console.error('Kullanıcı listesi alma hatası:', error);
+      res.status(401).json({ 
+        error: 'Yetkilendirme hatası',
+        message: error.message 
+      });
+    }
+  });
+});
+
 // API'yi Cloud Functions'a bağla
 exports.api = functions.https.onRequest((req, res) => {
   // CORS için preflight kontrolü
@@ -488,3 +649,63 @@ exports.api = functions.https.onRequest((req, res) => {
 //   logger.info("Hello logs!", {structuredData: true});
 //   response.send("Hello from Firebase!");
 // });
+
+exports.setSubscriberRole = functions.https.onRequest(async (req, res) => {
+  // CORS için preflight kontrolü
+  if (req.method === 'OPTIONS') {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.status(204).send('');
+    return;
+  }
+
+  // Her istekte CORS başlıklarını ekle
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  try {
+    // Token kontrolü
+    if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) {
+      throw new Error('Yetkilendirme token\'ı bulunamadı');
+    }
+
+    const idToken = req.headers.authorization.split('Bearer ')[1];
+    
+    // Token'ı doğrula
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    
+    // Admin yetkisini kontrol et
+    const userRecord = await admin.auth().getUser(decodedToken.uid);
+    const customClaims = userRecord.customClaims || {};
+    
+    if (!customClaims.admin && !customClaims.superAdmin) {
+      throw new Error('Bu işlem için admin yetkisi gerekiyor');
+    }
+
+    // Request body'den email'i al
+    const { email } = req.body;
+    if (!email) {
+      throw new Error('Email adresi gerekli');
+    }
+
+    // Hedef kullanıcıyı bul
+    const targetUser = await admin.auth().getUserByEmail(email);
+    
+    // Mevcut rolleri koru ve subscriber rolünü ekle
+    const currentClaims = targetUser.customClaims || {};
+    await admin.auth().setCustomUserClaims(targetUser.uid, {
+      ...currentClaims,
+      subscriber: true
+    });
+
+    res.json({ message: `${email} adresine abone rolü verildi` });
+  } catch (error) {
+    console.error('Abone rolü verme hatası:', error);
+    res.status(401).json({ 
+      error: 'Yetkilendirme hatası',
+      message: error.message 
+    });
+  }
+});

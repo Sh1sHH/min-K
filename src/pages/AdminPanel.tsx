@@ -7,19 +7,37 @@ import { toast } from 'sonner';
 import {
   Users, FileText, Settings, BarChart3, Calculator, 
   FileBox, MessageSquare, CreditCard, PieChart, Brain,
-  LogOut, Home
+  LogOut, Home, Code2, Blocks, Trash2
 } from 'lucide-react';
 import BlogManagement from '@/components/admin/BlogManagement';
+import ApiDocs from './ApiDocs';
+import ComponentDemo from './ComponentDemo';
 
 interface UserRole {
   email: string;
-  role: 'admin' | 'editor' | 'user';
+  role: 'admin' | 'süper admin' | 'editor' | 'user';
 }
 
 interface MenuItem {
   id: string;
   title: string;
   icon: React.ReactNode;
+}
+
+interface User {
+  uid: string;
+  email: string;
+  displayName: string | null;
+  photoURL: string | null;
+  emailVerified: boolean;
+  disabled: boolean;
+  createdAt: string;
+  lastSignIn: string;
+  customClaims?: {
+    admin?: boolean;
+    superAdmin?: boolean;
+    subscriber?: boolean;
+  };
 }
 
 const AdminPanel = () => {
@@ -29,12 +47,16 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<UserRole[]>([]);
   const [activeSection, setActiveSection] = useState('users');
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const auth = getAuth();
 
   // Sol menü öğeleri
   const menuItems: MenuItem[] = [
     { id: 'dashboard', title: 'Dashboard', icon: <BarChart3 className="w-5 h-5" /> },
     { id: 'users', title: 'Kullanıcı Yönetimi', icon: <Users className="w-5 h-5" /> },
     { id: 'blog', title: 'Blog Yönetimi', icon: <FileText className="w-5 h-5" /> },
+    { id: 'api', title: 'API Dokümantasyonu', icon: <Code2 className="w-5 h-5" /> },
+    { id: 'components', title: 'UI Components', icon: <Blocks className="w-5 h-5" /> },
     { id: 'calculator', title: 'Hesaplama Araçları', icon: <Calculator className="w-5 h-5" /> },
     { id: 'documents', title: 'Dosya Yönetimi', icon: <FileBox className="w-5 h-5" /> },
     { id: 'crm', title: 'Soru-Cevap', icon: <MessageSquare className="w-5 h-5" /> },
@@ -92,6 +114,34 @@ const AdminPanel = () => {
 
     fetchAdmins();
   }, [currentUser, isAdmin, navigate]);
+
+  // Tüm kullanıcıları getir
+  const fetchAllUsers = async () => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const response = await fetch('https://us-central1-minik-a61c5.cloudfunctions.net/listAllUsers', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+
+      const data = await response.json();
+      setAllUsers(data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast.error('Kullanıcılar yüklenirken bir hata oluştu');
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser && isAdmin) {
+      fetchAllUsers();
+    }
+  }, [currentUser, isAdmin]);
 
   const handleAddAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,13 +207,111 @@ const AdminPanel = () => {
     }
   };
 
+  const handleRemoveAdmin = async (email: string) => {
+    try {
+      if (!currentUser) {
+        throw new Error('Giriş yapmanız gerekiyor');
+      }
+
+      // Admin yetkisi kaldırma isteği
+      const token = await currentUser.getIdToken();
+      const response = await fetch('https://us-central1-minik-a61c5.cloudfunctions.net/removeAdminRole', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData.message || 'Admin yetkisi kaldırılamadı');
+      }
+
+      toast.success(responseData.message || `${email} adresinin admin yetkisi kaldırıldı`);
+      
+      // Admin listesini güncelle
+      const adminsResponse = await fetch('https://us-central1-minik-a61c5.cloudfunctions.net/listAdmins', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!adminsResponse.ok) {
+        const errorData = await adminsResponse.json();
+        throw new Error(errorData.message || 'Admin listesi alınamadı');
+      }
+
+      const adminsData = await adminsResponse.json();
+      const uniqueAdmins = adminsData.filter((admin: UserRole, index: number, self: UserRole[]) =>
+        index === self.findIndex((t) => t.email === admin.email)
+      );
+      setUsers(uniqueAdmins);
+      
+    } catch (error: any) {
+      console.error('Admin yetkisi kaldırma hatası:', error);
+      toast.error(error.message || 'Bir hata oluştu');
+    }
+  };
+
   const handleLogout = async () => {
     try {
-      const auth = getAuth();
       await auth.signOut();
       navigate('/');
     } catch (error) {
       console.error('Çıkış hatası:', error);
+    }
+  };
+
+  const handleSetAdmin = async (email: string) => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const response = await fetch('https://setadminrole-7fl3duvywa-uc.a.run.app', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ email })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to set admin role');
+      }
+
+      fetchAllUsers();
+      toast.success('Admin rolü başarıyla verildi');
+    } catch (error) {
+      console.error('Error setting admin role:', error);
+      toast.error('Admin rolü verilirken bir hata oluştu');
+    }
+  };
+
+  const handleSetSubscriber = async (email: string) => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const response = await fetch('https://us-central1-minik-a61c5.cloudfunctions.net/setSubscriberRole', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ email })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to set subscriber role');
+      }
+
+      fetchAllUsers();
+      toast.success('Abone rolü başarıyla verildi');
+    } catch (error) {
+      console.error('Error setting subscriber role:', error);
+      toast.error('Abone rolü verilirken bir hata oluştu');
     }
   };
 
@@ -228,6 +376,80 @@ const AdminPanel = () => {
               <div>
                 <h2 className="text-2xl font-semibold mb-6">Kullanıcı Yönetimi</h2>
                 <div className="bg-black/50 rounded-xl p-6 backdrop-blur-sm border border-white/5">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-white/10">
+                          <th className="text-left py-3 px-4">Email</th>
+                          <th className="text-left py-3 px-4">Ad Soyad</th>
+                          <th className="text-left py-3 px-4">Rol</th>
+                          <th className="text-left py-3 px-4">Son Giriş</th>
+                          <th className="text-left py-3 px-4">İşlemler</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allUsers.map((user) => (
+                          <tr key={user.uid} className="border-b border-white/5">
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                {user.photoURL && (
+                                  <img src={user.photoURL} alt="" className="w-6 h-6 rounded-full" />
+                                )}
+                                <span>{user.email}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">{user.displayName || '-'}</td>
+                            <td className="py-3 px-4">
+                              {user.customClaims?.superAdmin ? (
+                                <span className="text-yellow-400">Süper Admin</span>
+                              ) : user.customClaims?.admin ? (
+                                <span className="text-blue-400">Admin</span>
+                              ) : user.customClaims?.subscriber ? (
+                                <span className="text-green-400">Abone</span>
+                              ) : (
+                                <span className="text-gray-400">Kullanıcı</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4">
+                              {new Date(user.lastSignIn).toLocaleDateString('tr-TR')}
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex gap-2">
+                                {!user.customClaims?.superAdmin && currentUser?.email !== user.email && (
+                                  <>
+                                    <button
+                                      onClick={() => handleSetAdmin(user.email)}
+                                      className="bg-blue-500/10 text-blue-400 px-3 py-1 rounded hover:bg-blue-500/20 transition-colors"
+                                    >
+                                      Admin Yap
+                                    </button>
+                                    <button
+                                      onClick={() => handleSetSubscriber(user.email)}
+                                      className="bg-green-500/10 text-green-400 px-3 py-1 rounded hover:bg-green-500/20 transition-colors"
+                                    >
+                                      Abone Yap
+                                    </button>
+                                    {user.customClaims?.admin && (
+                                      <button
+                                        onClick={() => {
+                                          if (window.confirm(`${user.email} adresinin admin yetkisini kaldırmak istediğinize emin misiniz?`)) {
+                                            handleRemoveAdmin(user.email);
+                                          }
+                                        }}
+                                        className="bg-red-500/10 text-red-400 px-3 py-1 rounded hover:bg-red-500/20 transition-colors"
+                                      >
+                                        Admin Kaldır
+                                      </button>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   <form onSubmit={handleAddAdmin} className="mb-6">
                     <div className="flex gap-4">
                       <input
@@ -258,7 +480,72 @@ const AdminPanel = () => {
                         .map((user, index) => (
                           <div key={index} className="flex items-center justify-between py-3 px-4 border-b border-white/5">
                             <span>{user.email}</span>
-                            <span className="text-purple-400">{user.role}</span>
+                            <div className="flex items-center gap-4">
+                              <span className="text-purple-400">{user.role}</span>
+                              {user.role !== 'süper admin' && (
+                                <button
+                                  onClick={() => {
+                                    if (window.confirm(`${user.email} adresinin admin yetkisini kaldırmak istediğinize emin misiniz?`)) {
+                                      handleRemoveAdmin(user.email);
+                                    }
+                                  }}
+                                  className="text-red-400 hover:text-red-300 transition-colors"
+                                  title="Admin yetkisini kaldır"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+
+                  {/* Mevcut Aboneler */}
+                  <div className="mt-8">
+                    <h3 className="text-lg font-medium text-gray-300 mb-4">Mevcut Aboneler</h3>
+                    <div className="bg-black/30 rounded-lg">
+                      {allUsers
+                        .filter(user => user.customClaims?.subscriber && !user.customClaims?.admin && !user.customClaims?.superAdmin)
+                        .map((user) => (
+                          <div key={user.uid} className="flex items-center justify-between py-3 px-4 border-b border-white/5">
+                            <div className="flex items-center gap-2">
+                              {user.photoURL && (
+                                <img src={user.photoURL} alt="" className="w-6 h-6 rounded-full" />
+                              )}
+                              <span>{user.email}</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className="text-green-400">Abone</span>
+                              <span className="text-gray-400 text-sm">
+                                Son giriş: {new Date(user.lastSignIn).toLocaleDateString('tr-TR')}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+
+                  {/* Yetkisiz Kullanıcılar */}
+                  <div className="mt-8">
+                    <h3 className="text-lg font-medium text-gray-300 mb-4">Yetkisiz Kullanıcılar</h3>
+                    <div className="bg-black/30 rounded-lg">
+                      {allUsers
+                        .filter(user => !user.customClaims?.subscriber && !user.customClaims?.admin && !user.customClaims?.superAdmin)
+                        .map((user) => (
+                          <div key={user.uid} className="flex items-center justify-between py-3 px-4 border-b border-white/5">
+                            <div className="flex items-center gap-2">
+                              {user.photoURL && (
+                                <img src={user.photoURL} alt="" className="w-6 h-6 rounded-full" />
+                              )}
+                              <span>{user.email}</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className="text-gray-400">Normal Kullanıcı</span>
+                              <span className="text-gray-400 text-sm">
+                                Son giriş: {new Date(user.lastSignIn).toLocaleDateString('tr-TR')}
+                              </span>
+                            </div>
                           </div>
                         ))}
                     </div>
@@ -273,7 +560,22 @@ const AdminPanel = () => {
               </div>
             )}
 
-            {activeSection !== 'users' && activeSection !== 'blog' && (
+            {activeSection === 'api' && (
+              <div>
+                <ApiDocs />
+              </div>
+            )}
+
+            {activeSection === 'components' && (
+              <div>
+                <ComponentDemo />
+              </div>
+            )}
+
+            {activeSection !== 'users' && 
+             activeSection !== 'blog' && 
+             activeSection !== 'api' && 
+             activeSection !== 'components' && (
               <div className="bg-black/50 rounded-xl p-6 backdrop-blur-sm border border-white/5">
                 <h2 className="text-xl font-semibold mb-4">{activeSection} Yakında</h2>
                 <p className="text-gray-400">Bu bölüm yakında eklenecek...</p>
