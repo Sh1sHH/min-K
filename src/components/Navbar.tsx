@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Menu, MenuItem, HoveredLink, ProductItem } from "./ui/navbar-menu";
-import { Calculator, FileText, HelpCircle, MessageSquare, Package, Receipt, Settings, Zap } from "lucide-react";
+import { Calculator, FileText, HelpCircle, MessageSquare, Package, Receipt, Settings, Zap, ChevronDown, User } from "lucide-react";
 import { Button } from "./ui/button";
 import AuthModal from "./auth/AuthModal";
 import { useAuth } from "@/contexts/AuthContext";
@@ -41,6 +41,19 @@ const Navbar = () => {
     };
   }, [lastScrollY]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const handleAuthClick = (mode: 'login' | 'register') => {
     setAuthMode(mode);
     setShowAuthModal(true);
@@ -49,6 +62,7 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       await logout();
+      setShowUserMenu(false);
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -64,9 +78,7 @@ const Navbar = () => {
       >
         <div className="absolute inset-0 bg-gradient-to-b from-blue-400/100 to-transparent h-20 pointer-events-none" />
 
-
         <div className="relative mx-auto max-w-7xl">
-          {/* Logo and Navigation */}
           <div className="mx-8 px-8 py-4">
             <div className="flex items-center justify-between">
               {/* Logo */}
@@ -87,37 +99,78 @@ const Navbar = () => {
               {/* Auth Buttons */}
               <div className="flex items-center gap-4">
                 {currentUser ? (
-                  <>
-                    {isAdmin && (
-                      <Link to="/admin">
-                        <Button 
-                          variant="ghost" 
-                          className="text-white hover:text-white hover:bg-white/10 rounded-full px-4 py-2 text-sm"
-                        >
-                          <Settings className="w-4 h-4 mr-2" />
-                          Admin Panel
-                        </Button>
-                      </Link>
-                    )}
-                    {isSubscriber && (
-                      <Link
-                        to="/premium"
-                        className="text-sm text-white hover:text-white transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Zap className="w-4 h-4 text-yellow-400" />
-                          <span>Premium Panel</span>
-                        </div>
-                      </Link>
-                    )}
+                  <div className="relative" ref={userMenuRef}>
                     <Button 
                       variant="ghost" 
-                      className="text-white hover:text-white hover:bg-white/10 rounded-full px-6 py-2 text-sm"
-                      onClick={handleLogout}
+                      className="text-white hover:text-white hover:bg-white/10 rounded-full px-4 py-2 text-sm flex items-center gap-2"
+                      onClick={() => setShowUserMenu(!showUserMenu)}
                     >
-                      Çıkış Yap
+                      {currentUser.photoURL ? (
+                        <img src={currentUser.photoURL} alt="" className="w-6 h-6 rounded-full" />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center">
+                          <span className="text-sm font-medium text-white">
+                            {currentUser.email?.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      <span>{currentUser.displayName || currentUser.email?.split('@')[0]}</span>
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
                     </Button>
-                  </>
+
+                    {/* User Menu Dropdown */}
+                    {showUserMenu && (
+                      <div className="absolute right-0 mt-2 w-48 bg-black/50 backdrop-blur-xl border border-white/5 rounded-lg shadow-lg py-1 z-50">
+                        <div className="px-4 py-2 border-b border-white/5">
+                          <p className="text-sm text-white truncate">{currentUser.email}</p>
+                        </div>
+
+                        <Link
+                          to="/profile"
+                          className="block px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4" />
+                            <span>Profil</span>
+                          </div>
+                        </Link>
+
+                        {isSubscriber && (
+                          <Link
+                            to="/premium"
+                            className="block px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors"
+                            onClick={() => setShowUserMenu(false)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Zap className="w-4 h-4 text-yellow-400" />
+                              <span>Premium Panel</span>
+                            </div>
+                          </Link>
+                        )}
+
+                        {isAdmin && (
+                          <Link
+                            to="/admin"
+                            className="block px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors"
+                            onClick={() => setShowUserMenu(false)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Settings className="w-4 h-4" />
+                              <span>Admin Panel</span>
+                            </div>
+                          </Link>
+                        )}
+
+                        <button
+                          onClick={handleLogout}
+                          className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 transition-colors"
+                        >
+                          Çıkış Yap
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <>
                     <Button 
@@ -140,48 +193,6 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-
-      {/* User Menu Dropdown */}
-      {currentUser && showUserMenu && (
-        <div
-          ref={userMenuRef}
-          className="absolute right-4 top-16 w-48 bg-black/50 backdrop-blur-xl border border-white/5 rounded-lg shadow-lg py-1 z-50"
-        >
-          <div className="px-4 py-2 border-b border-white/5">
-            <p className="text-sm text-white truncate">{currentUser.email}</p>
-          </div>
-
-          {isAdmin && (
-            <Link
-              to="/admin"
-              className="block px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors"
-              onClick={() => setShowUserMenu(false)}
-            >
-              Admin Panel
-            </Link>
-          )}
-
-          {isSubscriber && (
-            <Link
-              to="/premium"
-              className="block px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors"
-              onClick={() => setShowUserMenu(false)}
-            >
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-yellow-400" />
-                <span>Premium Panel</span>
-              </div>
-            </Link>
-          )}
-
-          <button
-            onClick={handleLogout}
-            className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 transition-colors"
-          >
-            Çıkış Yap
-          </button>
-        </div>
-      )}
 
       <AuthModal 
         isOpen={showAuthModal}
