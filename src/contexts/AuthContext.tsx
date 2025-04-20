@@ -14,6 +14,7 @@ interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
   isAdmin: boolean;
+  isSubscriber: boolean;
   signUp: (email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -34,6 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSubscriber, setIsSubscriber] = useState(false);
 
   const signUp = async (email: string, password: string) => {
     try {
@@ -65,9 +67,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const googleSignIn = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      // Token'ı al ve custom claims'i kontrol et
+      const idTokenResult = await user.getIdTokenResult();
+      setIsAdmin(!!idTokenResult.claims.admin || !!idTokenResult.claims.superAdmin);
+      setIsSubscriber(!!idTokenResult.claims.subscriber);
+      
     } catch (error) {
-      console.error('Google sign in error:', error);
+      console.error('Google ile giriş hatası:', error);
       throw error;
     }
   };
@@ -75,13 +84,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
+      
       if (user) {
-        // Token'ı al ve admin durumunu kontrol et
-        const token = await user.getIdTokenResult();
-        setIsAdmin(!!(token.claims.admin || token.claims.superAdmin));
+        // Kullanıcı oturum açtığında custom claims'i kontrol et
+        const idTokenResult = await user.getIdTokenResult();
+        setIsAdmin(!!idTokenResult.claims.admin || !!idTokenResult.claims.superAdmin);
+        setIsSubscriber(!!idTokenResult.claims.subscriber);
       } else {
         setIsAdmin(false);
+        setIsSubscriber(false);
       }
+      
       setLoading(false);
     });
 
@@ -92,6 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     currentUser,
     loading,
     isAdmin,
+    isSubscriber,
     signUp,
     login,
     logout,

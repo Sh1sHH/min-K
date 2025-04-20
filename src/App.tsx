@@ -2,7 +2,7 @@ import React from 'react';
 import { Toaster } from 'sonner';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import Navbar from './components/Navbar';
+import Navbar from '@/components/Navbar';
 import Hero from './components/Hero';
 import AboutUs from './components/AboutUs';
 import Services from './components/Services';
@@ -11,17 +11,19 @@ import FAQ from './components/FAQ';
 import BlogSection from './components/BlogSection';
 import { Pricing2 } from './components/blocks/Pricing2';
 import Footer from './components/Footer';
-import AdminPanel from './pages/AdminPanel';
-import ComponentDemo from './pages/ComponentDemo';
+import AdminPanel from '@/pages/AdminPanel';
+import ComponentDemo from '@/pages/ComponentDemo';
 import Blog from './pages/Blog';
 import BlogManagement from './components/admin/BlogManagement';
-import BlogPage from './pages/BlogPage';
-import BlogDetail from './pages/BlogDetail';
+import BlogPage from '@/pages/BlogPage';
+import BlogDetail from '@/pages/BlogDetail';
+import SubscriberPanel from '@/pages/SubscriberPanel';
 
 function App() {
   const location = useLocation();
   const isAdminRoute = location.pathname === '/admin';
   const isComponentDemo = location.pathname === '/components';
+  const isPanel = location.pathname === '/premium' || location.pathname === '/admin';
 
   const pricingPlans = [
     {
@@ -124,9 +126,10 @@ function App() {
 
         {/* Content */}
         <div className="relative z-10">
-          {!isAdminRoute && !isComponentDemo && <Navbar />}
+          {!isPanel && <Navbar />}
           <Routes>
             <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/premium" element={<SubscriberPanel />} />
             <Route path="/components" element={<ComponentDemo />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/blog/:id" element={<BlogDetail />} />

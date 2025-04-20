@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Menu, MenuItem, HoveredLink, ProductItem } from "./ui/navbar-menu";
-import { Calculator, FileText, HelpCircle, MessageSquare, Package, Receipt, Settings } from "lucide-react";
+import { Calculator, FileText, HelpCircle, MessageSquare, Package, Receipt, Settings, Zap } from "lucide-react";
 import { Button } from "./ui/button";
 import AuthModal from "./auth/AuthModal";
 import { useAuth } from "@/contexts/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const Navbar = () => {
@@ -13,7 +13,11 @@ const Navbar = () => {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const { currentUser, isAdmin, logout } = useAuth();
+  const { currentUser, isAdmin, isSubscriber, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const controlNavbar = () => {
@@ -95,6 +99,17 @@ const Navbar = () => {
                         </Button>
                       </Link>
                     )}
+                    {isSubscriber && (
+                      <Link
+                        to="/premium"
+                        className="text-sm text-white hover:text-white transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Zap className="w-4 h-4 text-yellow-400" />
+                          <span>Premium Panel</span>
+                        </div>
+                      </Link>
+                    )}
                     <Button 
                       variant="ghost" 
                       className="text-white hover:text-white hover:bg-white/10 rounded-full px-6 py-2 text-sm"
@@ -125,6 +140,48 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+
+      {/* User Menu Dropdown */}
+      {currentUser && showUserMenu && (
+        <div
+          ref={userMenuRef}
+          className="absolute right-4 top-16 w-48 bg-black/50 backdrop-blur-xl border border-white/5 rounded-lg shadow-lg py-1 z-50"
+        >
+          <div className="px-4 py-2 border-b border-white/5">
+            <p className="text-sm text-white truncate">{currentUser.email}</p>
+          </div>
+
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="block px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors"
+              onClick={() => setShowUserMenu(false)}
+            >
+              Admin Panel
+            </Link>
+          )}
+
+          {isSubscriber && (
+            <Link
+              to="/premium"
+              className="block px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors"
+              onClick={() => setShowUserMenu(false)}
+            >
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-yellow-400" />
+                <span>Premium Panel</span>
+              </div>
+            </Link>
+          )}
+
+          <button
+            onClick={handleLogout}
+            className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 transition-colors"
+          >
+            Çıkış Yap
+          </button>
+        </div>
+      )}
 
       <AuthModal 
         isOpen={showAuthModal}

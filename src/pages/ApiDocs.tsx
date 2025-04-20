@@ -1,5 +1,66 @@
 import React from 'react';
 
+interface Endpoint {
+  title: string;
+  description: string;
+  implementation?: string;
+  notes?: string[];
+  access: string;
+}
+
+interface ApiSectionProps {
+  title: string;
+  description: string;
+  endpoints: Endpoint[];
+}
+
+const ApiSection: React.FC<ApiSectionProps> = ({ title, description, endpoints }) => {
+  return (
+    <section className="space-y-4">
+      <div className="border-b border-white/10 pb-4">
+        <h2 className="text-2xl font-semibold mb-2">{title}</h2>
+        <p className="text-gray-400">{description}</p>
+      </div>
+
+      <div className="space-y-6">
+        {endpoints.map((endpoint, index) => (
+          <div key={index} className="bg-black/30 rounded-lg p-6 space-y-4">
+            <h3 className="text-xl font-medium">{endpoint.title}</h3>
+            <p className="text-gray-400">{endpoint.description}</p>
+            
+            {endpoint.implementation && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-300 mb-2">Uygulama:</h4>
+                <pre className="bg-black/50 p-4 rounded-lg overflow-x-auto">
+                  <code className="text-sm text-gray-300">{endpoint.implementation}</code>
+                </pre>
+              </div>
+            )}
+
+            {endpoint.notes && endpoint.notes.length > 0 && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-300 mb-2">Notlar:</h4>
+                <ul className="list-disc list-inside space-y-1">
+                  {endpoint.notes.map((note, noteIndex) => (
+                    <li key={noteIndex} className="text-gray-400 text-sm">{note}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="mt-4 flex items-center gap-2">
+              <span className="text-xs text-gray-500">Erişim:</span>
+              <span className="text-xs px-2 py-1 bg-purple-500/10 text-purple-400 rounded-full">
+                {endpoint.access}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
 const ApiDocs: React.FC = () => {
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -185,6 +246,43 @@ https://removeadminrole-7fl3duvywa-uc.a.run.app`}
           </ol>
         </div>
       </section>
+
+      {/* Routing Çözümleri */}
+      <ApiSection
+        title="Routing & Layout Çözümleri"
+        description="Rotalama ve sayfa düzeni ile ilgili çözümler"
+        endpoints={[
+          {
+            title: "Panel Sayfalarında Navbar Gizleme",
+            description: "Admin Panel ve Premium Panel gibi özel sayfalarda navbar'ın görünmemesi için uygulanan çözüm.",
+            implementation: `// App.tsx
+import { useLocation } from 'react-router-dom';
+
+function App() {
+  const location = useLocation();
+  const isPanel = location.pathname === '/premium' || location.pathname === '/admin';
+
+  return (
+    <>
+      {!isPanel && <Navbar />}
+      <Routes>
+        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/premium" element={<SubscriberPanel />} />
+        {/* ... diğer rotalar ... */}
+      </Routes>
+    </>
+  );
+}`,
+            notes: [
+              "useLocation hook'u ile mevcut sayfa yolu kontrol edilir",
+              "/premium ve /admin rotalarında navbar otomatik olarak gizlenir",
+              "Diğer tüm sayfalarda navbar normal şekilde görünür",
+              "Panel sayfaları kendi bağımsız tasarımlarını kullanabilir"
+            ],
+            access: "Geliştirici"
+          }
+        ]}
+      />
     </div>
   );
 };
