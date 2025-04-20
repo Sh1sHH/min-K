@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { X, Mail, Lock, User, Eye, EyeOff, Building2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -17,7 +17,8 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    name: '',
+    firstName: '',
+    lastName: '',
     company: ''
   });
 
@@ -52,6 +53,16 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
         await login(formData.email, formData.password);
         toast.success('Başarıyla giriş yapıldı');
       } else {
+        // Validate required fields for registration
+        if (!formData.firstName.trim() || !formData.lastName.trim()) {
+          toast.error('Ad ve soyad alanları zorunludur');
+          return;
+        }
+        if (!formData.company.trim()) {
+          toast.error('Şirket adı zorunludur');
+          return;
+        }
+        
         await signUp(formData.email, formData.password);
         toast.success('Hesabınız başarıyla oluşturuldu');
       }
@@ -135,21 +146,38 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === 'register' && (
             <>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Ad Soyad"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white placeholder:text-gray-400 focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-50"
-                  required
-                  disabled={loading}
-                />
+              {/* Ad Soyad Row */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    name="firstName"
+                    placeholder="Ad"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white placeholder:text-gray-400 focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-50"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="lastName"
+                    placeholder="Soyad"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-gray-400 focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-50"
+                    required
+                    disabled={loading}
+                  />
+                </div>
               </div>
+              
+              {/* Şirket Adı */}
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
                   name="company"
@@ -164,6 +192,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
             </>
           )}
           
+          {/* Email */}
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
@@ -178,6 +207,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
             />
           </div>
 
+          {/* Password */}
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input

@@ -4,7 +4,7 @@ import { Calculator, FileText, HelpCircle, MessageSquare, Package, Receipt, Sett
 import { Button } from "./ui/button";
 import AuthModal from "./auth/AuthModal";
 import { useAuth } from "@/contexts/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const Navbar = () => {
@@ -15,6 +15,7 @@ const Navbar = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const { currentUser, isAdmin, isSubscriber, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -91,6 +92,21 @@ const Navbar = () => {
     });
   };
 
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // If not on home page, navigate to home
+    if (location.pathname !== '/') {
+      navigate('/');
+    } else {
+      // If on home page, scroll to top
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+    }
+  };
+
   return (
     <>
       <div 
@@ -106,7 +122,7 @@ const Navbar = () => {
             <div className="flex items-center justify-between">
               {/* Logo */}
               <button 
-                onClick={handleScrollToTop}
+                onClick={handleLogoClick}
                 className="flex items-center gap-2 hover:opacity-80 transition-opacity"
               >
                 <span className="text-xl font-semibold bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
@@ -230,10 +246,10 @@ const Navbar = () => {
                       Giriş Yap
                     </Button>
                     <Button 
-                      className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6 py-2 text-sm transition-all duration-200"
+                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6 py-2 text-sm transition-all duration-200"
                       onClick={() => handleAuthClick('register')}
                     >
-                      Get Started
+                      Kayıt Ol
                     </Button>
                   </>
                 )}

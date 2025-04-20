@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 const blogPosts = [
   {
@@ -27,6 +28,8 @@ const blogPosts = [
 ];
 
 const BlogSection = () => {
+  const navigate = useNavigate();
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -46,6 +49,10 @@ const BlogSection = () => {
         duration: 0.5
       }
     }
+  };
+
+  const handleViewAllClick = () => {
+    navigate('/blog');
   };
 
   return (
@@ -204,6 +211,7 @@ const BlogSection = () => {
           >
             <motion.button 
               variants={itemVariants}
+              onClick={handleViewAllClick}
               className="bg-[#4DA3FF]/10 hover:bg-[#4DA3FF]/20 text-[#4DA3FF] px-8 py-4 rounded-full text-lg font-medium inline-flex items-center group transition-all duration-300"
             >
               Tüm Yazıları Gör
