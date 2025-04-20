@@ -58,7 +58,9 @@ const Navbar = () => {
           isVisible ? "translate-y-0" : "-translate-y-full"
         )}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-transparent h-20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-400/100 to-transparent h-20 pointer-events-none" />
+
+
         <div className="relative mx-auto max-w-7xl">
           {/* Logo and Navigation */}
           <div className="mx-8 px-8 py-4">
