@@ -1,3 +1,7 @@
+// tailwind.config.mjs
+
+import typography from '@tailwindcss/typography';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -40,8 +44,8 @@ export default {
       },
       keyframes: {
         float: {
-          '0%, 100%': { transform: 'translateY(0) scale(1)' },
-          '50%': { transform: 'translateY(-20px) scale(1.05)' },
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-20px)' },
         },
         floatSlow: {
           '0%, 100%': { transform: 'translateY(0) scale(1)' },
@@ -49,17 +53,13 @@ export default {
         },
       },
       animation: {
-        float: 'float 8s ease-in-out infinite',
-        'float-delay': 'float 8s ease-in-out infinite 2s',
+        float: 'float 6s ease-in-out infinite',
+        'float-delay': 'float 6s ease-in-out infinite 3s',
         'float-slow': 'floatSlow 12s ease-in-out infinite 1s',
       },
-      
     },
   },
-  plugins: [],
-
-
-
-
-  
+  plugins: [
+    typography,
+  ],
 };

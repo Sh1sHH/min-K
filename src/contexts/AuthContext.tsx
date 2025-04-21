@@ -6,7 +6,8 @@ import {
   signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  UserCredential
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
@@ -15,7 +16,7 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   isSubscriber: boolean;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<UserCredential>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   googleSignIn: () => Promise<void>;
@@ -39,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string) => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      return await createUserWithEmailAndPassword(auth, email, password);
     } catch (error) {
       console.error('Signup error:', error);
       throw error;

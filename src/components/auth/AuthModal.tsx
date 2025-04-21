@@ -3,6 +3,9 @@ import { X, Mail, Lock, User, Eye, EyeOff, Building2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { updateProfile } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { firestore as db, auth } from '@/lib/firebase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -63,8 +66,35 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
           return;
         }
         
-        await signUp(formData.email, formData.password);
-        toast.success('Hesabınız başarıyla oluşturuldu');
+        // Önce kullanıcıyı oluştur
+        const userCredential = await signUp(formData.email, formData.password);
+        
+        if (userCredential && userCredential.user) {
+          try {
+            // Kullanıcı profilini güncelle
+            await updateProfile(userCredential.user, {
+              displayName: `${formData.firstName} ${formData.lastName}`,
+            });
+
+            // Firestore'da kullanıcı dokümanını oluştur
+            const userDocRef = doc(db, 'users', userCredential.user.uid);
+            await setDoc(userDocRef, {
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              company: formData.company,
+              email: formData.email,
+              createdAt: serverTimestamp(),
+              authProvider: 'email',
+              updatedAt: serverTimestamp()
+            });
+
+            toast.success('Hesabınız başarıyla oluşturuldu');
+          } catch (profileError) {
+            console.error('Profile update error:', profileError);
+            // Profil güncellemesi başarısız olsa bile kullanıcı kaydı tamamlandı
+            toast.success('Hesabınız oluşturuldu fakat profil bilgileri kaydedilemedi');
+          }
+        }
       }
       onClose();
     } catch (error: any) {
@@ -77,6 +107,8 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
         toast.error('Şifre en az 6 karakter olmalıdır');
       } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
         toast.error('Email veya şifre hatalı');
+      } else if (error.code === 'permission-denied') {
+        toast.error('Hesabınız oluşturuldu fakat profil bilgileri kaydedilemedi');
       } else {
         toast.error('Bir hata oluştu. Lütfen tekrar deneyin.');
       }

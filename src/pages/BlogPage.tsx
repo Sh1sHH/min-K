@@ -4,11 +4,13 @@ import { Clock, Calendar, User, Tag, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 
 interface BlogPost {
   id: string;
   title: string;
   content: string;
+  summary?: string;
   image: string;
   author: string;
   date: string;
@@ -33,11 +35,13 @@ const BlogPage = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('https://us-central1-minik-a61c5.cloudfunctions.net/api/posts', {
+      const response = await fetch('https://blog-7fl3duvywa-uc.a.run.app/posts', {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        mode: 'cors'
       });
 
       if (!response.ok) {
@@ -47,7 +51,12 @@ const BlogPage = () => {
       const data = await response.json();
       
       if (Array.isArray(data)) {
-        setPosts(data);
+        const formattedPosts = data.map(post => ({
+          ...post,
+          date: new Date(post.date).toLocaleDateString('tr-TR'),
+          createdAt: new Date(post.createdAt?.seconds * 1000).toLocaleDateString('tr-TR')
+        }));
+        setPosts(formattedPosts);
       } else {
         console.error('Invalid data format:', data);
         throw new Error('Geçersiz veri formatı');
@@ -198,73 +207,84 @@ const BlogPage = () => {
         {/* Blog Posts Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredPosts.map((post) => (
-            <motion.article
+            <motion.div
               key={post.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              whileHover={{ y: -5 }}
-              className="bg-white rounded-3xl overflow-hidden border border-[#1F2A44]/10 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer"
+              className="bg-white rounded-2xl shadow-lg overflow-hidden border border-[#1F2A44]/5 hover:border-[#4DA3FF]/30 transition-all duration-300 group"
               onClick={() => navigate(`/blog/${post.id}`)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && navigate(`/blog/${post.id}`)}
             >
-              <div className="relative h-48 overflow-hidden">
-                <img
-                  src={post.image}
+              {/* Image Container */}
+              <div className="relative aspect-[16/9] overflow-hidden">
+                <img 
+                  src={post.image} 
                   alt={post.title}
-                  className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm text-[#1F2A44] font-medium">
-                  {post.category}
+                <div className="absolute top-4 left-4">
+                  <span className="bg-white/90 backdrop-blur-sm text-[#1F2A44] px-3 py-1 rounded-full text-sm font-medium">
+                    {post.category}
+                  </span>
                 </div>
               </div>
-              
+
+              {/* Content */}
               <div className="p-6 space-y-4">
-                <h2 className="text-xl font-semibold text-[#1F2A44] line-clamp-2 group-hover:text-[#4DA3FF] transition-colors">
+                {/* Meta Info */}
+                <div className="flex items-center gap-4 text-sm text-[#1F2A44]/60">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4" />
+                    <span>{new Date(post.date).toLocaleDateString('tr-TR', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-4 h-4" />
+                    <span>{post.readTime}</span>
+                  </div>
+                </div>
+
+                {/* Title */}
+                <h2 className="text-xl font-semibold text-[#1F2A44] group-hover:text-[#4DA3FF] transition-colors line-clamp-2">
                   {post.title}
                 </h2>
-                
-                <p className="text-[#1F2A44]/70 line-clamp-3">
-                  {post.content}
-                </p>
 
-                <div className="flex items-center gap-4 text-sm text-[#1F2A44]/60">
-                  <div className="flex items-center gap-1">
-                    <User className="h-4 w-4" />
-                    {post.author}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    {post.date}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    {post.readTime}
-                  </div>
-                </div>
+                {/* Summary/Content */}
+                <div 
+                  className="text-[#1F2A44]/70 line-clamp-3 prose prose-sm"
+                  dangerouslySetInnerHTML={{ 
+                    __html: DOMPurify.sanitize(
+                      post.summary || post.content.substring(0, 150) + '...'
+                    )
+                  }}
+                />
 
-                <div className="pt-4 flex items-center text-[#4DA3FF] font-medium group-hover:text-[#B1E5D3] transition-colors duration-300">
-                  <span>Devamını Oku</span>
-                  <motion.div
-                    className="ml-2"
-                    initial={false}
-                    animate={{ x: 0 }}
-                    whileHover={{ x: 5 }}
-                  >
-                    →
-                  </motion.div>
+                {/* Author */}
+                <div className="flex items-center gap-3 pt-4 border-t border-[#1F2A44]/5">
+                  <div className="w-8 h-8 rounded-full bg-[#4DA3FF]/10 flex items-center justify-center">
+                    <span className="text-sm font-medium text-[#4DA3FF]">
+                      {post.author[0].toUpperCase()}
+                    </span>
+                  </div>
+                  <span className="text-sm text-[#1F2A44]/70">{post.author}</span>
                 </div>
               </div>
-            </motion.article>
+            </motion.div>
           ))}
-        </div>
 
-        {/* No Results */}
-        {filteredPosts.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-[#1F2A44]/70 text-lg">
-              Aradığınız kriterlere uygun blog yazısı bulunamadı.
-            </p>
-          </div>
-        )}
+          {filteredPosts.length === 0 && (
+            <div className="col-span-full text-center py-12 text-[#1F2A44]/60">
+              {searchTerm || selectedCategory
+                ? 'Arama kriterlerine uygun blog yazısı bulunamadı.'
+                : 'Henüz blog yazısı eklenmemiş.'}
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );

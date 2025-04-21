@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Clock, Calendar, User, Tag, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import DOMPurify from 'dompurify';
 
 interface BlogPost {
   id: string;
@@ -86,6 +87,9 @@ const BlogDetail = () => {
     );
   }
 
+  // HTML içeriğini güvenli hale getir
+  const sanitizedContent = DOMPurify.sanitize(post.content);
+
   return (
     <section className="relative min-h-screen bg-white text-[#1F2A44] pt-32 p-8 overflow-hidden">
       {/* Background Elements */}
@@ -162,7 +166,11 @@ const BlogDetail = () => {
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              {post.date}
+              {new Date(post.date).toLocaleDateString('tr-TR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
@@ -192,11 +200,14 @@ const BlogDetail = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <div className="text-[#1F2A44]/80 leading-relaxed space-y-6">
-            {post.content.split('\n').map((paragraph, index) => (
-              <p key={index}>{paragraph}</p>
-            ))}
-          </div>
+          <div 
+            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+            className="prose prose-lg prose-headings:text-[#1F2A44] prose-p:text-[#1F2A44]/80 
+              prose-a:text-[#4DA3FF] prose-a:no-underline hover:prose-a:text-[#B1E5D3]
+              prose-strong:text-[#1F2A44] prose-code:text-[#4DA3FF] prose-pre:bg-[#1F2A44]/5
+              prose-blockquote:border-l-[#4DA3FF] prose-blockquote:text-[#1F2A44]/60
+              prose-img:rounded-xl prose-img:shadow-lg max-w-none"
+          />
         </motion.div>
       </div>
     </section>
