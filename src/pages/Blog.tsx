@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import StarField from "@/components/ui/star-field";
 import { motion } from "framer-motion";
+import { useNavigate } from 'react-router-dom';
 
 interface BlogPost {
   id: string;
@@ -11,17 +12,18 @@ interface BlogPost {
   date: string;
   readTime: string;
   category: string;
+  slug: string;
 }
 
 const Blog = () => {
+  const navigate = useNavigate();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Replace with actual API call
     const fetchPosts = async () => {
       try {
-        const response = await fetch('/api/posts');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/posts`);
         const data = await response.json();
         setPosts(data);
       } catch (error) {
@@ -86,7 +88,11 @@ const Blog = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="bg-black/30 backdrop-blur-sm rounded-3xl overflow-hidden border border-white/10 group hover:border-purple-500/50 transition-all duration-300"
+                className="bg-black/30 backdrop-blur-sm rounded-3xl overflow-hidden border border-white/10 group hover:border-purple-500/50 transition-all duration-300 cursor-pointer"
+                onClick={() => navigate(`/blog/${post.slug}`)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && navigate(`/blog/${post.slug}`)}
               >
                 <div className="relative h-48 overflow-hidden">
                   <img 

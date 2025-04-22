@@ -132,7 +132,7 @@ function App() {
             <Route path="/premium" element={<SubscriberPanel />} />
             <Route path="/components" element={<ComponentDemo />} />
             <Route path="/blog" element={<BlogPage />} />
-            <Route path="/blog/:id" element={<BlogDetail />} />
+            <Route path="/blog/:slug" element={<BlogDetail />} />
             <Route path="/" element={
               <>
                 <Hero />

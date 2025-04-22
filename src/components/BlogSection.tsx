@@ -12,6 +12,7 @@ interface BlogPost {
   image: string;
   category: string;
   date: string;
+  slug: string;
 }
 
 const BlogSection = () => {
@@ -26,7 +27,7 @@ const BlogSection = () => {
   const fetchLatestPosts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('https://blog-7fl3duvywa-uc.a.run.app/posts');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/posts`);
       
       if (!response.ok) {
         throw new Error('Blog yazıları alınamadı');
@@ -193,10 +194,10 @@ const BlogSection = () => {
                   key={post.id}
                   variants={itemVariants}
                   className="bg-white rounded-3xl overflow-hidden shadow-lg border border-[#1F2A44]/10 hover:shadow-xl transition-all duration-300 group cursor-pointer"
-                  onClick={() => navigate(`/blog/${post.id}`)}
+                  onClick={() => navigate(`/blog/${post.slug}`)}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && navigate(`/blog/${post.id}`)}
+                  onKeyDown={(e) => e.key === 'Enter' && navigate(`/blog/${post.slug}`)}
                 >
                   {/* Image Container */}
                   <div className="relative aspect-square overflow-hidden">

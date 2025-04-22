@@ -44,18 +44,41 @@ export interface BlogPost {
  * @returns URL-dostu slug
  */
 export const generateSlug = (title: string): string => {
+  const turkishChars: { [key: string]: string } = {
+    'ğ': 'g', 'Ğ': 'G',
+    'ü': 'u', 'Ü': 'U',
+    'ş': 's', 'Ş': 'S',
+    'ı': 'i', 'I': 'i',
+    'ö': 'o', 'Ö': 'O',
+    'ç': 'c', 'Ç': 'C',
+    ' ': '-', '_': '-',
+    '/': '-', '\\': '-',
+    '.': '-', ',': '-',
+    '!': '', '?': '',
+    '(': '', ')': '',
+    '[': '', ']': '',
+    '{': '', '}': '',
+    '"': '', "'": '',
+    '@': '', '#': '',
+    '$': '', '%': '',
+    '^': '', '*': '',
+    '+': '', '=': '',
+    '|': '', '~': '',
+    '`': '', ':': '',
+    ';': '', '<': '',
+    '>': ''
+  };
+
   return title
-    .toLowerCase() // Küçük harfe çevir
-    .replace(/ğ/g, 'g')
-    .replace(/ü/g, 'u')
-    .replace(/ş/g, 's')
-    .replace(/ı/g, 'i')
-    .replace(/ö/g, 'o')
-    .replace(/ç/g, 'c')
-    .replace(/[^a-z0-9\s-]/g, '') // Alfanumerik olmayan karakterleri kaldır
-    .replace(/\s+/g, '-') // Boşlukları tire ile değiştir
-    .replace(/-+/g, '-') // Birden fazla tireyi tek tireye indir
-    .trim(); // Baştaki ve sondaki boşlukları kaldır
+    .toLowerCase()
+    .trim()
+    .split('')
+    .map(char => turkishChars[char] || char)
+    .join('')
+    .replace(/[^a-z0-9-]/g, '') // Sadece küçük harfler, rakamlar ve tire karakterini tut
+    .replace(/-+/g, '-') // Birden fazla tireyi tek tireye dönüştür
+    .replace(/^-+|-+$/g, '') // Baştaki ve sondaki tireleri kaldır
+    .substring(0, 100); // URL uzunluğunu sınırla
 };
 
 /**

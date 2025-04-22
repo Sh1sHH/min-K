@@ -26,8 +26,14 @@ interface FormState {
   readTime?: string;
   date?: string;
   seo: {
+    title: string;
     metaDescription: string;
     keywords: string[];
+    ogImage: string;
+    ogTitle: string;
+    ogDescription: string;
+    canonical: string;
+    robots: string;
   };
 }
 
@@ -54,8 +60,14 @@ const initialFormState: FormState = {
   tags: [],
   status: 'published',
   seo: {
+    title: '',
     metaDescription: '',
     keywords: [],
+    ogImage: '',
+    ogTitle: '',
+    ogDescription: '',
+    canonical: '',
+    robots: 'index, follow',
   },
 };
 
@@ -174,6 +186,20 @@ const BlogManagement = () => {
         const token = await currentUser.getIdToken();
         if (!token) throw new Error('Yetkilendirme hatası');
 
+        // SEO verilerini hazırla
+        const seoData = {
+          title: formData.seo.title || formData.title,
+          metaDescription: formData.seo.metaDescription || formData.summary,
+          keywords: formData.seo.keywords.length > 0 
+            ? formData.seo.keywords 
+            : [formData.category, ...formData.tags],
+          ogImage: formData.seo.ogImage || formData.image,
+          ogTitle: formData.seo.ogTitle || formData.title,
+          ogDescription: formData.seo.ogDescription || formData.summary,
+          canonical: formData.seo.canonical || `https://ikyardim.com/blog/${generateSlug(formData.title)}`,
+          robots: formData.seo.robots || 'index, follow'
+        };
+
         // Blog verisi hazırla
         const blogData = {
           title: formData.title.trim(),
@@ -184,10 +210,8 @@ const BlogManagement = () => {
           author: currentUser.displayName,
           tags: formData.tags,
           status: formData.status,
-          seo: {
-            metaDescription: formData.summary.trim(),
-            keywords: [formData.category, ...formData.tags]
-          }
+          seo: seoData,
+          slug: generateSlug(formData.title)
         };
 
         console.log('Gönderilecek blog verisi:', blogData);
@@ -281,7 +305,13 @@ const BlogManagement = () => {
       readTime: post.readTime || '',
       seo: {
         metaDescription: post.seo?.metaDescription || '',
-        keywords: Array.isArray(post.seo?.keywords) ? post.seo.keywords : []
+        keywords: Array.isArray(post.seo?.keywords) ? post.seo.keywords : [],
+        title: post.title || '',
+        ogImage: post.image || '',
+        ogTitle: post.title || '',
+        ogDescription: post.summary || '',
+        canonical: post.slug || '',
+        robots: 'index, follow',
       }
     });
     setIsEditing(true);
@@ -459,6 +489,150 @@ const BlogManagement = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+            </div>
+
+            {/* SEO Ayarları */}
+            <div className="bg-white rounded-lg shadow p-6 space-y-6 mt-6">
+              <h3 className="text-lg font-semibold text-gray-900">SEO Ayarları</h3>
+              
+              <div className="space-y-4">
+                {/* SEO Başlık */}
+                <div>
+                  <label htmlFor="seoTitle" className="block text-sm font-medium text-gray-700">
+                    SEO Başlık
+                  </label>
+                  <input
+                    type="text"
+                    id="seoTitle"
+                    name="seo.title"
+                    value={formData.seo.title}
+                    onChange={(e) => setFormData({ ...formData, seo: { ...formData.seo, title: e.target.value } })}
+                    placeholder="SEO için özel başlık (boş bırakılırsa yazı başlığı kullanılır)"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Meta Açıklama */}
+                <div>
+                  <label htmlFor="metaDescription" className="block text-sm font-medium text-gray-700">
+                    Meta Açıklama
+                  </label>
+                  <textarea
+                    id="metaDescription"
+                    name="seo.metaDescription"
+                    value={formData.seo.metaDescription}
+                    onChange={(e) => setFormData({ ...formData, seo: { ...formData.seo, metaDescription: e.target.value } })}
+                    rows={3}
+                    placeholder="Arama sonuçlarında görünecek kısa açıklama"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Anahtar Kelimeler */}
+                <div>
+                  <label htmlFor="keywords" className="block text-sm font-medium text-gray-700">
+                    Anahtar Kelimeler
+                  </label>
+                  <input
+                    type="text"
+                    id="keywords"
+                    name="seo.keywords"
+                    value={formData.seo.keywords.join(', ')}
+                    onChange={(e) => {
+                      const keywords = e.target.value.split(',').map(k => k.trim()).filter(Boolean);
+                      setFormData(prev => ({
+                        ...prev,
+                        seo: { ...prev.seo, keywords }
+                      }));
+                    }}
+                    placeholder="Anahtar kelimeleri virgülle ayırarak yazın"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Open Graph Başlık */}
+                <div>
+                  <label htmlFor="ogTitle" className="block text-sm font-medium text-gray-700">
+                    Sosyal Medya Başlığı
+                  </label>
+                  <input
+                    type="text"
+                    id="ogTitle"
+                    name="seo.ogTitle"
+                    value={formData.seo.ogTitle}
+                    onChange={(e) => setFormData({ ...formData, seo: { ...formData.seo, ogTitle: e.target.value } })}
+                    placeholder="Sosyal medya paylaşımlarında görünecek başlık"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Open Graph Açıklama */}
+                <div>
+                  <label htmlFor="ogDescription" className="block text-sm font-medium text-gray-700">
+                    Sosyal Medya Açıklaması
+                  </label>
+                  <textarea
+                    id="ogDescription"
+                    name="seo.ogDescription"
+                    value={formData.seo.ogDescription}
+                    onChange={(e) => setFormData({ ...formData, seo: { ...formData.seo, ogDescription: e.target.value } })}
+                    rows={3}
+                    placeholder="Sosyal medya paylaşımlarında görünecek açıklama"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Open Graph Görsel */}
+                <div>
+                  <label htmlFor="ogImage" className="block text-sm font-medium text-gray-700">
+                    Sosyal Medya Görseli
+                  </label>
+                  <input
+                    type="text"
+                    id="ogImage"
+                    name="seo.ogImage"
+                    value={formData.seo.ogImage}
+                    onChange={(e) => setFormData({ ...formData, seo: { ...formData.seo, ogImage: e.target.value } })}
+                    placeholder="Sosyal medya paylaşımlarında kullanılacak görsel URL'i"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Canonical URL */}
+                <div>
+                  <label htmlFor="canonical" className="block text-sm font-medium text-gray-700">
+                    Canonical URL
+                  </label>
+                  <input
+                    type="text"
+                    id="canonical"
+                    name="seo.canonical"
+                    value={formData.seo.canonical}
+                    onChange={(e) => setFormData({ ...formData, seo: { ...formData.seo, canonical: e.target.value } })}
+                    placeholder="https://ikyardim.com/blog/ornek-yazi"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Robots Direktifi */}
+                <div>
+                  <label htmlFor="robots" className="block text-sm font-medium text-gray-700">
+                    Robots Direktifi
+                  </label>
+                  <select
+                    id="robots"
+                    name="seo.robots"
+                    value={formData.seo.robots}
+                    onChange={(e) => setFormData({ ...formData, seo: { ...formData.seo, robots: e.target.value } })}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="index, follow">İndeksle ve Takip Et</option>
+                    <option value="noindex, follow">İndeksleme, Takip Et</option>
+                    <option value="index, nofollow">İndeksle, Takip Etme</option>
+                    <option value="noindex, nofollow">İndeksleme ve Takip Etme</option>
+                  </select>
+                </div>
               </div>
             </div>
 

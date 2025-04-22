@@ -6,18 +6,7 @@ const cors = require('cors');
 const app = express();
 
 // CORS configuration
-app.use((req, res, next) => {
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.set('Access-Control-Max-Age', '3600');
-  
-  if (req.method === 'OPTIONS') {
-    res.status(204).send('');
-    return;
-  }
-  next();
-});
+app.use(cors());
 app.use(express.json());
 
 // Auth middleware
@@ -71,9 +60,31 @@ const validateBlogPost = (req, res, next) => {
   next();
 };
 
+// Slug oluşturma fonksiyonu
+const generateSlug = (title) => {
+  const turkishChars = {
+    'ğ': 'g', 'Ğ': 'G',
+    'ü': 'u', 'Ü': 'U',
+    'ş': 's', 'Ş': 'S',
+    'ı': 'i', 'I': 'i',
+    'ö': 'o', 'Ö': 'O',
+    'ç': 'c', 'Ç': 'C'
+  };
+
+  return title
+    .toLowerCase()
+    .trim()
+    .split('')
+    .map(char => turkishChars[char] || char)
+    .join('')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};
+
 // Helper function to format blog post
 const formatBlogPost = (data, author) => {
   const now = admin.firestore.Timestamp.now();
+  const slug = generateSlug(data.title);
   
   return {
     title: data.title.trim(),
@@ -85,12 +96,16 @@ const formatBlogPost = (data, author) => {
     tags: Array.isArray(data.tags) ? data.tags : [],
     status: data.status || 'published',
     seo: {
-      metaDescription: data.seo?.metaDescription?.trim() || data.summary?.trim() || '',
-      keywords: Array.isArray(data.seo?.keywords) ? data.seo.keywords : [data.category]
+      title: data.seo?.title || data.title,
+      metaDescription: data.seo?.metaDescription || data.summary || '',
+      keywords: data.seo?.keywords || [data.category, ...data.tags],
+      ogImage: data.seo?.ogImage || data.image,
+      ogTitle: data.seo?.ogTitle || data.title,
+      ogDescription: data.seo?.ogDescription || data.summary || '',
+      canonical: data.seo?.canonical || `https://ikyardim.com/blog/${slug}`,
+      robots: data.seo?.robots || 'index, follow'
     },
-    slug: data.slug || data.title.toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, ''),
+    slug,
     readTime: data.readTime || `${Math.ceil(data.content.split(' ').length / 200)} dakika`,
     date: now,
     createdAt: now,
@@ -125,20 +140,26 @@ app.get('/posts', async (req, res) => {
   }
 });
 
-// GET /posts/:id - Get a single post
-app.get('/posts/:id', async (req, res) => {
+// GET /posts/by-slug/:slug - Get a single post by slug
+app.get('/posts/by-slug/:slug', async (req, res) => {
   try {
-    const { id } = req.params;
-    const postDoc = await admin.firestore()
+    const { slug } = req.params;
+    console.log("Slug ile istek geldi:", slug); // log eklendi
+
+    const postsSnapshot = await admin.firestore()
       .collection('posts')
-      .doc(id)
+      .where('slug', '==', slug)
+      .limit(1)
       .get();
 
-    if (!postDoc.exists) {
+    if (postsSnapshot.empty) {
+      console.warn("Slug bulunamadı:", slug); // log eklendi
       return res.status(404).json({ error: 'Blog yazısı bulunamadı' });
     }
 
+    const postDoc = postsSnapshot.docs[0];
     const data = postDoc.data();
+    
     const post = {
       id: postDoc.id,
       ...data,
@@ -151,7 +172,7 @@ app.get('/posts/:id', async (req, res) => {
     const relatedPostsSnapshot = await admin.firestore()
       .collection('posts')
       .where('category', '==', post.category)
-      .where('__name__', '!=', id) // Aynı yazıyı hariç tut
+      .where('slug', '!=', slug)
       .limit(3)
       .get();
 
@@ -162,6 +183,7 @@ app.get('/posts/:id', async (req, res) => {
         title: data.title,
         image: data.image,
         category: data.category,
+        slug: data.slug,
         date: data.date?.toDate?.() || new Date(),
         author: data.author
       };
@@ -172,7 +194,7 @@ app.get('/posts/:id', async (req, res) => {
       relatedPosts
     });
   } catch (error) {
-    console.error('Error fetching post:', error);
+    console.error('Error fetching post by slug:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -182,6 +204,17 @@ app.post('/posts', authenticateUser, requireAdmin, validateBlogPost, async (req,
   try {
     const user = await admin.auth().getUser(req.user.uid);
     const postData = formatBlogPost(req.body, user);
+    
+    // Slug'ın benzersiz olduğunu kontrol et
+    const existingPost = await admin.firestore()
+      .collection('posts')
+      .where('slug', '==', postData.slug)
+      .get();
+
+    if (!existingPost.empty) {
+      // Eğer aynı slug varsa, sonuna timestamp ekle
+      postData.slug = `${postData.slug}-${Date.now()}`;
+    }
     
     const docRef = await admin.firestore().collection('posts').add(postData);
     
@@ -210,9 +243,21 @@ app.put('/posts/:id', authenticateUser, requireAdmin, validateBlogPost, async (r
     const user = await admin.auth().getUser(req.user.uid);
     const updateData = {
       ...formatBlogPost(req.body, user),
-      createdAt: post.data().createdAt, // Preserve original creation date
+      createdAt: post.data().createdAt,
       updatedAt: admin.firestore.Timestamp.now()
     };
+
+    // Slug değişmişse benzersizliğini kontrol et
+    if (updateData.slug !== post.data().slug) {
+      const existingPost = await admin.firestore()
+        .collection('posts')
+        .where('slug', '==', updateData.slug)
+        .get();
+
+      if (!existingPost.empty) {
+        updateData.slug = `${updateData.slug}-${Date.now()}`;
+      }
+    }
 
     await postRef.update(updateData);
     res.status(200).json({ message: 'Blog yazısı güncellendi' });

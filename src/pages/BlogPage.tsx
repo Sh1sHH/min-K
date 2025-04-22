@@ -16,6 +16,7 @@ interface BlogPost {
   date: string;
   readTime: string;
   category: string;
+  slug: string;
 }
 
 const BlogPage = () => {
@@ -254,10 +255,10 @@ const BlogPage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-white rounded-2xl shadow-lg overflow-hidden border border-[#1F2A44]/5 hover:border-[#4DA3FF]/30 transition-all duration-300 group"
-              onClick={() => navigate(`/blog/${post.id}`)}
+              onClick={() => navigate(`/blog/${post.slug}`)}
               role="button"
               tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && navigate(`/blog/${post.id}`)}
+              onKeyDown={(e) => e.key === 'Enter' && navigate(`/blog/${post.slug}`)}
             >
               {/* Image Container */}
               <div className="relative aspect-square overflow-hidden">
