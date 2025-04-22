@@ -1,34 +1,51 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
-const blogPosts = [
-  {
-    title: "İK Süreçlerinde Dijital Dönüşüm",
-    description: "Şirketinizin İK süreçlerini nasıl dijitalleştirebileceğinizi ve bunun avantajlarını keşfedin.",
-    image: "/hizmet2.png",
-    category: "Dijital Dönüşüm",
-    readTime: "5 dk okuma"
-  },
-  {
-    title: "Çalışan Bağlılığını Artırmanın Yolları",
-    description: "Modern iş dünyasında çalışan bağlılığını artırmak için uygulanabilecek etkili stratejiler.",
-    image: "/hizmet2.png",
-    category: "Çalışan Deneyimi",
-    readTime: "4 dk okuma"
-  },
-  {
-    title: "İK Trendleri 2024",
-    description: "2024 yılında İK dünyasını şekillendirecek en önemli trendler ve yenilikler.",
-    image: "/hizmet2.png",
-    category: "Trendler",
-    readTime: "6 dk okuma"
-  }
-];
+interface BlogPost {
+  id: string;
+  title: string;
+  content: string;
+  summary?: string;
+  image: string;
+  category: string;
+  date: string;
+}
 
 const BlogSection = () => {
   const navigate = useNavigate();
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchLatestPosts();
+  }, []);
+
+  const fetchLatestPosts = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('https://blog-7fl3duvywa-uc.a.run.app/posts');
+      
+      if (!response.ok) {
+        throw new Error('Blog yazıları alınamadı');
+      }
+
+      const data = await response.json();
+      // Son 3 postu al ve tarihe göre sırala
+      const latestPosts = data
+        .sort((a: BlogPost, b: BlogPost) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 3);
+      
+      setPosts(latestPosts);
+    } catch (error) {
+      console.error('Blog yazıları alınırken hata:', error);
+      toast.error('Blog yazıları yüklenirken bir hata oluştu');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -157,48 +174,64 @@ const BlogSection = () => {
             viewport={{ once: true }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
-            {blogPosts.map((post, index) => (
-              <motion.div 
-                key={index}
-                variants={itemVariants}
-                className="bg-white rounded-3xl overflow-hidden shadow-lg border border-[#1F2A44]/10 hover:shadow-xl transition-all duration-300 group"
-              >
-                {/* Image Container */}
-                <div className="relative w-full h-48 overflow-hidden">
-                  <img 
-                    src={post.image}
-                    alt={post.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-white/90 backdrop-blur-sm text-[#1F2A44] px-3 py-1 rounded-full text-sm font-medium">
-                      {post.category}
-                    </span>
+            {loading ? (
+              // Loading skeletons
+              Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="bg-white rounded-3xl overflow-hidden shadow-lg border border-[#1F2A44]/10 animate-pulse">
+                  <div className="w-full h-48 bg-gray-200" />
+                  <div className="p-6 space-y-4">
+                    <div className="h-4 bg-gray-200 rounded w-1/4" />
+                    <div className="h-6 bg-gray-200 rounded w-3/4" />
+                    <div className="h-4 bg-gray-200 rounded w-full" />
+                    <div className="h-4 bg-gray-200 rounded w-2/3" />
                   </div>
                 </div>
-
-                {/* Content */}
-                <div className="p-6">
-                  <div className="flex items-center text-[#1F2A44]/60 text-sm mb-3">
-                    <span>{post.readTime}</span>
+              ))
+            ) : (
+              posts.map((post) => (
+                <motion.div 
+                  key={post.id}
+                  variants={itemVariants}
+                  className="bg-white rounded-3xl overflow-hidden shadow-lg border border-[#1F2A44]/10 hover:shadow-xl transition-all duration-300 group cursor-pointer"
+                  onClick={() => navigate(`/blog/${post.id}`)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && navigate(`/blog/${post.id}`)}
+                >
+                  {/* Image Container */}
+                  <div className="relative aspect-square overflow-hidden">
+                    <img 
+                      src={post.image}
+                      alt={post.title}
+                      className="w-full h-full object-contain bg-[#F8FAFC]"
+                      loading="lazy"
+                    />
+                    <div className="absolute top-4 left-4">
+                      <span className="bg-white/90 backdrop-blur-sm text-[#1F2A44] px-3 py-1 rounded-full text-sm font-medium">
+                        {post.category}
+                      </span>
+                    </div>
                   </div>
-                  
-                  <h3 className="text-xl font-semibold text-[#1F2A44] mb-3 line-clamp-2">
-                    {post.title}
-                  </h3>
-                  
-                  <p className="text-[#1F2A44]/70 mb-6 line-clamp-2">
-                    {post.description}
-                  </p>
 
-                  {/* Read More Link */}
-                  <div className="flex items-center text-[#4DA3FF] font-medium group-hover:text-[#B1E5D3] transition-colors duration-300">
-                    <span>Devamını Oku</span>
-                    <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
+                  {/* Content */}
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold text-[#1F2A44] mb-3 line-clamp-2">
+                      {post.title}
+                    </h3>
+                    
+                    <p className="text-[#1F2A44]/70 mb-6 line-clamp-2">
+                      {post.summary || post.content.substring(0, 150) + '...'}
+                    </p>
+
+                    {/* Read More Link */}
+                    <div className="flex items-center text-[#4DA3FF] font-medium group-hover:text-[#B1E5D3] transition-colors duration-300">
+                      <span>Devamını Oku</span>
+                      <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))
+            )}
           </motion.div>
 
           {/* View All Button */}
@@ -209,13 +242,13 @@ const BlogSection = () => {
             viewport={{ once: true }}
             className="text-center mt-12"
           >
-            <motion.button 
+            <motion.button
               variants={itemVariants}
               onClick={handleViewAllClick}
-              className="bg-[#4DA3FF]/10 hover:bg-[#4DA3FF]/20 text-[#4DA3FF] px-8 py-4 rounded-full text-lg font-medium inline-flex items-center group transition-all duration-300"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#4DA3FF] text-white rounded-full hover:bg-[#4DA3FF]/90 transition-colors"
             >
-              Tüm Yazıları Gör
-              <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
+              <span>Tüm Yazıları Gör</span>
+              <ArrowRight className="w-4 h-4" />
             </motion.button>
           </motion.div>
         </div>

@@ -25,6 +25,8 @@ const BlogPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 6;
 
   useEffect(() => {
     fetchPosts();
@@ -102,6 +104,22 @@ const BlogPage = () => {
     const matchesCategory = !selectedCategory || post.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory]);
+
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (loading) {
     return (
@@ -230,7 +248,7 @@ const BlogPage = () => {
 
         {/* Blog Posts Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredPosts.map((post) => (
+          {currentPosts.map((post) => (
             <motion.div
               key={post.id}
               initial={{ opacity: 0, y: 20 }}
@@ -242,11 +260,12 @@ const BlogPage = () => {
               onKeyDown={(e) => e.key === 'Enter' && navigate(`/blog/${post.id}`)}
             >
               {/* Image Container */}
-              <div className="relative aspect-[16/9] overflow-hidden">
+              <div className="relative aspect-square overflow-hidden">
                 <img 
                   src={post.image} 
                   alt={post.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-contain bg-[#F8FAFC]"
+                  loading="lazy"
                 />
                 <div className="absolute top-4 left-4">
                   <span className="bg-white/90 backdrop-blur-sm text-[#1F2A44] px-3 py-1 rounded-full text-sm font-medium">
@@ -301,6 +320,45 @@ const BlogPage = () => {
             </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 pt-8">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-4 py-2 rounded-lg bg-white border border-[#1F2A44]/10 text-[#1F2A44] 
+                       hover:bg-[#4DA3FF]/10 disabled:opacity-50 disabled:hover:bg-white 
+                       disabled:cursor-not-allowed transition-colors"
+            >
+              Önceki
+            </button>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
+              <button
+                key={pageNumber}
+                onClick={() => handlePageChange(pageNumber)}
+                className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors
+                          ${currentPage === pageNumber 
+                            ? 'bg-[#4DA3FF] text-white' 
+                            : 'bg-white border border-[#1F2A44]/10 text-[#1F2A44] hover:bg-[#4DA3FF]/10'
+                          }`}
+              >
+                {pageNumber}
+              </button>
+            ))}
+            
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 rounded-lg bg-white border border-[#1F2A44]/10 text-[#1F2A44] 
+                       hover:bg-[#4DA3FF]/10 disabled:opacity-50 disabled:hover:bg-white 
+                       disabled:cursor-not-allowed transition-colors"
+            >
+              Sonraki
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );
