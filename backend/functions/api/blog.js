@@ -6,7 +6,18 @@ const cors = require('cors');
 const app = express();
 
 // CORS configuration
-app.use(cors());
+app.use((req, res, next) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.set('Access-Control-Max-Age', '3600');
+  
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+  next();
+});
 app.use(express.json());
 
 // Auth middleware
@@ -110,6 +121,58 @@ app.get('/posts', async (req, res) => {
     res.status(200).json(posts);
   } catch (error) {
     console.error('Error fetching posts:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /posts/:id - Get a single post
+app.get('/posts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const postDoc = await admin.firestore()
+      .collection('posts')
+      .doc(id)
+      .get();
+
+    if (!postDoc.exists) {
+      return res.status(404).json({ error: 'Blog yazısı bulunamadı' });
+    }
+
+    const data = postDoc.data();
+    const post = {
+      id: postDoc.id,
+      ...data,
+      date: data.date?.toDate?.() || new Date(),
+      createdAt: data.createdAt?.toDate?.() || new Date(),
+      updatedAt: data.updatedAt?.toDate?.() || new Date()
+    };
+
+    // İlgili yazılar için kategori bazlı sorgu
+    const relatedPostsSnapshot = await admin.firestore()
+      .collection('posts')
+      .where('category', '==', post.category)
+      .where('__name__', '!=', id) // Aynı yazıyı hariç tut
+      .limit(3)
+      .get();
+
+    const relatedPosts = relatedPostsSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        title: data.title,
+        image: data.image,
+        category: data.category,
+        date: data.date?.toDate?.() || new Date(),
+        author: data.author
+      };
+    });
+
+    res.status(200).json({
+      post,
+      relatedPosts
+    });
+  } catch (error) {
+    console.error('Error fetching post:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

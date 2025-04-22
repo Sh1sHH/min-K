@@ -32,7 +32,7 @@ const BlogDetail = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`https://us-central1-minik-a61c5.cloudfunctions.net/api/posts/${id}`, {
+      const response = await fetch(`https://blog-7fl3duvywa-uc.a.run.app/posts/${id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -44,7 +44,7 @@ const BlogDetail = () => {
       }
 
       const data = await response.json();
-      setPost(data);
+      setPost(data.post);
     } catch (error) {
       console.error('Blog yazısı alınırken hata oluştu:', error);
       setError(error instanceof Error ? error.message : 'Blog yazısı yüklenirken bir hata oluştu');

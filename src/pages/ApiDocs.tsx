@@ -247,6 +247,57 @@ https://removeadminrole-7fl3duvywa-uc.a.run.app`}
         </div>
       </section>
 
+      {/* CORS ve API Endpoint Kullanımı */}
+      <div className="space-y-4">
+        <h3 className="text-2xl font-bold text-[#1F2A44]">CORS ve API Endpoint Kullanımı</h3>
+        
+        <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6 space-y-4">
+          <p className="text-[#1F2A44]/80">
+            API endpoint'lerini kullanırken, Cloud Run URL'ini kullanmanız gerekmektedir. Firebase Functions URL'i yerine aşağıdaki base URL'i kullanın:
+          </p>
+          
+          <div className="bg-[#1F2A44] text-white p-4 rounded-lg font-mono text-sm">
+            https://blog-7fl3duvywa-uc.a.run.app
+          </div>
+
+          <div className="space-y-2">
+            <p className="font-semibold text-[#1F2A44]">Örnek Kullanım:</p>
+            <pre className="bg-[#1F2A44] text-white p-4 rounded-lg overflow-x-auto">
+              {`const response = await fetch('https://blog-7fl3duvywa-uc.a.run.app/posts/:id', {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});`}
+            </pre>
+          </div>
+
+          <div className="mt-4">
+            <p className="font-semibold text-[#1F2A44]">❌ Yanlış Kullanım:</p>
+            <pre className="bg-red-100 text-red-800 p-4 rounded-lg overflow-x-auto">
+              {`https://us-central1-minik-a61c5.cloudfunctions.net/api/posts/:id`}
+            </pre>
+            
+            <p className="font-semibold text-[#1F2A44] mt-4">✅ Doğru Kullanım:</p>
+            <pre className="bg-green-100 text-green-800 p-4 rounded-lg overflow-x-auto">
+              {`https://blog-7fl3duvywa-uc.a.run.app/posts/:id`}
+            </pre>
+          </div>
+
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+            <p className="text-yellow-800">
+              <span className="font-bold">Not:</span> API yanıtları şu formatta gelecektir:
+            </p>
+            <pre className="bg-yellow-100/50 p-2 rounded mt-2 text-sm">
+              {`{
+  "post": { /* Blog post detayları */ },
+  "relatedPosts": [ /* İlgili blog yazıları */ ]
+}`}
+            </pre>
+          </div>
+        </div>
+      </div>
+
       {/* Routing Çözümleri */}
       <ApiSection
         title="Routing & Layout Çözümleri"
