@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Calendar, User, Tag, Search } from 'lucide-react';
+import { Calendar, User, Tag, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -51,12 +51,7 @@ const BlogPage = () => {
       const data = await response.json();
       
       if (Array.isArray(data)) {
-        const formattedPosts = data.map(post => ({
-          ...post,
-          date: new Date(post.date).toLocaleDateString('tr-TR'),
-          createdAt: new Date(post.createdAt?.seconds * 1000).toLocaleDateString('tr-TR')
-        }));
-        setPosts(formattedPosts);
+        setPosts(data);
       } else {
         console.error('Invalid data format:', data);
         throw new Error('Geçersiz veri formatı');
@@ -67,6 +62,35 @@ const BlogPage = () => {
       toast.error(error instanceof Error ? error.message : 'Blog yazıları yüklenirken bir hata oluştu');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string | { seconds: number }) => {
+    try {
+      // Firebase Timestamp'i kontrol et
+      if (typeof dateString === 'object' && 'seconds' in dateString) {
+        const date = new Date(dateString.seconds * 1000);
+        return date.toLocaleDateString('tr-TR', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      }
+      
+      // Normal tarih string'i
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Tarih belirtilmemiş';
+      }
+      
+      return date.toLocaleDateString('tr-TR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Tarih formatlanırken hata:', error);
+      return 'Tarih belirtilmemiş';
     }
   };
 
@@ -237,15 +261,7 @@ const BlogPage = () => {
                 <div className="flex items-center gap-4 text-sm text-[#1F2A44]/60">
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-4 h-4" />
-                    <span>{new Date(post.date).toLocaleDateString('tr-TR', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="w-4 h-4" />
-                    <span>{post.readTime}</span>
+                    <span>{formatDate(post.date)}</span>
                   </div>
                 </div>
 
