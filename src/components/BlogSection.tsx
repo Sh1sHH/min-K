@@ -98,7 +98,7 @@ const BlogSection = () => {
           className="absolute top-0 right-0 w-[800px] h-[800px]"
         >
           <img 
-            src="/shape5.svg" 
+            src="/shape4.svg" 
             alt="Decorative Shape" 
             className="w-full h-full object-contain animate-float"
             style={{ animationDuration: '20s' }}

@@ -4,40 +4,46 @@ import { motion } from 'framer-motion';
 
 const benefits = [
   {
-    icon: <TrendingUp className="w-6 h-6 text-[#4DA3FF]" />,
+    icon: <TrendingUp className="w-8 h-8 text-[#4DA3FF]" />,
     title: "Verimlilik Artışı",
     description: "İK süreçlerinizi otomatikleştirerek %40'a varan verimlilik artışı sağlayın.",
-    highlight: "%40 Verimlilik"
+    highlight: "%40 Verimlilik",
+    delay: 0.2
   },
   {
-    icon: <Clock className="w-6 h-6 text-[#4DA3FF]" />,
+    icon: <Clock className="w-8 h-8 text-[#4DA3FF]" />,
     title: "Zaman Tasarrufu",
-    description: "Manuel işlemlerde harcanan zamanı %60 azaltın, stratejik görevlere odaklanın.",
-    highlight: "%60 Tasarruf"
+    description: "Manuel işlemlerde harcanan zamanı %60 azaltın.",
+    highlight: "%60 Tasarruf",
+    delay: 0.3
   },
   {
-    icon: <Shield className="w-6 h-6 text-[#4DA3FF]" />,
+    icon: <Shield className="w-8 h-8 text-[#4DA3FF]" />,
     title: "Yasal Uyumluluk",
-    description: "Güncel mevzuata uygun, otomatik güncellenen yasal düzenlemeler ve hesaplamalar.",
-    highlight: "100% Uyumluluk"
+    description: "Güncel mevzuata uygun hesaplamalar.",
+    highlight: "100% Uyumluluk",
+    delay: 0.4
   },
   {
-    icon: <Users className="w-6 h-6 text-[#4DA3FF]" />,
+    icon: <Users className="w-8 h-8 text-[#4DA3FF]" />,
     title: "Çalışan Memnuniyeti",
-    description: "Şeffaf ve dijital süreçlerle çalışan memnuniyetini artırın.",
-    highlight: "Mutlu Çalışanlar"
+    description: "Şeffaf ve dijital süreçler.",
+    highlight: "Mutlu Çalışanlar",
+    delay: 0.5
   },
   {
-    icon: <BarChart className="w-6 h-6 text-[#4DA3FF]" />,
+    icon: <BarChart className="w-8 h-8 text-[#4DA3FF]" />,
     title: "Detaylı Raporlama",
-    description: "Gerçek zamanlı verilerle İK metriklerinizi analiz edin ve raporlayın.",
-    highlight: "Anlık Analiz"
+    description: "Gerçek zamanlı İK metrikleri.",
+    highlight: "Anlık Analiz",
+    delay: 0.6
   },
   {
-    icon: <Award className="w-6 h-6 text-[#4DA3FF]" />,
+    icon: <Award className="w-8 h-8 text-[#4DA3FF]" />,
     title: "Profesyonel Destek",
-    description: "Uzman İK danışmanlarımızdan 7/24 destek alın.",
-    highlight: "7/24 Destek"
+    description: "7/24 uzman İK danışmanlığı.",
+    highlight: "7/24 Destek",
+    delay: 0.7
   }
 ];
 
@@ -65,27 +71,6 @@ const stats = [
 ];
 
 const Showcase = () => {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.5
-      }
-    }
-  };
-
   return (
     <section id="benefits-section" className="relative py-24 overflow-hidden bg-white">
       {/* Background Elements */}
@@ -117,16 +102,6 @@ const Showcase = () => {
             className="w-full h-full object-contain"
           />
         </div>
-        
-        {/* Subtle gradient orbs */}
-        <div 
-          className="absolute -top-[20%] -left-[10%] w-[500px] h-[500px] bg-[#4DA3FF]/10 rounded-full filter blur-[100px] opacity-40 animate-float mix-blend-multiply"
-          style={{ animationDuration: '15s' }}
-        />
-        <div 
-          className="absolute top-[30%] -right-[15%] w-[400px] h-[400px] bg-[#B1E5D3]/10 rounded-full filter blur-[90px] opacity-40 animate-float-delay mix-blend-multiply"
-          style={{ animationDuration: '12s' }}
-        />
       </div>
 
       <div className="relative z-10">
@@ -152,75 +127,92 @@ const Showcase = () => {
             </p>
           </motion.div>
 
-          {/* Stats Section - New Design */}
+          {/* Stats Section */}
           <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-20"
+            transition={{ duration: 0.6 }}
+            className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-20"
           >
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={index}
-                  variants={itemVariants}
-                  className="relative group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#4DA3FF]/5 to-[#B1E5D3]/5 rounded-3xl transform transition-transform duration-300 group-hover:scale-105" />
-                  <div className="relative p-8 text-center">
-                    <div className="text-5xl font-bold bg-gradient-to-r from-[#4DA3FF] to-[#B1E5D3] bg-clip-text text-transparent mb-3">
-                      {stat.number}
-                    </div>
-                    <h3 className="text-xl font-semibold text-[#1F2A44] mb-2">
-                      {stat.label}
-                    </h3>
-                    <p className="text-[#1F2A44]/70 text-sm">
-                      {stat.description}
-                    </p>
+            {stats.map((stat, index) => (
+              <motion.div
+                key={index}
+                whileHover={{ y: -5 }}
+                className="relative group"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-[#4DA3FF]/5 to-[#B1E5D3]/5 rounded-3xl transform transition-all duration-300 group-hover:scale-105" />
+                <div className="relative p-8 text-center">
+                  <div className="text-5xl font-bold bg-gradient-to-r from-[#4DA3FF] to-[#B1E5D3] bg-clip-text text-transparent mb-3">
+                    {stat.number}
                   </div>
-                </motion.div>
-              ))}
-            </div>
+                  <h3 className="text-xl font-semibold text-[#1F2A44] mb-2">
+                    {stat.label}
+                  </h3>
+                  <p className="text-[#1F2A44]/70 text-sm">
+                    {stat.description}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
           </motion.div>
 
-          {/* Benefits Grid - New Design */}
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-8"
-          >
+          {/* Benefits Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {benefits.map((benefit, index) => (
               <motion.div
                 key={index}
-                variants={itemVariants}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ 
+                  duration: 0.5,
+                  delay: benefit.delay,
+                  type: "spring",
+                  stiffness: 100
+                }}
+                whileHover={{ y: -8 }}
                 className="group relative"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-[#4DA3FF]/5 to-[#B1E5D3]/5 rounded-3xl transform transition-all duration-300 group-hover:scale-105" />
-                <div className="relative p-8 rounded-3xl border border-[#1F2A44]/10">
-                  {/* Top Section */}
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="w-12 h-12 bg-[#4DA3FF]/10 rounded-xl flex items-center justify-center group-hover:bg-[#4DA3FF]/20 transition-colors duration-300">
+                {/* Card Background */}
+                <div className="absolute inset-0 bg-white rounded-3xl shadow-lg" />
+                <div className="absolute inset-0 bg-gradient-to-br from-[#4DA3FF]/5 to-[#B1E5D3]/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                {/* Gradient Border */}
+                <div className="absolute -inset-[1px] bg-gradient-to-r from-[#4DA3FF] via-[#B1E5D3] to-[#4DA3FF] rounded-3xl opacity-0 group-hover:opacity-100 transition-all duration-300 blur-[1px]" />
+                <div className="absolute inset-[1px] bg-white rounded-[22px]" />
+                
+                {/* Card Content */}
+                <div className="relative p-8">
+                  {/* Icon Container */}
+                  <div className="mb-6 relative">
+                    <div className="w-16 h-16 bg-[#4DA3FF]/10 rounded-2xl flex items-center justify-center transform transition-transform duration-300 group-hover:rotate-6">
                       {benefit.icon}
                     </div>
-                    <span className="text-sm font-medium text-[#4DA3FF] bg-[#4DA3FF]/10 px-3 py-1 rounded-full">
-                      {benefit.highlight}
-                    </span>
+                    {/* Floating Highlight Badge */}
+                    <div className="absolute -top-2 -right-2">
+                      <span className="inline-block px-3 py-1 bg-white shadow-md rounded-full text-sm font-medium text-[#4DA3FF] transform transition-transform duration-300 group-hover:scale-110">
+                        {benefit.highlight}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Content */}
+                  {/* Text Content */}
                   <h3 className="text-xl font-semibold text-[#1F2A44] mb-3 group-hover:text-[#4DA3FF] transition-colors duration-300">
                     {benefit.title}
                   </h3>
                   <p className="text-[#1F2A44]/70">
                     {benefit.description}
                   </p>
+
+                  {/* Decorative Elements */}
+                  <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="w-20 h-20 bg-gradient-to-br from-[#4DA3FF]/10 to-[#B1E5D3]/10 rounded-full blur-xl" />
+                  </div>
                 </div>
               </motion.div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

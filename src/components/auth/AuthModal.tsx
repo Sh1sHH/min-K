@@ -70,25 +70,52 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
         
         if (userCredential && userCredential.user) {
           try {
+            // Önce displayName güncelle
             await updateProfile(userCredential.user, {
               displayName: `${formData.firstName} ${formData.lastName}`,
             });
 
+            // Kısa bir bekleme ekle
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Firestore'a profil bilgilerini kaydet
             const userDocRef = doc(db, 'users', userCredential.user.uid);
             await setDoc(userDocRef, {
               firstName: formData.firstName,
               lastName: formData.lastName,
               company: formData.company,
               email: formData.email,
+              displayName: `${formData.firstName} ${formData.lastName}`,
               createdAt: serverTimestamp(),
               authProvider: 'email',
-              updatedAt: serverTimestamp()
-            });
+              updatedAt: serverTimestamp(),
+              role: 'user'
+            }, { merge: true });
 
             toast.success('Hesabınız başarıyla oluşturuldu');
           } catch (profileError) {
             console.error('Profile update error:', profileError);
-            toast.success('Hesabınız oluşturuldu fakat profil bilgileri kaydedilemedi');
+            
+            // Profil bilgilerini tekrar kaydetmeyi dene
+            try {
+              const userDocRef = doc(db, 'users', userCredential.user.uid);
+              await setDoc(userDocRef, {
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                company: formData.company,
+                email: formData.email,
+                displayName: `${formData.firstName} ${formData.lastName}`,
+                createdAt: serverTimestamp(),
+                authProvider: 'email',
+                updatedAt: serverTimestamp(),
+                role: 'user'
+              }, { merge: true });
+              
+              toast.success('Hesabınız başarıyla oluşturuldu');
+            } catch (retryError) {
+              console.error('Retry profile update error:', retryError);
+              toast.error('Hesabınız oluşturuldu fakat profil bilgileri kaydedilemedi. Lütfen daha sonra tekrar deneyin.');
+            }
           }
         }
       }
