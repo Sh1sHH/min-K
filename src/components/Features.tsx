@@ -8,15 +8,6 @@ const Features = () => {
     <div className="relative py-24 overflow-hidden bg-white">
       {/* Background Elements */}
       <div className="absolute inset-0">
-        {/* Background image */}
-        <div className="absolute inset-0">
-          <img 
-            src="/white2.png" 
-            alt="Background" 
-            className="w-full h-full object-cover object-center opacity-5"
-          />
-        </div>
-        
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-white" />
         
@@ -36,7 +27,7 @@ const Features = () => {
         <div className="flex flex-col lg:flex-row gap-12 items-center mb-24">
           <div className="w-full lg:w-1/2">
             <img
-              src="/employee-benefits.jpg"
+              src="/employee-benefits.webp"
               alt="Employee Benefits"
               className="rounded-2xl object-cover w-full aspect-[4/3] shadow-lg"
             />
@@ -71,7 +62,7 @@ const Features = () => {
           </div>
           <div className="w-full lg:w-1/2">
             <img
-              src="/team-meeting.jpg"
+              src="/team-meeting.webp"
               alt="Team Meeting"
               className="rounded-2xl object-cover w-full aspect-[4/3] shadow-lg"
             />

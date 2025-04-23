@@ -230,7 +230,6 @@ const ComponentDemo = () => {
                       animation: 'gradientMove 8s ease-in-out infinite',
                     }}
                   />
-                  <div className="absolute inset-0 bg-[url('/noise.png')] bg-repeat opacity-[0.02] mix-blend-overlay" />
                   
                   {/* Content */}
                   <div className="relative px-6 py-24 sm:px-12 sm:py-32 lg:px-16">

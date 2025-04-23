@@ -9,19 +9,19 @@ import { motion } from 'framer-motion';
 const features = [
   {
     title: "Bordro Hesaplama",
-    image: "/hesaplama.png",
+    image: "/hesaplama.webp",
     icon: <Calculator className="w-12 h-12 text-[#4DA3FF]" />,
     description: "Gelişmiş algoritmalarımız ile maaş, izin, prim ve diğer tüm İK hesaplamalarınızı otomatik olarak yapın. Zaman kazanın, hata yapmayın."
   },
   {
     title: "Blog",
-    image: "/blog.png",
+    image: "/blog.webp",
     icon: <Users className="w-12 h-12 text-[#4DA3FF]" />,
     description: "Çalışanlarınızın bilgilerini güvenle saklayın, performanslarını takip edin ve kariyer gelişimlerini planlayın. Tek platformda tüm İK süreçleri."
   },
   {
     title: "Danışmanlık",
-    image: "/danismanlik.png",
+    image: "/danismanlik.webp",
     icon: <Calendar className="w-12 h-12 text-[#4DA3FF]" />,
     description: "Yıllık izin, hastalık izni ve diğer tüm izin türlerini kolayca yönetin. Otomatik hesaplama ve onay süreçleri ile işinizi kolaylaştırın."
   }
@@ -53,15 +53,6 @@ const Hero = () => {
     <section className="relative py-24 overflow-hidden bg-white">
       {/* Background Elements */}
       <div className="absolute inset-0">
-        {/* Background image */}
-        <div className="absolute inset-0">
-          <img 
-            src="/white2.png" 
-            alt="Background" 
-            className="w-full h-full object-cover object-center opacity-5"
-          />
-        </div>
-        
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-white" />
         

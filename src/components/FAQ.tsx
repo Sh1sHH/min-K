@@ -54,15 +54,6 @@ const FAQ = () => {
     <section id="sss-section" className="relative py-24 overflow-hidden bg-white">
       {/* Background Elements */}
       <div className="absolute inset-0">
-        {/* Background image */}
-        <div className="absolute inset-0">
-          <img 
-            src="/white2.png" 
-            alt="Background" 
-            className="w-full h-full object-cover object-center opacity-5"
-          />
-        </div>
-        
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-white" />
         
@@ -95,7 +86,7 @@ const FAQ = () => {
               whileInView={{ scale: 1, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              src="/sss.png"
+              src="/sss.webp"
               alt="Frequently Asked Questions"
               className="w-full h-auto object-cover rounded-3xl shadow-lg"
             />

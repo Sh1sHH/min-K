@@ -6,32 +6,32 @@ const services = [
   {
     title: "Bordro Yönetimi",
     description: "Maaş, SGK, vergi hesaplamaları ve bordro süreçlerinizi otomatik olarak yönetin.",
-    image: "/bordro2.png",
+    image: "/bordro2.webp",
   },
   {
     title: "Online Danışmanlık",
     description: "Uzman İK danışmanlarımızla online görüşmeler yapın, sorularınıza anında yanıt alın.",
-    image: "/danismanlik4.png",
+    image: "/danismanlik4.webp",
   },
   {
     title: "İK Analitikleri",
     description: "Detaylı raporlar ve analizlerle İK süreçlerinizi optimize edin.",
-    image: "/analitik2.png",
+    image: "/analitik2.webp",
   },
   {
     title: "Performans Yönetimi",
     description: "İzin, mesai, performans takibi gibi süreçleri tek platformdan yönetin.",
-    image: "/performans.png",
+    image: "/performans.webp",
   },
   {
     title: "İşe Alım",
     description: "Çalışanlarınızın gelişimi için online eğitimler ve sertifikasyon programları.",
-    image: "/isealim2.png",
+    image: "/isealim2.webp",
   },
   {
     title: "Mevzuatsal İşlemler",
     description: "Çalışanlarınızın gelişimi için online eğitimler ve sertifikasyon programları.",
-    image: "/mevzuat.png",
+    image: "/mevzuat.webp",
   }
 ];
 
@@ -61,15 +61,6 @@ const Services = () => {
     <section id="services-section" className="relative py-24 overflow-hidden bg-white">
       {/* Background Elements */}
       <div className="absolute inset-0">
-        {/* Background image */}
-        <div className="absolute inset-0">
-          <img 
-            src="/white2.png" 
-            alt="Background" 
-            className="w-full h-full object-cover object-center opacity-5"
-          />
-        </div>
-        
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-white opacity-90" />
         

@@ -44,7 +44,7 @@ const Blog = () => {
         
         <div className="absolute inset-0 mix-blend-overlay">
           <img 
-            src="/bg3.png" 
+            src="/bg3.webp" 
             alt="Background" 
             className="w-full h-full object-cover object-center opacity-40"
           />

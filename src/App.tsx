@@ -91,9 +91,6 @@ function App() {
           {/* Main gradient with enhanced color stops */}
           <div className="absolute inset-0 bg-gradient-to-b from-[#2C0633] from-5% via-[#4F1C48] via-25% via-[#1B0421] via-55% to-[#0F0F0F] to-90% opacity-95" />
           
-          {/* Mesh gradient overlay with improved blend */}
-          <div className="absolute inset-0 bg-[url('/mesh-gradient.png')] bg-cover bg-center mix-blend-soft-light opacity-30" />
-          
           {/* Enhanced animated gradient orbs with better positioning */}
           <div 
             className="absolute -top-[20%] -left-[10%] w-[900px] h-[900px] bg-gradient-to-r from-[#4F1C48] via-[#3C1237] to-[#2C0633] rounded-full filter blur-[130px] opacity-50 animate-float"
@@ -117,9 +114,6 @@ function App() {
             className="absolute top-[15%] right-[30%] w-[300px] h-[300px] bg-gradient-to-tl from-[#4F1C48] to-[#2C0633] rounded-full filter blur-[90px] opacity-20 animate-float-delay"
             style={{ animationDuration: '22s' }}
           />
-          
-          {/* Enhanced noise texture with better blend mode */}
-          <div className="absolute inset-0 bg-[url('/noise.png')] bg-repeat opacity-[0.03] mix-blend-overlay" />
           
           {/* Subtle gradient overlay for better color blending */}
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#1B0421]/10 to-[#0F0F0F]/20" />

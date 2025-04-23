@@ -10,15 +10,6 @@ const NotFound = () => {
     <section className="relative min-h-screen bg-white text-[#1F2A44] pt-32 p-8 overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0">
-        {/* Background image */}
-        <div className="absolute inset-0">
-          <img 
-            src="/white2.png" 
-            alt="Background" 
-            className="w-full h-full object-cover object-center opacity-5"
-          />
-        </div>
-        
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-white opacity-90" />
         
