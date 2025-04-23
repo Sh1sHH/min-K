@@ -18,6 +18,7 @@ import BlogManagement from './components/admin/BlogManagement';
 import BlogPage from '@/pages/BlogPage';
 import BlogDetail from '@/pages/BlogDetail';
 import SubscriberPanel from '@/pages/SubscriberPanel';
+import NotFound from '@/pages/NotFound';
 
 function App() {
   const location = useLocation();
@@ -149,6 +150,8 @@ function App() {
                 <Footer />
               </>
             } />
+            {/* 404 sayfası için catch-all route */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
       </div>
