@@ -66,17 +66,14 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
           return;
         }
         
-        // Önce kullanıcıyı oluştur
         const userCredential = await signUp(formData.email, formData.password);
         
         if (userCredential && userCredential.user) {
           try {
-            // Kullanıcı profilini güncelle
             await updateProfile(userCredential.user, {
               displayName: `${formData.firstName} ${formData.lastName}`,
             });
 
-            // Firestore'da kullanıcı dokümanını oluştur
             const userDocRef = doc(db, 'users', userCredential.user.uid);
             await setDoc(userDocRef, {
               firstName: formData.firstName,
@@ -91,7 +88,6 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
             toast.success('Hesabınız başarıyla oluşturuldu');
           } catch (profileError) {
             console.error('Profile update error:', profileError);
-            // Profil güncellemesi başarısız olsa bile kullanıcı kaydı tamamlandı
             toast.success('Hesabınız oluşturuldu fakat profil bilgileri kaydedilemedi');
           }
         }
@@ -128,49 +124,51 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
+      {/* Backdrop with blur */}
       <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+        className="absolute inset-0 bg-[#1F2A44]/60 backdrop-blur-sm" 
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md bg-black/80 border border-white/10 rounded-2xl p-8 shadow-xl">
+      <div className="relative w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl">
         {/* Close button */}
         <button 
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+          className="absolute top-4 right-4 text-[#1F2A44]/60 hover:text-[#1F2A44] transition-colors"
           disabled={loading}
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Header */}
-        <h2 className="text-2xl font-semibold text-white mb-2">
-          {mode === 'login' ? 'Hoş Geldiniz' : 'Hesap Oluşturun'}
-        </h2>
-        <p className="text-gray-400 mb-6">
-          {mode === 'login' 
-            ? 'minİK hesabınıza giriş yapın'
-            : 'Hemen ücretsiz hesap oluşturun'}
-        </p>
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-[#1F2A44] mb-2">
+            {mode === 'login' ? 'Hoş Geldiniz' : 'Hesap Oluşturun'}
+          </h2>
+          <p className="text-[#1F2A44]/60">
+            {mode === 'login' 
+              ? 'İKyardım hesabınıza giriş yapın'
+              : 'Hemen ücretsiz hesap oluşturun'}
+          </p>
+        </div>
 
         {/* Google Sign In Button */}
         <button
           onClick={handleGoogleSignIn}
           disabled={loading}
-          className="w-full bg-white text-gray-800 font-medium py-2.5 px-4 rounded-lg mb-4 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-white border-2 border-[#1F2A44]/10 text-[#1F2A44] font-medium py-3 px-4 rounded-xl mb-6 flex items-center justify-center hover:bg-[#1F2A44]/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
         >
           <img src="/google.svg" alt="Google logo" className="w-5 h-5 mr-3" />
           Google ile {mode === 'login' ? 'Giriş Yap' : 'Kayıt Ol'}
         </button>
 
-        <div className="relative my-6">
+        <div className="relative my-8">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-white/10"></div>
+            <div className="w-full border-t border-[#1F2A44]/10"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-4 text-gray-400 bg-black/80">veya</span>
+            <span className="px-4 text-[#1F2A44]/60 bg-white">veya</span>
           </div>
         </div>
 
@@ -181,14 +179,14 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
               {/* Ad Soyad Row */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4DA3FF]" />
                   <input
                     type="text"
                     name="firstName"
                     placeholder="Ad"
                     value={formData.firstName}
                     onChange={handleInputChange}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white placeholder:text-gray-400 focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-50"
+                    className="w-full bg-[#1F2A44]/5 rounded-xl pl-10 pr-4 py-3 text-[#1F2A44] placeholder:text-[#1F2A44]/40 focus:outline-none focus:ring-2 focus:ring-[#4DA3FF]/20 focus:bg-white transition-all disabled:opacity-50"
                     required
                     disabled={loading}
                   />
@@ -200,7 +198,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
                     placeholder="Soyad"
                     value={formData.lastName}
                     onChange={handleInputChange}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-gray-400 focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-50"
+                    className="w-full bg-[#1F2A44]/5 rounded-xl px-4 py-3 text-[#1F2A44] placeholder:text-[#1F2A44]/40 focus:outline-none focus:ring-2 focus:ring-[#4DA3FF]/20 focus:bg-white transition-all disabled:opacity-50"
                     required
                     disabled={loading}
                   />
@@ -209,14 +207,14 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
               
               {/* Şirket Adı */}
               <div className="relative">
-                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4DA3FF]" />
                 <input
                   type="text"
                   name="company"
                   placeholder="Şirket Adı"
                   value={formData.company}
                   onChange={handleInputChange}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white placeholder:text-gray-400 focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-50"
+                  className="w-full bg-[#1F2A44]/5 rounded-xl pl-10 pr-4 py-3 text-[#1F2A44] placeholder:text-[#1F2A44]/40 focus:outline-none focus:ring-2 focus:ring-[#4DA3FF]/20 focus:bg-white transition-all disabled:opacity-50"
                   required
                   disabled={loading}
                 />
@@ -226,14 +224,14 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
           
           {/* Email */}
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4DA3FF]" />
             <input
               type="email"
               name="email"
               placeholder="E-posta"
               value={formData.email}
               onChange={handleInputChange}
-              className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white placeholder:text-gray-400 focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-50"
+              className="w-full bg-[#1F2A44]/5 rounded-xl pl-10 pr-4 py-3 text-[#1F2A44] placeholder:text-[#1F2A44]/40 focus:outline-none focus:ring-2 focus:ring-[#4DA3FF]/20 focus:bg-white transition-all disabled:opacity-50"
               required
               disabled={loading}
             />
@@ -241,21 +239,21 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
 
           {/* Password */}
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4DA3FF]" />
             <input
               type={showPassword ? 'text' : 'password'}
               name="password"
               placeholder="Şifre"
               value={formData.password}
               onChange={handleInputChange}
-              className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-12 py-3 text-white placeholder:text-gray-400 focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-50"
+              className="w-full bg-[#1F2A44]/5 rounded-xl pl-10 pr-12 py-3 text-[#1F2A44] placeholder:text-[#1F2A44]/40 focus:outline-none focus:ring-2 focus:ring-[#4DA3FF]/20 focus:bg-white transition-all disabled:opacity-50"
               required
               disabled={loading}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1F2A44]/40 hover:text-[#1F2A44] transition-colors disabled:opacity-50"
               disabled={loading}
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -264,7 +262,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
 
           {mode === 'login' && (
             <div className="text-right">
-              <a href="#" className="text-sm text-purple-400 hover:text-purple-300 transition-colors">
+              <a href="#" className="text-sm text-[#4DA3FF] hover:text-[#4DA3FF]/80 transition-colors">
                 Şifremi Unuttum
               </a>
             </div>
@@ -272,7 +270,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
 
           <Button 
             type="submit"
-            className="w-full bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white py-3 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-[#4DA3FF] hover:bg-[#4DA3FF]/90 text-white py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#4DA3FF]/20"
             disabled={loading}
           >
             {loading ? 'İşleniyor...' : mode === 'login' ? 'Giriş Yap' : 'Kayıt Ol'}
@@ -280,13 +278,13 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
         </form>
 
         {/* Footer */}
-        <div className="mt-6 text-center text-gray-400">
+        <div className="mt-6 text-center text-[#1F2A44]/60">
           {mode === 'login' ? (
             <>
               Hesabınız yok mu?{' '}
               <button 
                 onClick={() => setMode('register')}
-                className="text-purple-400 hover:text-purple-300 transition-colors"
+                className="text-[#4DA3FF] hover:text-[#4DA3FF]/80 transition-colors font-medium"
                 disabled={loading}
               >
                 Hemen Oluşturun
@@ -297,7 +295,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
               Zaten hesabınız var mı?{' '}
               <button 
                 onClick={() => setMode('login')}
-                className="text-purple-400 hover:text-purple-300 transition-colors"
+                className="text-[#4DA3FF] hover:text-[#4DA3FF]/80 transition-colors font-medium"
                 disabled={loading}
               >
                 Giriş Yapın
