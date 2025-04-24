@@ -7,7 +7,9 @@ import {
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
-  UserCredential
+  UserCredential,
+  sendPasswordResetEmail,
+  sendEmailVerification
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
@@ -20,6 +22,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   googleSignIn: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  sendVerificationEmail: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -40,9 +44,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string) => {
     try {
-      return await createUserWithEmailAndPassword(auth, email, password);
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      // Send verification email right after sign up
+      if (result.user) {
+        await sendEmailVerification(result.user);
+      }
+      return result;
     } catch (error) {
       console.error('Signup error:', error);
+      throw error;
+    }
+  };
+
+  const sendVerificationEmail = async () => {
+    try {
+      if (currentUser && !currentUser.emailVerified) {
+        await sendEmailVerification(currentUser);
+      }
+    } catch (error) {
+      console.error('Email verification error:', error);
       throw error;
     }
   };
@@ -61,6 +81,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await signOut(auth);
     } catch (error) {
       console.error('Logout error:', error);
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      console.error('Password reset error:', error);
       throw error;
     }
   };
@@ -110,7 +139,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     login,
     logout,
-    googleSignIn
+    googleSignIn,
+    resetPassword,
+    sendVerificationEmail
   };
 
   return (
