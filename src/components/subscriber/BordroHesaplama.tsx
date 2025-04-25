@@ -2,6 +2,41 @@ import React, { useState } from 'react';
 import { Calculator } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+// Format number to Turkish currency format
+const formatToTurkishCurrency = (value: string): string => {
+  // Remove all non-numeric characters except decimal point
+  const numericValue = value.replace(/[^0-9,]/g, '');
+  
+  // Convert comma to dot for calculations
+  const normalizedValue = numericValue.replace(',', '.');
+  
+  // Parse the number
+  const number = parseFloat(normalizedValue);
+  
+  // If not a valid number, return empty string
+  if (isNaN(number)) return '';
+  
+  // Format the number to Turkish currency format
+  return new Intl.NumberFormat('tr-TR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(number);
+};
+
+// Parse Turkish formatted currency to number
+const parseTurkishCurrency = (value: string): number => {
+  // Remove all non-numeric characters except decimal point or comma
+  const numericValue = value.replace(/[^0-9.,]/g, '');
+  // Convert comma to dot for JavaScript float parsing
+  const normalizedValue = numericValue.replace(/,/g, '.');
+  // Get the last decimal point value if multiple exists
+  const parts = normalizedValue.split('.');
+  const result = parts.length > 1 
+    ? parts.slice(0, -1).join('') + '.' + parts.slice(-1)
+    : normalizedValue;
+  return parseFloat(result) || 0;
+};
+
 interface BordroSonuc {
   brut: string;
   net: string;
@@ -89,7 +124,7 @@ const BordroHesaplama = () => {
 
     setLoading(true);
     try {
-      const tutarNum = parseFloat(tutar.replace(/[^0-9.]/g, ''));
+      const tutarNum = parseTurkishCurrency(tutar);
       
       if (hesaplamaTipi === 'bruttenNet') {
         const result = bruttenNete(tutarNum);
@@ -163,8 +198,8 @@ const BordroHesaplama = () => {
               type="text"
               value={tutar}
               onChange={(e) => setTutar(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4DA3FF]/20 focus:border-[#4DA3FF] transition-all"
-              placeholder="Tutar giriniz"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4DA3FF]/20 focus:border-[#4DA3FF] transition-all text-[#4DA3FF]"
+              placeholder="Örnek: 22.104,67"
             />
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">
               ₺
