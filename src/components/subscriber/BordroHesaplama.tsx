@@ -157,21 +157,21 @@ const BordroHesaplama = () => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
+    <div className="bg-black/50 rounded-xl shadow-lg p-6 backdrop-blur-sm border border-white/5">
       <div className="flex items-center gap-3 mb-6">
-        <Calculator className="w-6 h-6 text-[#4DA3FF]" />
-        <h2 className="text-xl font-semibold text-gray-900">Bordro Hesaplama</h2>
+        <Calculator className="w-6 h-6 text-blue-400" />
+        <h2 className="text-xl font-semibold text-white">Bordro Hesaplama</h2>
       </div>
 
       <div className="space-y-6">
         {/* Hesaplama Tipi Seçimi */}
-        <div className="flex gap-4 p-1 bg-gray-100 rounded-lg w-fit">
+        <div className="flex gap-4 p-1 bg-white/5 rounded-lg w-fit">
           <button
             onClick={() => setHesaplamaTipi('bruttenNet')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
               hesaplamaTipi === 'bruttenNet'
-                ? 'bg-white text-[#4DA3FF] shadow'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-blue-500/20 text-blue-400'
+                : 'text-white/60 hover:text-white hover:bg-white/5'
             }`}
           >
             Brütten Net
@@ -180,8 +180,8 @@ const BordroHesaplama = () => {
             onClick={() => setHesaplamaTipi('nettenBrut')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
               hesaplamaTipi === 'nettenBrut'
-                ? 'bg-white text-[#4DA3FF] shadow'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-blue-500/20 text-blue-400'
+                : 'text-white/60 hover:text-white hover:bg-white/5'
             }`}
           >
             Netten Brüt
@@ -190,7 +190,7 @@ const BordroHesaplama = () => {
 
         {/* Tutar Girişi */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-white/70">
             {hesaplamaTipi === 'bruttenNet' ? 'Brüt Tutar' : 'Net Tutar'}
           </label>
           <div className="relative">
@@ -198,10 +198,10 @@ const BordroHesaplama = () => {
               type="text"
               value={tutar}
               onChange={(e) => setTutar(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4DA3FF]/20 focus:border-[#4DA3FF] transition-all text-[#4DA3FF]"
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all text-blue-400 placeholder:text-white/30"
               placeholder="Örnek: 22.104,67"
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40">
               ₺
             </span>
           </div>
@@ -211,55 +211,87 @@ const BordroHesaplama = () => {
         <Button
           onClick={handleHesapla}
           disabled={!tutar || loading}
-          className="w-full bg-[#4DA3FF] hover:bg-[#4DA3FF]/90 text-white py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#4DA3FF]/20"
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Hesaplanıyor...' : 'Hesapla'}
         </Button>
 
         {/* Sonuçlar */}
         {sonuc && (
-          <div className="mt-6 space-y-4 bg-gray-50 rounded-xl p-6">
+          <div className="mt-6 space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <p className="text-sm text-gray-600">Brüt Ücret</p>
-                <p className="text-lg font-semibold text-gray-900">
+              <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                <p className="text-sm text-white/60">Brüt Ücret</p>
+                <p className="text-lg font-semibold text-white mt-1">
                   {formatCurrency(sonuc.brut)}
                 </p>
               </div>
-              <div className="space-y-1">
-                <p className="text-sm text-gray-600">Net Ücret</p>
-                <p className="text-lg font-semibold text-[#4DA3FF]">
+              <div className="bg-blue-500/10 rounded-xl p-4 border border-blue-500/20">
+                <p className="text-sm text-white/60">Net Ücret</p>
+                <p className="text-lg font-semibold text-blue-400 mt-1">
                   {formatCurrency(sonuc.net)}
                 </p>
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-4 mt-4">
-              <h3 className="text-sm font-medium text-gray-900 mb-3">Kesintiler</h3>
-              <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+              <h3 className="text-sm font-medium text-white/70 mb-4">Kesintiler</h3>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <p className="text-sm text-gray-600">SGK Kesintisi (%14)</p>
-                  <p className="text-sm font-medium text-gray-900">
-                    {formatCurrency(sonuc.sgk)}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-white/60">SGK</p>
+                    <p className="text-xs text-white/40">%14</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-purple-500 rounded-full" style={{ width: '14%' }} />
+                    </div>
+                    <p className="text-sm font-medium text-purple-400">
+                      {formatCurrency(sonuc.sgk)}
+                    </p>
+                  </div>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-gray-600">İşsizlik Kesintisi (%1)</p>
-                  <p className="text-sm font-medium text-gray-900">
-                    {formatCurrency(sonuc.issizlik)}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-white/60">İşsizlik</p>
+                    <p className="text-xs text-white/40">%1</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-pink-500 rounded-full" style={{ width: '1%' }} />
+                    </div>
+                    <p className="text-sm font-medium text-pink-400">
+                      {formatCurrency(sonuc.issizlik)}
+                    </p>
+                  </div>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-gray-600">Gelir Vergisi (%15)</p>
-                  <p className="text-sm font-medium text-gray-900">
-                    {formatCurrency(sonuc.gelirVergisi)}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-white/60">Gelir Vergisi</p>
+                    <p className="text-xs text-white/40">%15</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-yellow-500 rounded-full" style={{ width: '15%' }} />
+                    </div>
+                    <p className="text-sm font-medium text-yellow-400">
+                      {formatCurrency(sonuc.gelirVergisi)}
+                    </p>
+                  </div>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-gray-600">Damga Vergisi (%0.759)</p>
-                  <p className="text-sm font-medium text-gray-900">
-                    {formatCurrency(sonuc.damga)}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-white/60">Damga</p>
+                    <p className="text-xs text-white/40">%0.759</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-green-500 rounded-full" style={{ width: '0.759%' }} />
+                    </div>
+                    <p className="text-sm font-medium text-green-400">
+                      {formatCurrency(sonuc.damga)}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

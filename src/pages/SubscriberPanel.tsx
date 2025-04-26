@@ -5,21 +5,14 @@ import { getAuth } from 'firebase/auth';
 import { toast } from 'sonner';
 import {
   Home,
-  Compass,
-  Zap,
-  PlaySquare,
-  Library,
-  History,
-  Clock,
-  Bookmark,
-  Settings,
+  Calculator,
+  Users,
   LogOut,
-  Heart,
-  MessageCircle,
-  FileText,
-  Calculator
+  MessageSquare
 } from 'lucide-react';
 import BordroHesaplama from '@/components/subscriber/BordroHesaplama';
+import HeadHunter from '@/components/subscriber/HeadHunter';
+import AskExpert from '@/components/subscriber/AskExpert';
 
 interface MenuItem {
   id: string;
@@ -31,25 +24,14 @@ interface MenuItem {
 const SubscriberPanel = () => {
   const { currentUser, isSubscriber } = useAuth();
   const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState('home');
+  const [activeSection, setActiveSection] = useState('calculator');
   const auth = getAuth();
 
   // Menü öğeleri
   const menuItems: MenuItem[] = [
-    { id: 'home', title: 'Ana Sayfa', icon: <Home size={20} /> },
-    { id: 'explore', title: 'Keşfet', icon: <Compass size={20} /> },
-    { id: 'shorts', title: 'Shorts', icon: <Zap size={20} /> },
     { id: 'calculator', title: 'Bordro Hesaplama', icon: <Calculator size={20} /> },
-    { id: 'subscriptions', title: 'Abonelikler', icon: <PlaySquare size={20} />, divider: true },
-    { id: 'library', title: 'Kütüphane', icon: <Library className="w-5 h-5" /> },
-    { id: 'history', title: 'Geçmiş', icon: <History className="w-5 h-5" /> },
-    { id: 'watchLater', title: 'Daha Sonra İzle', icon: <Clock className="w-5 h-5" /> },
-    { id: 'bookmarks', title: 'Kaydedilenler', icon: <Bookmark className="w-5 h-5" />, divider: true },
-    
-    { id: 'favorites', title: 'Favorilerim', icon: <Heart className="w-5 h-5" /> },
-    { id: 'messages', title: 'Mesajlarım', icon: <MessageCircle className="w-5 h-5" /> },
-    { id: 'documents', title: 'Dökümanlarım', icon: <FileText className="w-5 h-5" /> },
-    { id: 'settings', title: 'Ayarlar', icon: <Settings className="w-5 h-5" /> }
+    { id: 'headhunter', title: 'Head Hunter', icon: <Users size={20} /> },
+    { id: 'askexpert', title: 'Bir Bilene Sor', icon: <MessageSquare size={20} /> }
   ];
 
   // Kullanıcı ve abone kontrolü
@@ -93,7 +75,7 @@ const SubscriberPanel = () => {
           {/* Ana Sayfaya Dönüş */}
           <Link 
             to="/"
-            className="mx-2 flex items-center gap-2 px-4 py-3 text-gray-300 hover:bg-white/5 rounded-lg transition-colors"
+            className="mx-2 mb-4 flex items-center gap-2 px-4 py-3 text-gray-300 hover:bg-white/5 rounded-lg transition-colors"
           >
             <Home className="w-5 h-5" />
             <span>Ana Sayfaya Dön</span>
@@ -120,7 +102,7 @@ const SubscriberPanel = () => {
             ))}
           </nav>
 
-          <div className="p-4 border-t border-white/5">
+          <div className="p-4">
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-2 px-4 py-2 text-red-500 hover:bg-white/5 rounded-lg transition-colors"
@@ -137,10 +119,14 @@ const SubscriberPanel = () => {
             {/* Her bölüm için içerik */}
             {activeSection === 'calculator' ? (
               <BordroHesaplama />
+            ) : activeSection === 'headhunter' ? (
+              <HeadHunter />
+            ) : activeSection === 'askexpert' ? (
+              <AskExpert />
             ) : (
               <div className="bg-black/50 rounded-xl p-6 backdrop-blur-sm border border-white/5">
                 <h2 className="text-xl font-semibold mb-4">
-                  {menuItems.find(item => item.id === activeSection)?.title || 'Ana Sayfa'}
+                  {menuItems.find(item => item.id === activeSection)?.title || 'Head Hunter'}
                 </h2>
                 <p className="text-gray-400">Bu bölüm yakında eklenecek...</p>
               </div>
