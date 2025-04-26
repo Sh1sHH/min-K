@@ -210,7 +210,7 @@ const BlogDetail = () => {
 
           {/* Featured Image */}
           <motion.div 
-            className="mt-8 rounded-3xl overflow-hidden shadow-xl"
+            className="mt-8 rounded-3xl overflow-hidden shadow-xl relative aspect-[16/9] w-full"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -218,7 +218,7 @@ const BlogDetail = () => {
             <img
               src={post.image}
               alt={post.title}
-              className="w-full h-[400px] object-cover"
+              className="absolute inset-0 w-full h-full object-contain bg-white/5 backdrop-blur-sm"
             />
           </motion.div>
 
