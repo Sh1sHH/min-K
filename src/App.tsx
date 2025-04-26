@@ -19,12 +19,13 @@ import BlogPage from '@/pages/BlogPage';
 import BlogDetail from '@/pages/BlogDetail';
 import SubscriberPanel from '@/pages/SubscriberPanel';
 import NotFound from '@/pages/NotFound';
+import Profile from '@/components/Profile';
 
 function App() {
   const location = useLocation();
   const isAdminRoute = location.pathname === '/admin';
   const isComponentDemo = location.pathname === '/components';
-  const isPanel = location.pathname === '/premium' || location.pathname === '/admin';
+  const isPanel = location.pathname === '/premium' || location.pathname === '/admin' || location.pathname === '/profile';
 
   const pricingPlans = [
     {
@@ -128,6 +129,7 @@ function App() {
             <Route path="/components" element={<ComponentDemo />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/blog/:slug" element={<BlogDetail />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/" element={
               <>
                 <Hero />
