@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import RichTextEditor from './RichTextEditor';
 import { BlogPost, CATEGORIES, generateSlug } from '@/utils/blogHelpers';
 import { Timestamp } from 'firebase/firestore';
-import { storage } from '@/lib/firebase';
+import { storage } from '@/config/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface FormState {

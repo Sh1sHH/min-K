@@ -47,7 +47,7 @@ const smartFormat = (input: string): string => {
 
   // Türkçe formatta göster
   return number.toLocaleString('tr-TR', { 
-    minimumFractionDigits: 2, 
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2 
   });
 };
@@ -274,18 +274,18 @@ const BordroHesaplama = () => {
         {/* Çalışan Tipi Seçimi */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-white/70">Çalışan Tipi</label>
-          <div className="flex gap-4 p-1 bg-white/5 rounded-lg w-fit">
-            <button
+        <div className="flex gap-4 p-1 bg-white/5 rounded-lg w-fit">
+          <button
               onClick={() => setCalisanTipi('normal')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                 calisanTipi === 'normal'
-                  ? 'bg-blue-500/20 text-blue-400'
-                  : 'text-white/60 hover:text-white hover:bg-white/5'
-              }`}
-            >
+                ? 'bg-blue-500/20 text-blue-400'
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
+          >
               Normal
-            </button>
-            <button
+          </button>
+          <button
               onClick={() => setCalisanTipi('emekli')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                 calisanTipi === 'emekli'
@@ -306,14 +306,14 @@ const BordroHesaplama = () => {
               <button
                 key={derece}
                 onClick={() => setVergiDerece(derece as 1 | 2 | 3 | 4)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                   vergiDerece === derece
-                    ? 'bg-blue-500/20 text-blue-400'
-                    : 'text-white/60 hover:text-white hover:bg-white/5'
-                }`}
-              >
+                ? 'bg-blue-500/20 text-blue-400'
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
+          >
                 {derece}. Derece
-              </button>
+          </button>
             ))}
           </div>
           <p className="text-xs text-white/40">

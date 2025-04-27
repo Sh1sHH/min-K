@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { updateProfile } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { firestore as db, auth } from '@/lib/firebase';
+import { firestore as db, auth } from '@/config/firebase';
 
 interface AuthModalProps {
   isOpen: boolean;

@@ -11,7 +11,7 @@ import {
   sendPasswordResetEmail,
   sendEmailVerification
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/config/firebase';
 
 interface AuthContextType {
   currentUser: User | null;

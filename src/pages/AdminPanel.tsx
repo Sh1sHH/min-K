@@ -49,7 +49,7 @@ const AdminPanel = () => {
   const [users, setUsers] = useState<UserRole[]>([]);
   const [activeSection, setActiveSection] = useState('users');
   const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const auth = getAuth();
 
   // Sol menü öğeleri

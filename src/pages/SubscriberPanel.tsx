@@ -27,14 +27,14 @@ const SubscriberPanel = () => {
   const { currentUser, isSubscriber } = useAuth();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('calculator');
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const auth = getAuth();
 
   // Menü öğeleri
   const menuItems: MenuItem[] = [
     { id: 'calculator', title: 'Bordro Hesaplama', icon: <Calculator size={20} /> },
     { id: 'headhunter', title: 'Head Hunter', icon: <Users size={20} /> },
-    { id: 'askexpert', title: 'Bir Bilene Sor', icon: <MessageSquare size={20} /> }
+    { id: 'askexpert', title: 'İKyardım Hattı', icon: <MessageSquare size={20} /> }
   ];
 
   // Kullanıcı ve abone kontrolü
