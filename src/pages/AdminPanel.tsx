@@ -7,11 +7,12 @@ import { toast } from 'sonner';
 import {
   Users, FileText, Settings, BarChart3, Calculator, 
   FileBox, MessageSquare, CreditCard, PieChart, Brain,
-  LogOut, Home, Code2, Blocks, Trash2
+  LogOut, Home, Code2, Blocks, Trash2, ChevronRight
 } from 'lucide-react';
 import BlogManagement from '@/components/admin/BlogManagement';
 import ApiDocs from './ApiDocs';
 import ComponentDemo from './ComponentDemo';
+import { cn } from '@/lib/utils';
 
 interface UserRole {
   email: string;
@@ -48,6 +49,7 @@ const AdminPanel = () => {
   const [users, setUsers] = useState<UserRole[]>([]);
   const [activeSection, setActiveSection] = useState('users');
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [isExpanded, setIsExpanded] = useState(false);
   const auth = getAuth();
 
   // Sol menü öğeleri
@@ -323,48 +325,87 @@ const AdminPanel = () => {
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white">
       <div className="flex h-screen">
-        {/* Sol Menü */}
-        <div className="w-64 bg-black/50 backdrop-blur-sm border-r border-white/5 p-4 flex flex-col">
-          <div className="flex items-center gap-2 mb-8">
-          {/*<img src="/logo.svg" alt="minİK" className="w-8 h-8" />*/}
-            <h1 className="text-xl font-semibold">Admin Panel</h1>
+        {/* Sol Menü - Küçük Versiyon */}
+        <div 
+          className={cn(
+            "bg-black/50 backdrop-blur-sm border-r border-white/5 flex flex-col transition-all duration-300",
+            isExpanded ? "w-64" : "w-16"
+          )}
+        >
+          {/* Logo ve Başlık */}
+          <div className={cn(
+            "p-4 flex items-center gap-2 mb-4",
+            isExpanded ? "justify-between" : "justify-center"
+          )}>
+            {isExpanded && <h1 className="text-xl font-semibold">Admin Panel</h1>}
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className={cn(
+                "p-1.5 rounded-lg hover:bg-white/5 transition-all",
+                isExpanded ? "ml-auto" : "mx-auto"
+              )}
+            >
+              <ChevronRight className={cn(
+                "w-5 h-5 transition-transform",
+                isExpanded ? "rotate-180" : "rotate-0"
+              )} />
+            </button>
           </div>
 
           {/* Ana Sayfaya Dönüş */}
           <Link 
             to="/"
-            className="flex items-center gap-2 px-4 py-3 text-gray-300 hover:bg-white/5 rounded-lg transition-colors mb-4"
+            className={cn(
+              "flex items-center gap-2 text-gray-300 hover:bg-white/5 rounded-lg transition-colors mb-4",
+              isExpanded ? "mx-2 px-4 py-3" : "mx-auto p-3"
+            )}
+            title="Ana Sayfaya Dön"
           >
             <Home className="w-5 h-5" />
-            <span>Ana Sayfaya Dön</span>
+            {isExpanded && <span>Ana Sayfaya Dön</span>}
           </Link>
 
+          {/* Menü Öğeleri */}
           <nav className="space-y-1 flex-1">
             {menuItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setActiveSection(item.id)}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
+                className={cn(
+                  "flex items-center transition-colors",
+                  isExpanded ? "w-full px-4 py-3 justify-between" : "mx-auto p-3",
                   activeSection === item.id 
                     ? 'bg-purple-600 text-white' 
                     : 'hover:bg-white/5 text-gray-300'
-                }`}
+                )}
+                title={!isExpanded ? item.title : undefined}
               >
-                <div className="flex items-center gap-3">
+                <div className={cn(
+                  "flex items-center",
+                  isExpanded ? "gap-3" : "justify-center"
+                )}>
                   {item.icon}
-                  <span>{item.title}</span>
+                  {isExpanded && <span>{item.title}</span>}
                 </div>
               </button>
             ))}
           </nav>
 
-          <div className="mt-auto pt-4 border-t border-white/5">
+          {/* Çıkış Butonu */}
+          <div className={cn(
+            "border-t border-white/5",
+            isExpanded ? "p-4" : "p-2"
+          )}>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-2 px-4 py-2 text-red-500 hover:bg-white/5 rounded-lg transition-colors"
+              className={cn(
+                "flex items-center gap-2 text-red-500 hover:bg-white/5 rounded-lg transition-colors",
+                isExpanded ? "w-full px-4 py-2" : "mx-auto p-2"
+              )}
+              title={!isExpanded ? "Çıkış Yap" : undefined}
             >
               <LogOut className="w-4 h-4" />
-              <span>Çıkış Yap</span>
+              {isExpanded && <span>Çıkış Yap</span>}
             </button>
           </div>
         </div>
