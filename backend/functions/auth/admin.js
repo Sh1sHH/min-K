@@ -232,4 +232,52 @@ exports.setUserPremium = functions.https.onRequest((req, res) => {
       res.status(500).json({ error: 'Internal server error' });
     }
   });
-}); 
+});
+
+// Remove premium role
+exports.removeUserPremium = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    if (req.method === 'OPTIONS') {
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.status(204).send('');
+      return;
+    }
+
+    try {
+      res.set('Access-Control-Allow-Origin', '*'); // <<< Bunu eklemen gerekiyor!
+      
+      if (!req.headers.authorization?.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const idToken = req.headers.authorization.split('Bearer ')[1];
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      
+      if (!await isUserAdmin(decodedToken.uid)) {
+        return res.status(403).json({ error: 'Admin yetkisi gerekli' });
+      }
+
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: 'Email adresi gerekli' });
+      }
+
+      const targetUser = await admin.auth().getUserByEmail(email);
+      const currentClaims = targetUser.customClaims || {};
+      
+      const { premium, ...remainingClaims } = currentClaims;
+      await admin.auth().setCustomUserClaims(targetUser.uid, remainingClaims);
+
+      res.json({
+        success: true,
+        message: `${email} adresinin premium üyeliği kaldırıldı`
+      });
+    } catch (error) {
+      console.error('Premium üyelik kaldırma hatası:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+});
+

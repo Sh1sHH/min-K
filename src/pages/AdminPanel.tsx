@@ -62,14 +62,7 @@ const AdminPanel = () => {
     { id: 'blog', title: 'Blog Yönetimi', icon: <FileText className="w-5 h-5" /> },
     { id: 'api', title: 'API Dokümantasyonu', icon: <Code2 className="w-5 h-5" /> },
     { id: 'components', title: 'UI Components', icon: <Blocks className="w-5 h-5" /> },
-    { id: 'calculator', title: 'Hesaplama Araçları', icon: <Calculator className="w-5 h-5" /> },
-    { id: 'documents', title: 'Dosya Yönetimi', icon: <FileBox className="w-5 h-5" /> },
-    { id: 'crm', title: 'Soru-Cevap', icon: <MessageSquare className="w-5 h-5" /> },
-    { id: 'ikyardim', title: 'İKyardım Hattı', icon: <HelpCircle className="w-5 h-5" /> },
-    { id: 'billing', title: 'Fatura/Abonelik', icon: <CreditCard className="w-5 h-5" /> },
-    { id: 'feedback', title: 'Geri Bildirim', icon: <PieChart className="w-5 h-5" /> },
-    { id: 'ai', title: 'AI Tavsiyeler', icon: <Brain className="w-5 h-5" /> },
-    { id: 'settings', title: 'Ayarlar', icon: <Settings className="w-5 h-5" /> }
+    { id: 'ikyardim', title: 'İKyardım Hattı', icon: <MessageSquare className="w-5 h-5" /> }
   ];
 
   // Kullanıcı ve admin kontrolü
@@ -321,6 +314,32 @@ const AdminPanel = () => {
     }
   };
 
+  const handleRemovePremium = async (email: string) => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const response = await fetch('https://us-central1-minik-a61c5.cloudfunctions.net/removeUserPremium', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Premium üyelik kaldırılamadı');
+      }
+
+      fetchAllUsers();
+      toast.success(data.message || 'Premium üyelik rolü başarıyla kaldırıldı');
+    } catch (error: any) {
+      console.error('Error removing premium role:', error);
+      toast.error(error.message || 'Premium üyelik rolü kaldırılırken bir hata oluştu');
+    }
+  };
+
   // Kullanıcı girişi yoksa veya admin değilse içeriği gösterme
   if (!currentUser || !isAdmin) {
     return null;
@@ -565,6 +584,17 @@ const AdminPanel = () => {
                               <span className="text-gray-400 text-sm">
                                 Son giriş: {new Date(user.lastSignIn).toLocaleDateString('tr-TR')}
                               </span>
+                              <button
+                                onClick={() => {
+                                  if (window.confirm(`${user.email} adresinin premium üyeliğini kaldırmak istediğinize emin misiniz?`)) {
+                                    handleRemovePremium(user.email);
+                                  }
+                                }}
+                                className="text-red-400 hover:text-red-300 transition-colors"
+                                title="Premium üyeliği kaldır"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
                           </div>
                         ))}

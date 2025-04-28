@@ -22,3 +22,4 @@ exports.createInitialAdmin = require('./auth/admin').createInitialAdmin;
 exports.listAdmins = require('./auth/admin').listAdmins;
 exports.listAllUsers = require('./auth/admin').listAllUsers;
 exports.setUserPremium = require('./auth/admin').setUserPremium;
+exports.removeUserPremium = require('./auth/admin').removeUserPremium;

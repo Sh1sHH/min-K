@@ -9,6 +9,10 @@
 - Backend: İKyardım Hattı için yeni koleksiyonlar eklendi:
   - `ikQuestions`: Kullanıcı sorularını saklayan koleksiyon
   - `ikAnswers`: Uzman cevaplarını saklayan koleksiyon
+- Admin paneline premium üyelik kaldırma özelliği eklendi
+  - Premium üyelerin listelendiği bölümde silme butonu eklendi
+  - Premium üyeliği kaldırma işlemi için onay penceresi eklendi
+  - Başarılı/başarısız işlem bildirimleri eklendi
 
 ### Changed
 - Navbar'da `isSubscriber` yerine `isPremium` kullanımına geçildi
@@ -25,6 +29,10 @@
   - Premium kullanıcılar için yeni erişim kuralları
   - İK soruları için CRUD operasyonları kuralları
   - Dosya yükleme izinleri düzenlendi
+- Admin Panel sidebar menüsü sadeleştirildi:
+  - Gereksiz menü öğeleri kaldırıldı
+  - Sadece aktif kullanılan özellikler bırakıldı
+  - Kaldırılan öğeler: Hesaplama Araçları, Dosya Yönetimi, Soru-Cevap, Fatura/Abonelik, Geri Bildirim, AI Tavsiyeler, Ayarlar
 
 ### Fixed
 - Premium Panel erişim kontrolü düzeltildi
@@ -46,6 +54,14 @@
 - Backend: Eski koleksiyonlar ve alanlar kaldırıldı:
   - `subscribers` koleksiyonu silindi
   - Kullanıcı dokümanlarından `subscriberType` alanı kaldırıldı
+- Admin Panel'den kaldırılan özellikler:
+  - Hesaplama Araçları modülü
+  - Dosya Yönetimi sistemi
+  - Soru-Cevap modülü
+  - Fatura/Abonelik yönetimi
+  - Geri Bildirim sistemi
+  - AI Tavsiyeler özelliği
+  - Ayarlar sayfası
 
 ### Technical Details
 - `IK_CATEGORIES` için özel tip tanımlaması eklendi
