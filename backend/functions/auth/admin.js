@@ -198,8 +198,8 @@ exports.listAllUsers = functions.https.onRequest((req, res) => {
   });
 });
 
-// Set subscriber role
-exports.setSubscriberRole = functions.https.onRequest((req, res) => {
+// Set premium role
+exports.setUserPremium = functions.https.onRequest((req, res) => {
   return cors(req, res, async () => {
     try {
       if (!req.headers.authorization?.startsWith('Bearer ')) {
@@ -223,12 +223,12 @@ exports.setSubscriberRole = functions.https.onRequest((req, res) => {
       
       await admin.auth().setCustomUserClaims(targetUser.uid, {
         ...currentClaims,
-        subscriber: true
+        premium: true
       });
 
-      res.json({ message: `${email} adresine abone rolü verildi` });
+      res.json({ message: `${email} adresine premium üyelik verildi` });
     } catch (error) {
-      console.error('Abone rolü verme hatası:', error);
+      console.error('Premium üyelik verme hatası:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   });

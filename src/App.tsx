@@ -17,7 +17,7 @@ import Blog from './pages/Blog';
 import BlogManagement from './components/admin/BlogManagement';
 import BlogPage from '@/pages/BlogPage';
 import BlogDetail from '@/pages/BlogDetail';
-import SubscriberPanel from '@/pages/SubscriberPanel';
+import PremiumPanel from '@/pages/PremiumPanel';
 import NotFound from '@/pages/NotFound';
 import Profile from '@/components/Profile';
 
@@ -125,7 +125,7 @@ function App() {
           {!isPanel && <Navbar />}
           <Routes>
             <Route path="/admin" element={<AdminPanel />} />
-            <Route path="/premium" element={<SubscriberPanel />} />
+            <Route path="/premium" element={<PremiumPanel />} />
             <Route path="/components" element={<ComponentDemo />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/blog/:slug" element={<BlogDetail />} />

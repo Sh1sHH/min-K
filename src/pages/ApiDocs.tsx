@@ -171,10 +171,10 @@ const ApiDocs: React.FC = () => {
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-2">POST /setSubscriberRole</h3>
-            <p className="text-gray-600 mb-2">Bir kullanıcıya abone yetkisi verir. (Admin yetkisi gerekli)</p>
+            <h3 className="text-xl font-semibold mb-2">POST /setUserPremium</h3>
+            <p className="text-gray-600 mb-2">Bir kullanıcıya premium üyelik verir. (Admin yetkisi gerekli)</p>
             <div className="bg-gray-50 p-4 rounded">
-              <p className="font-mono">POST https://setsubscriberole-7fl3duvywa-uc.a.run.app</p>
+              <p className="font-mono">POST https://setuserpremium-7fl3duvywa-uc.a.run.app</p>
               <p className="mt-2 text-sm text-gray-600">Body:</p>
               <pre className="mt-1 bg-gray-100 p-2 rounded">
 {`{
@@ -318,7 +318,7 @@ function App() {
       {!isPanel && <Navbar />}
       <Routes>
         <Route path="/admin" element={<AdminPanel />} />
-        <Route path="/premium" element={<SubscriberPanel />} />
+        <Route path="/premium" element={<PremiumPanel />} />
         {/* ... diğer rotalar ... */}
       </Routes>
     </>

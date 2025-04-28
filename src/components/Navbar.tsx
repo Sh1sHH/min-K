@@ -13,7 +13,7 @@ const Navbar = () => {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const { currentUser, isAdmin, isSubscriber, logout } = useAuth();
+  const { currentUser, isAdmin, isPremium, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
@@ -201,14 +201,14 @@ const Navbar = () => {
                           </div>
                         </Link>
 
-                        {isSubscriber && (
+                        {isPremium && (
                           <Link
                             to="/premium"
                             className="block px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors"
                             onClick={() => setShowUserMenu(false)}
                           >
                             <div className="flex items-center gap-2">
-                              <Zap className="w-4 h-4 text-yellow-400" />
+                              <Zap className="w-4 h-4" />
                               <span>Premium Panel</span>
                             </div>
                           </Link>

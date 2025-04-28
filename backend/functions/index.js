@@ -21,4 +21,4 @@ exports.removeAdminRole = require('./auth/admin').removeAdminRole;
 exports.createInitialAdmin = require('./auth/admin').createInitialAdmin;
 exports.listAdmins = require('./auth/admin').listAdmins;
 exports.listAllUsers = require('./auth/admin').listAllUsers;
-exports.setSubscriberRole = require('./auth/admin').setSubscriberRole;
+exports.setUserPremium = require('./auth/admin').setUserPremium;

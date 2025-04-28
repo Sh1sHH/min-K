@@ -17,7 +17,7 @@ interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
   isAdmin: boolean;
-  isSubscriber: boolean;
+  isPremium: boolean;
   signUp: (email: string, password: string) => Promise<UserCredential>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isSubscriber, setIsSubscriber] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
 
   const signUp = async (email: string, password: string) => {
     try {
@@ -103,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Token'ı al ve custom claims'i kontrol et
       const idTokenResult = await user.getIdTokenResult();
       setIsAdmin(!!idTokenResult.claims.admin || !!idTokenResult.claims.superAdmin);
-      setIsSubscriber(!!idTokenResult.claims.subscriber);
+      setIsPremium(!!idTokenResult.claims.premium);
       
     } catch (error) {
       console.error('Google ile giriş hatası:', error);
@@ -119,10 +119,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Kullanıcı oturum açtığında custom claims'i kontrol et
         const idTokenResult = await user.getIdTokenResult();
         setIsAdmin(!!idTokenResult.claims.admin || !!idTokenResult.claims.superAdmin);
-        setIsSubscriber(!!idTokenResult.claims.subscriber);
+        setIsPremium(!!idTokenResult.claims.premium);
       } else {
         setIsAdmin(false);
-        setIsSubscriber(false);
+        setIsPremium(false);
       }
       
       setLoading(false);
@@ -135,7 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     currentUser,
     loading,
     isAdmin,
-    isSubscriber,
+    isPremium,
     signUp,
     login,
     logout,

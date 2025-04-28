@@ -23,8 +23,8 @@ interface MenuItem {
   divider?: boolean;
 }
 
-const SubscriberPanel = () => {
-  const { currentUser, isSubscriber } = useAuth();
+const PremiumPanel = () => {
+  const { currentUser, isPremium } = useAuth();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('calculator');
   const [isExpanded, setIsExpanded] = useState(true);
@@ -37,7 +37,7 @@ const SubscriberPanel = () => {
     { id: 'askexpert', title: 'İKyardım Hattı', icon: <MessageSquare size={20} /> }
   ];
 
-  // Kullanıcı ve abone kontrolü
+  // Kullanıcı ve premium üyelik kontrolü
   useEffect(() => {
     if (!currentUser) {
       navigate('/');
@@ -45,12 +45,12 @@ const SubscriberPanel = () => {
       return;
     }
 
-    if (!isSubscriber) {
+    if (!isPremium) {
       navigate('/');
-      toast.error('Bu sayfaya erişim için abone olmanız gerekiyor');
+      toast.error('Bu sayfaya erişim için premium üye olmanız gerekiyor');
       return;
     }
-  }, [currentUser, isSubscriber, navigate]);
+  }, [currentUser, isPremium, navigate]);
 
   const handleLogout = async () => {
     try {
@@ -61,8 +61,8 @@ const SubscriberPanel = () => {
     }
   };
 
-  // Kullanıcı girişi yoksa veya abone değilse içeriği gösterme
-  if (!currentUser || !isSubscriber) {
+  // Kullanıcı girişi yoksa veya premium değilse içeriği gösterme
+  if (!currentUser || !isPremium) {
     return null;
   }
 
@@ -176,4 +176,4 @@ const SubscriberPanel = () => {
   );
 };
 
-export default SubscriberPanel; 
+export default PremiumPanel; 

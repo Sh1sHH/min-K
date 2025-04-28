@@ -15,6 +15,10 @@ service cloud.firestore {
         (request.auth.token.admin == true || request.auth.token.superAdmin == true);
     }
 
+    function hasPremiumRole() {
+      return isAuthenticated() && request.auth.token.premium == true;
+    }
+
     // Users collection rules
     match /users/{userId} {
       allow read: if isAuthenticated();
@@ -27,6 +31,21 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow write: if isOwner(userId);
       }
+    }
+
+    // IK Questions collection rules
+    match /ikQuestions/{questionId} {
+      allow read: if hasAdminRole() || 
+        (hasPremiumRole() && request.auth.uid == resource.data.userId);
+      allow create: if hasPremiumRole();
+      allow update, delete: if hasAdminRole();
+    }
+
+    // IK Answers collection rules
+    match /ikAnswers/{answerId} {
+      allow read: if hasAdminRole() || 
+        (hasPremiumRole() && request.auth.uid == get(/databases/$(database)/documents/ikQuestions/$(resource.data.questionId)).data.userId);
+      allow create, update, delete: if hasAdminRole();
     }
 
     // Public collections (if needed)

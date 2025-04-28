@@ -7,11 +7,13 @@ import { toast } from 'sonner';
 import {
   Users, FileText, Settings, BarChart3, Calculator, 
   FileBox, MessageSquare, CreditCard, PieChart, Brain,
-  LogOut, Home, Code2, Blocks, Trash2, ChevronRight
+  LogOut, Home, Code2, Blocks, Trash2, ChevronRight,
+  HelpCircle
 } from 'lucide-react';
 import BlogManagement from '@/components/admin/BlogManagement';
 import ApiDocs from './ApiDocs';
 import ComponentDemo from './ComponentDemo';
+import IKHelpQuestions from './admin/IKHelpQuestions';
 import { cn } from '@/lib/utils';
 
 interface UserRole {
@@ -38,6 +40,7 @@ interface User {
     admin?: boolean;
     superAdmin?: boolean;
     subscriber?: boolean;
+    premium?: boolean;
   };
 }
 
@@ -62,6 +65,7 @@ const AdminPanel = () => {
     { id: 'calculator', title: 'Hesaplama Araçları', icon: <Calculator className="w-5 h-5" /> },
     { id: 'documents', title: 'Dosya Yönetimi', icon: <FileBox className="w-5 h-5" /> },
     { id: 'crm', title: 'Soru-Cevap', icon: <MessageSquare className="w-5 h-5" /> },
+    { id: 'ikyardim', title: 'İKyardım Hattı', icon: <HelpCircle className="w-5 h-5" /> },
     { id: 'billing', title: 'Fatura/Abonelik', icon: <CreditCard className="w-5 h-5" /> },
     { id: 'feedback', title: 'Geri Bildirim', icon: <PieChart className="w-5 h-5" /> },
     { id: 'ai', title: 'AI Tavsiyeler', icon: <Brain className="w-5 h-5" /> },
@@ -296,7 +300,7 @@ const AdminPanel = () => {
   const handleSetSubscriber = async (email: string) => {
     try {
       const token = await auth.currentUser?.getIdToken();
-      const response = await fetch('https://us-central1-minik-a61c5.cloudfunctions.net/setSubscriberRole', {
+      const response = await fetch('https://us-central1-minik-a61c5.cloudfunctions.net/setUserPremium', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -306,14 +310,14 @@ const AdminPanel = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to set subscriber role');
+        throw new Error('Failed to set premium role');
       }
 
       fetchAllUsers();
-      toast.success('Abone rolü başarıyla verildi');
+      toast.success('Premium üyelik rolü başarıyla verildi');
     } catch (error) {
-      console.error('Error setting subscriber role:', error);
-      toast.error('Abone rolü verilirken bir hata oluştu');
+      console.error('Error setting premium role:', error);
+      toast.error('Premium üyelik rolü verilirken bir hata oluştu');
     }
   };
 
@@ -445,8 +449,8 @@ const AdminPanel = () => {
                                 <span className="text-yellow-400">Süper Admin</span>
                               ) : user.customClaims?.admin ? (
                                 <span className="text-blue-400">Admin</span>
-                              ) : user.customClaims?.subscriber ? (
-                                <span className="text-green-400">Abone</span>
+                              ) : user.customClaims?.premium ? (
+                                <span className="text-green-400">Premium Üye</span>
                               ) : (
                                 <span className="text-gray-400">Kullanıcı</span>
                               )}
@@ -468,7 +472,7 @@ const AdminPanel = () => {
                                       onClick={() => handleSetSubscriber(user.email)}
                                       className="bg-green-500/10 text-green-400 px-3 py-1 rounded hover:bg-green-500/20 transition-colors"
                                     >
-                                      Abone Yap
+                                      Premium Yap
                                     </button>
                                     {user.customClaims?.admin && (
                                       <button
@@ -544,10 +548,10 @@ const AdminPanel = () => {
 
                   {/* Mevcut Aboneler */}
                   <div className="mt-8">
-                    <h3 className="text-lg font-medium text-gray-300 mb-4">Mevcut Aboneler</h3>
+                    <h3 className="text-lg font-medium text-gray-300 mb-4">Premium Üyeler</h3>
                     <div className="bg-black/30 rounded-lg">
                       {allUsers
-                        .filter(user => user.customClaims?.subscriber && !user.customClaims?.admin && !user.customClaims?.superAdmin)
+                        .filter(user => user.customClaims?.premium && !user.customClaims?.admin && !user.customClaims?.superAdmin)
                         .map((user) => (
                           <div key={user.uid} className="flex items-center justify-between py-3 px-4 border-b border-white/5">
                             <div className="flex items-center gap-2">
@@ -557,7 +561,7 @@ const AdminPanel = () => {
                               <span>{user.email}</span>
                             </div>
                             <div className="flex items-center gap-4">
-                              <span className="text-green-400">Abone</span>
+                              <span className="text-green-400">Premium Üye</span>
                               <span className="text-gray-400 text-sm">
                                 Son giriş: {new Date(user.lastSignIn).toLocaleDateString('tr-TR')}
                               </span>
@@ -572,7 +576,7 @@ const AdminPanel = () => {
                     <h3 className="text-lg font-medium text-gray-300 mb-4">Yetkisiz Kullanıcılar</h3>
                     <div className="bg-black/30 rounded-lg">
                       {allUsers
-                        .filter(user => !user.customClaims?.subscriber && !user.customClaims?.admin && !user.customClaims?.superAdmin)
+                        .filter(user => !user.customClaims?.premium && !user.customClaims?.admin && !user.customClaims?.superAdmin)
                         .map((user) => (
                           <div key={user.uid} className="flex items-center justify-between py-3 px-4 border-b border-white/5">
                             <div className="flex items-center gap-2">
@@ -613,10 +617,17 @@ const AdminPanel = () => {
               </div>
             )}
 
+            {activeSection === 'ikyardim' && (
+              <div>
+                <IKHelpQuestions />
+              </div>
+            )}
+
             {activeSection !== 'users' && 
              activeSection !== 'blog' && 
              activeSection !== 'api' && 
-             activeSection !== 'components' && (
+             activeSection !== 'components' &&
+             activeSection !== 'ikyardim' && (
               <div className="bg-black/50 rounded-xl p-6 backdrop-blur-sm border border-white/5">
                 <h2 className="text-xl font-semibold mb-4">{activeSection} Yakında</h2>
                 <p className="text-gray-400">Bu bölüm yakında eklenecek...</p>
