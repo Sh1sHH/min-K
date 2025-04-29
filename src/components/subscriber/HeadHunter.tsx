@@ -11,10 +11,12 @@ interface CV {
   content?: string;
   aiAnalysis?: string;
   score?: number;
+  error?: string;
 }
 
-const MAX_CONTENT_LENGTH = 2000;
+const MAX_CONTENT_LENGTH = 8000; // Increased for GPT-4 Turbo
 const MAX_CVS = 5;
+const RATE_LIMIT_DELAY = 1000; // 1 second delay between API calls
 
 const CVSlot = ({ 
   cv, 
@@ -210,52 +212,114 @@ const HeadHunter = () => {
 
   // Her CV için ayrı analiz yapma
   const analyzeCV = async (cv: CV, requirements: string, apiKey: string): Promise<CV> => {
-    const prompt = `CV'yi iş gereksinimleriyle karşılaştır. Sadece aşağıdaki formatta yanıt ver:
+    const systemPrompt = `Sen deneyimli bir İK uzmanısın. CV'leri iş gereksinimleriyle karşılaştırarak detaylı analiz yapıyorsun.
+Analizini yaparken şu kriterlere dikkat et:
+1. Teknik yetenekler ve deneyim uyumu
+2. Soft skills ve kültürel uyum
+3. Eğitim ve sertifikalar
+4. İş deneyimi süresi ve kalitesi
+5. Projelerdeki başarılar ve sorumluluklar`;
 
-Gereksinimler: ${requirements}
+    const userPrompt = `CV'yi aşağıdaki iş gereksinimleriyle karşılaştır:
 
-CV: ${cv.content}
+${requirements}
 
-Yanıtı bu formatta ver (başka bir şey ekleme):
+CV İçeriği:
+${cv.content}
+
+Yanıtı kesinlikle bu formatta ver (başka bir şey ekleme):
 PUAN: [0-100]
+
 ÖZET: [Bir cümle ile uygunluk]
+
 ARTILARI: [Maddeler halinde, maksimum 3 madde]
-EKSİLERİ: [Maddeler halinde, maksimum 3 madde]`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: "gpt-3.5-turbo",
-        messages: [{
-          role: "user",
-          content: prompt
-        }],
-        temperature: 0.3,
-        max_tokens: 300
-      })
-    });
+EKSİLERİ: [Maddeler halinde, maksimum 3 madde]
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'API çağrısı başarısız oldu');
+DETAYLI DEĞERLENDİRME: [2-3 paragraf detaylı analiz]`;
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4-1106-preview",
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt
+            },
+            {
+              role: "user",
+              content: userPrompt
+            }
+          ],
+          temperature: 0.2,
+          max_tokens: 1000,
+          stream: true // Enable streaming
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'API çağrısı başarısız oldu');
+      }
+
+      const reader = response.body?.getReader();
+      let analysisText = '';
+      let score = 0;
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          // Parse the streaming response
+          const chunk = new TextDecoder().decode(value);
+          const lines = chunk.split('\n');
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') break;
+              
+              try {
+                const parsed = JSON.parse(data);
+                const content = parsed.choices[0]?.delta?.content || '';
+                analysisText += content;
+
+                // Extract score if available
+                if (!score) {
+                  const scoreMatch = analysisText.match(/PUAN:\s*(\d+)/i);
+                  if (scoreMatch) {
+                    score = parseInt(scoreMatch[1]);
+                  }
+                }
+              } catch (e) {
+                console.error('Streaming parse error:', e);
+              }
+            }
+          }
+        }
+      }
+
+      return {
+        ...cv,
+        aiAnalysis: analysisText,
+        score: score || 0
+      };
+    } catch (error) {
+      console.error(`CV analiz hatası (${cv.file.name}):`, error);
+      return {
+        ...cv,
+        aiAnalysis: 'Analiz sırasında hata oluştu',
+        score: 0,
+        error: error instanceof Error ? error.message : 'Bilinmeyen hata'
+      };
     }
-
-    const data = await response.json();
-    const analysis = data.choices[0].message.content;
-
-    // Analiz metninden puanı çıkar
-    const scoreMatch = analysis.match(/PUAN:\s*(\d+)/i);
-    const score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
-
-    return {
-      ...cv,
-      aiAnalysis: analysis,
-      score
-    };
   };
 
   // Ana analiz fonksiyonu
@@ -277,15 +341,17 @@ EKSİLERİ: [Maddeler halinde, maksimum 3 madde]`;
           const analyzedCV = await analyzeCV(cv, requirements, apiKey);
           analyzedCVs.push(analyzedCV);
           
+          // Rate limiting between API calls
           if (cvs.indexOf(cv) !== cvs.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY));
           }
         } catch (error) {
           console.error(`CV analiz hatası (${cv.file.name}):`, error);
           analyzedCVs.push({
             ...cv,
             aiAnalysis: 'Analiz sırasında hata oluştu',
-            score: 0
+            score: 0,
+            error: error instanceof Error ? error.message : 'Bilinmeyen hata'
           });
         } finally {
           setAnalyzingCVIds(prev => prev.filter(id => id !== cv.id));
@@ -299,7 +365,12 @@ EKSİLERİ: [Maddeler halinde, maksimum 3 madde]`;
       );
       
       setResult(bestCV);
-      toast.success('CV analizi tamamlandı');
+
+      if (analyzedCVs.some(cv => cv.error)) {
+        toast.warning('Bazı CV\'ler analiz edilirken hata oluştu');
+      } else {
+        toast.success('CV analizi tamamlandı');
+      }
 
     } catch (error) {
       console.error('AI analiz hatası:', error);

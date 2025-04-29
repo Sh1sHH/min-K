@@ -199,36 +199,45 @@ const IKHelpForm: React.FC<IKHelpFormProps> = ({ onSuccess }) => {
           <div className="flex items-center gap-4">
             <Button
               type="button"
-              onClick={() => document.getElementById('file-upload')?.click()}
-              className="border border-white/10 text-white hover:bg-white/5"
+              onClick={() => document.getElementById('file-input')?.click()}
+              className="text-sm px-4 py-1.5 bg-black/30 border border-white/10 hover:bg-black/40 text-white"
               disabled={loading}
             >
               <Upload className="w-4 h-4 mr-2" />
               Dosya Seç
             </Button>
             <input
-              id="file-upload"
+              id="file-input"
               type="file"
-              className="hidden"
-              onChange={handleFileChange}
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
               multiple
+              onChange={handleFileChange}
+              className="hidden"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
               disabled={loading}
             />
-            <span className="text-sm text-gray-400">
+            <span className="text-xs text-gray-400">
               PDF, Word, Excel veya Görsel (max 5MB)
             </span>
           </div>
         </div>
       </div>
 
-      <Button
-        type="submit"
-        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-        disabled={loading}
-      >
-        {loading ? 'Gönderiliyor...' : 'Soruyu Gönder'}
-      </Button>
+      <div className="flex justify-end">
+        <Button
+          type="submit"
+          disabled={loading}
+          className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 px-4 py-1.5 text-sm min-w-[100px]"
+        >
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white/100" />
+              <span>Gönderiliyor</span>
+            </>
+          ) : (
+            <span>Gönder</span>
+          )}
+        </Button>
+      </div>
     </form>
   );
 };

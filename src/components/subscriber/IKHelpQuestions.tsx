@@ -374,9 +374,9 @@ const IKHelpQuestions = () => {
                                 <Button
                                   type="button"
                                   onClick={() => document.getElementById(`file-upload-${question.id}`)?.click()}
-                                  className="text-sm"
+                                  className="text-sm px-4"
                                 >
-                                  <Upload className="w-4 h-4 mr-1" />
+                                  <Upload className="w-4 h-4 mr-2" />
                                   Dosya Ekle
                                 </Button>
                                 <input
@@ -412,12 +412,25 @@ const IKHelpQuestions = () => {
                               )}
                             </div>
 
-                            <Button
-                              onClick={() => handleSubmitReply(question.id!)}
-                              disabled={replying || !replyContent.trim()}
-                            >
-                              {replying ? 'Gönderiliyor...' : 'Yanıtla'}
-                            </Button>
+                            <div className="flex items-center gap-3 mt-4">
+                              <Button
+                                onClick={() => handleSubmitReply(question.id!)}
+                                disabled={replying || !replyContent.trim()}
+                                className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 min-w-[100px] px-3 py-1.5 text-sm transition-all duration-200 ease-in-out"
+                              >
+                                {replying ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white/100" />
+                                    <span>Gönderiliyor</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <MessageSquare className="w-4 h-4" />
+                                    <span>Yanıtla</span>
+                                  </>
+                                )}
+                              </Button>
+                            </div>
                           </div>
                         )}
                       </div>

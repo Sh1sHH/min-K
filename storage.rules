@@ -18,6 +18,18 @@ service firebase.storage {
       return request.auth.token.premium == true;
     }
 
+    // Blog görselleri için kurallar
+    match /blog-images/{fileName} {
+      // Okuma kuralları - herkes okuyabilir
+      allow read: if true;
+
+      // Yazma kuralları - sadece admin yazabilir
+      allow write: if isAuthenticated() && hasAdminRole();
+
+      // Silme kuralları - sadece admin silebilir
+      allow delete: if isAuthenticated() && hasAdminRole();
+    }
+
     // IK Help dosyaları için kurallar
     match /ik-help/{fileName} {
       // Okuma kuralları

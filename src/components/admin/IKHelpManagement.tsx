@@ -494,20 +494,31 @@ const IKHelpManagement = () => {
                                   )}
                                 </div>
 
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 mt-4">
                                   <Button
                                     onClick={() => handleSubmitReply(question.id!)}
                                     disabled={replying || !replyContent.trim()}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 min-w-[120px] transition-all duration-200 ease-in-out"
                                   >
-                                    {replying ? 'Gönderiliyor...' : 'Yanıtla'}
+                                    {replying ? (
+                                      <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white/100" />
+                                        <span>Gönderiliyor</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <MessageSquare className="w-4 h-4" />
+                                        <span>Yanıtla</span>
+                                      </>
+                                    )}
                                   </Button>
 
                                   <Button
                                     onClick={() => handleMarkAsSolved(question.id!)}
-                                    variant="ghost"
-                                    className="border border-green-600 text-green-500 hover:bg-green-900/20"
+                                    className="border border-green-500/50 hover:border-green-500 text-green-500 hover:text-green-400 hover:bg-green-500/10 flex items-center gap-2 min-w-[160px] transition-all duration-200 ease-in-out"
                                   >
-                                    Çözüldü Olarak İşaretle
+                                    <CheckCircle className="w-4 h-4" />
+                                    <span>Çözüldü</span>
                                   </Button>
                                 </div>
                               </div>
