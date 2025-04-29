@@ -1,5 +1,72 @@
 # Changelog
 
+## [2025-04-29]
+
+### Added
+- Onaylanmamış hesaplar için otomatik email bildirimi sistemi eklendi:
+  - Kayıttan 4 dakika sonra otomatik uyarı emaili
+  - HTML ve text formatında email şablonu
+  - Hesap silinmeden önce son uyarı
+- Admin Panel'e gelişmiş arama ve filtreleme özellikleri eklendi:
+  - Email ve kullanıcı adına göre anlık arama
+  - Rol bazlı filtreleme (Admin, Premium, Normal Kullanıcı)
+  - Arama ve filtreleme kombinasyonu desteği
+- Admin Panel'e kullanıcı istatistikleri kartları eklendi:
+  - Toplam Kullanıcı Sayısı
+  - Admin Sayısı
+  - Premium Üye Sayısı
+  - Normal Kullanıcı Sayısı
+- Admin Panel'e modern UI/UX iyileştirmeleri:
+  - Kullanıcı profil kartları
+  - Rol etiketleri (badges)
+  - İşlem butonları için ikonlar ve tooltips
+  - Hover efektleri ve geçişler
+
+### Changed
+- Admin Panel kullanıcı yönetimi arayüzü yenilendi:
+  - Tablo tasarımı modernleştirildi
+  - Kullanıcı bilgileri tek sütunda birleştirildi
+  - Rol gösterimi badge sistemine geçirildi
+  - İşlem butonları yeniden tasarlandı
+- Yetki verme/alma butonları iyileştirildi:
+  - Koşullu buton gösterimi (kullanıcının mevcut rolüne göre)
+  - Admin Yap/Kaldır butonları güncellendi
+  - Premium Yap/Kaldır butonları güncellendi
+  - Her buton için ikon ve açıklama eklendi
+- Yeni Admin ekleme formu güncellendi:
+  - Modern input tasarımı
+  - İkon destekli buton
+  - Daha belirgin form alanı
+- Doğrulanmamış kullanıcı temizleme fonksiyonu basitleştirildi
+  - Email gönderme özelliği kaldırıldı
+  - Sadece 5 dakika sonra silme işlemi yapılıyor
+  - Kod optimize edildi
+
+### Fixed
+- Premium kullanıcılara "Premium Yap" butonu gösterilmesi sorunu giderildi
+- Admin Panel'de gereksiz tekrarlanan admin listesi kaldırıldı
+- Kullanıcı rollerinin doğru gösterilmemesi sorunu çözüldü
+- Yetki değişikliklerinde anlık UI güncellenmesi sağlandı
+- `index.js` dosyasındaki tekrarlanan export'lar düzeltildi
+- Firebase Functions yapılandırması iyileştirildi
+
+### Technical Details
+- Email bildirimi sistemi için Firebase Cloud Functions güncellendi:
+  - `deleteUnverifiedUsers` fonksiyonu geliştirildi
+  - Email gönderimi için Firestore mail collection entegrasyonu
+  - Zamanlama mantığı optimize edildi (4dk email, 5dk silme)
+- Arama ve filtreleme için yeni state yönetimi eklendi:
+  - `searchTerm` state'i
+  - `activeFilter` state'i
+  - Filtreleme mantığı optimize edildi
+- TypeScript tip iyileştirmeleri:
+  - Rol filtreleme için union type tanımı
+  - Arama fonksiyonu null check geliştirmesi
+- UI Bileşenleri:
+  - Conditional rendering optimizasyonları
+  - Tailwind sınıfları düzenlendi
+  - Responsive tasarım iyileştirmeleri
+
 ## [2025-04-28]
 
 ### Added

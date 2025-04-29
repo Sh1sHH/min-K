@@ -5,8 +5,26 @@ rules_version = '2';
 //    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
 service firebase.storage {
   match /b/{bucket}/o {
+    // Yetki kontrolleri
+    function isAdmin() {
+      return request.auth != null && (request.auth.token.admin == true || request.auth.token.superAdmin == true);
+    }
+    
+    function isPremium() {
+      return request.auth != null && request.auth.token.premium == true;
+    }
+
+    // İK Yardım Hattı dosya kuralları - Tam dosya yolu eşleşmesi
+    match /ik-help/{userId}/{fileName} {
+      // Premium üyeler ve adminler kendi dosyalarını yükleyebilir
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (isPremium() || isAdmin());
+    }
+
+    // Diğer tüm dosyalar için genel kurallar
     match /{allPaths=**} {
-      allow read, write: if false;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
     }
   }
 }

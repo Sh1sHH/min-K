@@ -4,12 +4,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getAuth, updateProfile, updateEmail, updatePassword } from 'firebase/auth';
 import { doc, getDoc, updateDoc, getFirestore } from 'firebase/firestore';
 import { toast } from 'sonner';
-import { User, Mail, Phone, Building, MapPin, Lock, Loader2, ArrowLeft, X, Check } from 'lucide-react';
+import { User, Mail, Phone, Building, MapPin, Lock, Loader2, ArrowLeft, X, Check, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import InputMask from 'react-input-mask';
 
 interface UserProfile {
-  displayName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
   company: string;
@@ -22,7 +26,8 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<UserProfile>({
-    displayName: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
     company: '',
@@ -45,8 +50,10 @@ const Profile = () => {
         const docSnap = await getDoc(userRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
+          const [firstName = '', lastName = ''] = (currentUser.displayName || '').split(' ');
           setProfile({
-            displayName: currentUser.displayName || '',
+            firstName,
+            lastName,
             email: currentUser.email || '',
             phone: data.phone || '',
             company: data.company || '',
@@ -79,7 +86,7 @@ const Profile = () => {
     try {
       // Firebase Auth profilini güncelle
       await updateProfile(currentUser, {
-        displayName: profile.displayName,
+        displayName: `${profile.firstName} ${profile.lastName}`.trim(),
       });
 
       // Email değiştiyse güncelle
@@ -131,8 +138,10 @@ const Profile = () => {
       const docSnap = await getDoc(userRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
+        const [firstName = '', lastName = ''] = (currentUser.displayName || '').split(' ');
         setProfile({
-          displayName: currentUser.displayName || '',
+          firstName,
+          lastName,
           email: currentUser.email || '',
           phone: data.phone || '',
           company: data.company || '',
@@ -144,94 +153,110 @@ const Profile = () => {
     }
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    // Sadece rakamları al
+    const numbers = value.replace(/\D/g, '');
+    
+    // Maksimum 11 rakam kontrolü
+    if (numbers.length > 11) return;
+    
+    // Her zaman (0 ile başlat
+    if (!value.startsWith('(0')) {
+      value = '(0' + numbers;
+    }
+    
+    setProfile(prev => ({ ...prev, phone: value }));
+  };
+
   if (!currentUser) {
     return null;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-3xl mx-auto">
-        {/* Geri Dön Butonu */}
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Geri Dön</span>
-        </button>
-
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200">
-          {/* Header */}
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                  <User className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Profil Bilgileri</h2>
-                  <p className="text-sm text-gray-500">{currentUser.email}</p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                {isEditing ? (
-                  <>
-                    <Button
-                      onClick={handleCancel}
-                      variant="outline"
-                      className="gap-2 px-4"
-                      disabled={loading}
-                    >
-                      <X className="w-4 h-4" />
-                      İptal
-                    </Button>
-                    <Button
-                      onClick={handleSave}
-                      className="bg-blue-600 hover:bg-blue-700 text-white gap-2 px-4"
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Check className="w-4 h-4" />
-                      )}
-                      Kaydet
-                    </Button>
-                  </>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Geri Dön</span>
+          </button>
+          {isEditing ? (
+            <div className="flex gap-3">
+              <Button
+                onClick={handleCancel}
+                variant="ghost"
+                className="gap-2"
+                disabled={loading}
+              >
+                <X className="w-4 h-4" />
+                İptal
+              </Button>
+              <Button
+                onClick={handleSave}
+                variant="default"
+                className="gap-2"
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <Button
-                    onClick={() => setIsEditing(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6"
-                  >
-                    Düzenle
-                  </Button>
+                  <Check className="w-4 h-4" />
                 )}
-              </div>
+                Kaydet
+              </Button>
             </div>
-          </div>
+          ) : (
+            <Button
+              onClick={() => setIsEditing(true)}
+              variant="default"
+              className="gap-2"
+            >
+              <UserCircle className="w-4 h-4" />
+              Profili Düzenle
+            </Button>
+          )}
+        </div>
 
-          {/* Profile Form */}
-          <div className="p-6 space-y-6">
-            {/* Ad Soyad */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Ad Soyad</label>
-              <div className="flex gap-3">
-                <User className="w-5 h-5 text-gray-400" />
-                <Input
-                  value={profile.displayName}
-                  onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
-                  disabled={!isEditing}
-                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Ad Soyad"
-                />
+        <div className="grid gap-6">
+          {/* Kişisel Bilgiler */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                <User className="w-5 h-5 text-blue-600" />
+                Kişisel Bilgiler
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Ad</label>
+                  <Input
+                    value={profile.firstName}
+                    onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
+                    disabled={!isEditing}
+                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Ad"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Soyad</label>
+                  <Input
+                    value={profile.lastName}
+                    onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
+                    disabled={!isEditing}
+                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Soyad"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Email */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">E-posta</label>
-              <div className="flex gap-3">
-                <Mail className="w-5 h-5 text-gray-400" />
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">E-posta</label>
                 <Input
                   type="email"
                   value={profile.email}
@@ -241,28 +266,57 @@ const Profile = () => {
                   placeholder="E-posta adresi"
                 />
               </div>
-            </div>
 
-            {/* Telefon */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Telefon</label>
-              <div className="flex gap-3">
-                <Phone className="w-5 h-5 text-gray-400" />
-                <Input
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Telefon</label>
+                <InputMask
+                  mask="(0999) 999 99 99"
+                  maskChar="_"
                   value={profile.phone}
-                  onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                  onChange={handlePhoneChange}
                   disabled={!isEditing}
-                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Telefon numarası"
-                />
+                  onFocus={(e) => {
+                    const input = e.target;
+                    if (!input.value) {
+                      input.value = '(0';
+                    }
+                    // Her zaman (0'dan sonraya konumla
+                    setTimeout(() => {
+                      input.setSelectionRange(2, 2);
+                    }, 0);
+                  }}
+                  onClick={(e) => {
+                    const input = e.target as HTMLInputElement;
+                    // Her tıklamada (0'dan sonraya konumla
+                    setTimeout(() => {
+                      input.setSelectionRange(2, 2);
+                    }, 0);
+                  }}
+                >
+                  {(inputProps: any) => (
+                    <Input
+                      {...inputProps}
+                      type="tel"
+                      className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="(05XX) XXX XX XX"
+                    />
+                  )}
+                </InputMask>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Şirket */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Şirket</label>
-              <div className="flex gap-3">
-                <Building className="w-5 h-5 text-gray-400" />
+          {/* İş Bilgileri */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                <Building className="w-5 h-5 text-blue-600" />
+                İş Bilgileri
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Şirket</label>
                 <Input
                   value={profile.company}
                   onChange={(e) => setProfile({ ...profile, company: e.target.value })}
@@ -271,13 +325,9 @@ const Profile = () => {
                   placeholder="Şirket adı"
                 />
               </div>
-            </div>
 
-            {/* Adres */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Adres</label>
-              <div className="flex gap-3">
-                <MapPin className="w-5 h-5 text-gray-400" />
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Adres</label>
                 <Input
                   value={profile.address}
                   onChange={(e) => setProfile({ ...profile, address: e.target.value })}
@@ -286,43 +336,43 @@ const Profile = () => {
                   placeholder="Adres"
                 />
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Şifre Değiştirme */}
-            {isEditing && (
-              <div className="pt-6 mt-6 border-t border-gray-200 space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900">Şifre Değiştir</h3>
-                
+          {/* Şifre Değiştirme */}
+          {isEditing && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                  <Lock className="w-5 h-5 text-blue-600" />
+                  Şifre Değiştir
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Yeni Şifre</label>
-                  <div className="flex gap-3">
-                    <Lock className="w-5 h-5 text-gray-400" />
-                    <Input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="Yeni şifre"
-                    />
-                  </div>
+                  <label className="text-sm font-medium text-gray-700">Yeni Şifre</label>
+                  <Input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Yeni şifre"
+                  />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Şifre Tekrar</label>
-                  <div className="flex gap-3">
-                    <Lock className="w-5 h-5 text-gray-400" />
-                    <Input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="Yeni şifre tekrar"
-                    />
-                  </div>
+                  <label className="text-sm font-medium text-gray-700">Şifre Tekrar</label>
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Yeni şifre tekrar"
+                  />
                 </div>
-              </div>
-            )}
-          </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

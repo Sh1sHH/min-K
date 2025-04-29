@@ -8,7 +8,8 @@ import {
   Users, FileText, Settings, BarChart3, Calculator, 
   FileBox, MessageSquare, CreditCard, PieChart, Brain,
   LogOut, Home, Code2, Blocks, Trash2, ChevronRight,
-  HelpCircle
+  HelpCircle, Search, Filter, Shield, UserPlus, UserMinus,
+  Crown, User
 } from 'lucide-react';
 import BlogManagement from '@/components/admin/BlogManagement';
 import ApiDocs from './ApiDocs';
@@ -53,6 +54,8 @@ const AdminPanel = () => {
   const [activeSection, setActiveSection] = useState('users');
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'admin' | 'premium' | 'normal'>('all');
   const auth = getAuth();
 
   // Sol menü öğeleri
@@ -340,6 +343,32 @@ const AdminPanel = () => {
     }
   };
 
+  // Filtrelenmiş kullanıcıları hesapla
+  const filteredUsers = allUsers.filter(user => {
+    // Önce arama terimini kontrol et
+    const searchMatch = 
+      (user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+       user.displayName?.toLowerCase().includes(searchTerm.toLowerCase())) ?? false;
+
+    // Sonra aktif filtreyi kontrol et
+    let filterMatch = true;
+    switch (activeFilter) {
+      case 'admin':
+        filterMatch = !!user.customClaims?.admin;
+        break;
+      case 'premium':
+        filterMatch = !!user.customClaims?.premium;
+        break;
+      case 'normal':
+        filterMatch = !user.customClaims?.admin && !user.customClaims?.premium;
+        break;
+      default:
+        filterMatch = true;
+    }
+
+    return searchMatch && filterMatch;
+  });
+
   // Kullanıcı girişi yoksa veya admin değilse içeriği gösterme
   if (!currentUser || !isAdmin) {
     return null;
@@ -438,61 +467,187 @@ const AdminPanel = () => {
           <div className="p-8">
             {activeSection === 'users' && (
               <div>
-                <h2 className="text-2xl font-semibold mb-6">Kullanıcı Yönetimi</h2>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-semibold">Kullanıcı Yönetimi</h2>
+                  <div className="flex gap-4">
+                    <div className="relative">
+                      <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Kullanıcı ara..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 pr-4 py-2 bg-black/30 border border-white/10 rounded-lg focus:outline-none focus:border-purple-500 transition-colors w-64"
+                      />
+                    </div>
+                    <div className="relative group">
+                      <button 
+                        className={cn(
+                          "flex items-center gap-2 px-4 py-2 bg-black/30 border border-white/10 rounded-lg hover:bg-white/5 transition-colors",
+                          activeFilter !== 'all' && "text-purple-400 border-purple-500/50"
+                        )}
+                        onClick={() => setActiveFilter(activeFilter === 'all' ? 'all' : 'all')}
+                      >
+                        <Filter className="w-4 h-4" />
+                        <span>{activeFilter === 'all' ? 'Filtrele' : 
+                          activeFilter === 'admin' ? 'Adminler' :
+                          activeFilter === 'premium' ? 'Premium Üyeler' :
+                          'Normal Kullanıcılar'}</span>
+                      </button>
+                      <div className="absolute right-0 top-full mt-2 w-48 py-2 bg-black/90 backdrop-blur-sm border border-white/10 rounded-lg shadow-xl invisible group-hover:visible transition-all z-10">
+                        <button
+                          onClick={() => setActiveFilter('all')}
+                          className={cn(
+                            "w-full px-4 py-2 text-left hover:bg-white/5 transition-colors",
+                            activeFilter === 'all' && "text-purple-400"
+                          )}
+                        >
+                          Tümü
+                        </button>
+                        <button
+                          onClick={() => setActiveFilter('admin')}
+                          className={cn(
+                            "w-full px-4 py-2 text-left hover:bg-white/5 transition-colors",
+                            activeFilter === 'admin' && "text-purple-400"
+                          )}
+                        >
+                          Sadece Adminler
+                        </button>
+                        <button
+                          onClick={() => setActiveFilter('premium')}
+                          className={cn(
+                            "w-full px-4 py-2 text-left hover:bg-white/5 transition-colors",
+                            activeFilter === 'premium' && "text-purple-400"
+                          )}
+                        >
+                          Sadece Premium Üyeler
+                        </button>
+                        <button
+                          onClick={() => setActiveFilter('normal')}
+                          className={cn(
+                            "w-full px-4 py-2 text-left hover:bg-white/5 transition-colors",
+                            activeFilter === 'normal' && "text-purple-400"
+                          )}
+                        >
+                          Normal Kullanıcılar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* User Statistics */}
+                <div className="grid grid-cols-4 gap-4 mb-6">
+                  <div className="bg-black/30 border border-white/10 rounded-lg p-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Users className="w-5 h-5 text-blue-400" />
+                      <span className="text-gray-400">Toplam Kullanıcı</span>
+                    </div>
+                    <span className="text-2xl font-semibold">{allUsers.length}</span>
+                  </div>
+                  <div className="bg-black/30 border border-white/10 rounded-lg p-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Shield className="w-5 h-5 text-purple-400" />
+                      <span className="text-gray-400">Admin Sayısı</span>
+                    </div>
+                    <span className="text-2xl font-semibold">
+                      {allUsers.filter(user => user.customClaims?.admin).length}
+                    </span>
+                  </div>
+                  <div className="bg-black/30 border border-white/10 rounded-lg p-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Crown className="w-5 h-5 text-yellow-400" />
+                      <span className="text-gray-400">Premium Üyeler</span>
+                    </div>
+                    <span className="text-2xl font-semibold">
+                      {allUsers.filter(user => user.customClaims?.premium).length}
+                    </span>
+                  </div>
+                  <div className="bg-black/30 border border-white/10 rounded-lg p-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <User className="w-5 h-5 text-gray-400" />
+                      <span className="text-gray-400">Normal Kullanıcılar</span>
+                    </div>
+                    <span className="text-2xl font-semibold">
+                      {allUsers.filter(user => !user.customClaims?.admin && !user.customClaims?.premium).length}
+                    </span>
+                  </div>
+                </div>
+
                 <div className="bg-black/50 rounded-xl p-6 backdrop-blur-sm border border-white/5">
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-white/10">
-                          <th className="text-left py-3 px-4">Email</th>
-                          <th className="text-left py-3 px-4">Ad Soyad</th>
-                          <th className="text-left py-3 px-4">Rol</th>
-                          <th className="text-left py-3 px-4">Son Giriş</th>
-                          <th className="text-left py-3 px-4">İşlemler</th>
+                          <th className="text-left py-3 px-4 text-gray-400 font-medium">Kullanıcı</th>
+                          <th className="text-left py-3 px-4 text-gray-400 font-medium">Rol</th>
+                          <th className="text-left py-3 px-4 text-gray-400 font-medium">Kayıt Tarihi</th>
+                          <th className="text-left py-3 px-4 text-gray-400 font-medium">Son Giriş</th>
+                          <th className="text-left py-3 px-4 text-gray-400 font-medium">İşlemler</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {allUsers.map((user) => (
-                          <tr key={user.uid} className="border-b border-white/5">
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-2">
-                                {user.photoURL && (
-                                  <img src={user.photoURL} alt="" className="w-6 h-6 rounded-full" />
+                        {filteredUsers.map((user) => (
+                          <tr key={user.uid} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                            <td className="py-4 px-4">
+                              <div className="flex items-center gap-3">
+                                {user.photoURL ? (
+                                  <img src={user.photoURL} alt="" className="w-8 h-8 rounded-full" />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center">
+                                    <User className="w-4 h-4 text-purple-400" />
+                                  </div>
                                 )}
-                                <span>{user.email}</span>
+                                <div>
+                                  <div className="font-medium">{user.displayName || 'İsimsiz Kullanıcı'}</div>
+                                  <div className="text-sm text-gray-400">{user.email}</div>
+                                </div>
                               </div>
                             </td>
-                            <td className="py-3 px-4">{user.displayName || '-'}</td>
-                            <td className="py-3 px-4">
-                              {user.customClaims?.superAdmin ? (
-                                <span className="text-yellow-400">Süper Admin</span>
-                              ) : user.customClaims?.admin ? (
-                                <span className="text-blue-400">Admin</span>
-                              ) : user.customClaims?.premium ? (
-                                <span className="text-green-400">Premium Üye</span>
-                              ) : (
-                                <span className="text-gray-400">Kullanıcı</span>
-                              )}
+                            <td className="py-4 px-4">
+                              <div className="flex gap-2">
+                                {user.customClaims?.superAdmin && (
+                                  <span className="px-2 py-1 rounded-full text-xs bg-yellow-500/10 text-yellow-400 font-medium">
+                                    Süper Admin
+                                  </span>
+                                )}
+                                {user.customClaims?.admin && (
+                                  <span className="px-2 py-1 rounded-full text-xs bg-blue-500/10 text-blue-400 font-medium">
+                                    Admin
+                                  </span>
+                                )}
+                                {user.customClaims?.premium && (
+                                  <span className="px-2 py-1 rounded-full text-xs bg-green-500/10 text-green-400 font-medium">
+                                    Premium
+                                  </span>
+                                )}
+                                {!user.customClaims?.superAdmin && !user.customClaims?.admin && !user.customClaims?.premium && (
+                                  <span className="px-2 py-1 rounded-full text-xs bg-gray-500/10 text-gray-400 font-medium">
+                                    Kullanıcı
+                                  </span>
+                                )}
+                              </div>
                             </td>
-                            <td className="py-3 px-4">
+                            <td className="py-4 px-4 text-gray-400">
+                              {new Date(user.createdAt).toLocaleDateString('tr-TR')}
+                            </td>
+                            <td className="py-4 px-4 text-gray-400">
                               {new Date(user.lastSignIn).toLocaleDateString('tr-TR')}
                             </td>
-                            <td className="py-3 px-4">
+                            <td className="py-4 px-4">
                               <div className="flex gap-2">
                                 {!user.customClaims?.superAdmin && currentUser?.email !== user.email && (
                                   <>
-                                    <button
-                                      onClick={() => handleSetAdmin(user.email)}
-                                      className="bg-blue-500/10 text-blue-400 px-3 py-1 rounded hover:bg-blue-500/20 transition-colors"
-                                    >
-                                      Admin Yap
-                                    </button>
-                                    <button
-                                      onClick={() => handleSetSubscriber(user.email)}
-                                      className="bg-green-500/10 text-green-400 px-3 py-1 rounded hover:bg-green-500/20 transition-colors"
-                                    >
-                                      Premium Yap
-                                    </button>
+                                    {!user.customClaims?.admin && (
+                                      <button
+                                        onClick={() => handleSetAdmin(user.email)}
+                                        className="group relative flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors"
+                                        title="Admin Yap"
+                                      >
+                                        <Shield className="w-4 h-4" />
+                                        <span className="text-sm">Admin Yap</span>
+                                      </button>
+                                    )}
                                     {user.customClaims?.admin && (
                                       <button
                                         onClick={() => {
@@ -500,9 +655,35 @@ const AdminPanel = () => {
                                             handleRemoveAdmin(user.email);
                                           }
                                         }}
-                                        className="bg-red-500/10 text-red-400 px-3 py-1 rounded hover:bg-red-500/20 transition-colors"
+                                        className="group relative flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors"
+                                        title="Admin Yetkisini Kaldır"
                                       >
-                                        Admin Kaldır
+                                        <UserMinus className="w-4 h-4" />
+                                        <span className="text-sm">Admin Kaldır</span>
+                                      </button>
+                                    )}
+                                    {!user.customClaims?.premium && (
+                                      <button
+                                        onClick={() => handleSetSubscriber(user.email)}
+                                        className="group relative flex items-center gap-2 px-3 py-1.5 bg-green-500/10 text-green-400 rounded-lg hover:bg-green-500/20 transition-colors"
+                                        title="Premium Yap"
+                                      >
+                                        <Crown className="w-4 h-4" />
+                                        <span className="text-sm">Premium Yap</span>
+                                      </button>
+                                    )}
+                                    {user.customClaims?.premium && (
+                                      <button
+                                        onClick={() => {
+                                          if (window.confirm(`${user.email} adresinin premium üyeliğini kaldırmak istediğinize emin misiniz?`)) {
+                                            handleRemovePremium(user.email);
+                                          }
+                                        }}
+                                        className="group relative flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors"
+                                        title="Premium Üyeliği Kaldır"
+                                      >
+                                        <UserMinus className="w-4 h-4" />
+                                        <span className="text-sm">Premium Kaldır</span>
                                       </button>
                                     )}
                                   </>
@@ -514,7 +695,10 @@ const AdminPanel = () => {
                       </tbody>
                     </table>
                   </div>
-                  <form onSubmit={handleAddAdmin} className="mb-6">
+
+                  {/* Add New Admin Form */}
+                  <form onSubmit={handleAddAdmin} className="mt-6 p-4 bg-black/30 rounded-lg border border-white/10">
+                    <h3 className="text-lg font-medium mb-4">Yeni Admin Ekle</h3>
                     <div className="flex gap-4">
                       <input
                         type="email"
@@ -527,104 +711,13 @@ const AdminPanel = () => {
                       <button
                         type="submit"
                         disabled={loading}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
+                        <UserPlus className="w-4 h-4" />
                         {loading ? 'İşleniyor...' : 'Admin Yap'}
                       </button>
                     </div>
                   </form>
-
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-300 mb-4">Mevcut Adminler</h3>
-                    <div className="bg-black/30 rounded-lg">
-                      {users
-                        .filter((user, index, self) => 
-                          index === self.findIndex((t) => t.email === user.email)
-                        )
-                        .map((user, index) => (
-                          <div key={index} className="flex items-center justify-between py-3 px-4 border-b border-white/5">
-                            <span>{user.email}</span>
-                            <div className="flex items-center gap-4">
-                              <span className="text-purple-400">{user.role}</span>
-                              {user.role !== 'süper admin' && (
-                                <button
-                                  onClick={() => {
-                                    if (window.confirm(`${user.email} adresinin admin yetkisini kaldırmak istediğinize emin misiniz?`)) {
-                                      handleRemoveAdmin(user.email);
-                                    }
-                                  }}
-                                  className="text-red-400 hover:text-red-300 transition-colors"
-                                  title="Admin yetkisini kaldır"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-
-                  {/* Mevcut Aboneler */}
-                  <div className="mt-8">
-                    <h3 className="text-lg font-medium text-gray-300 mb-4">Premium Üyeler</h3>
-                    <div className="bg-black/30 rounded-lg">
-                      {allUsers
-                        .filter(user => user.customClaims?.premium && !user.customClaims?.admin && !user.customClaims?.superAdmin)
-                        .map((user) => (
-                          <div key={user.uid} className="flex items-center justify-between py-3 px-4 border-b border-white/5">
-                            <div className="flex items-center gap-2">
-                              {user.photoURL && (
-                                <img src={user.photoURL} alt="" className="w-6 h-6 rounded-full" />
-                              )}
-                              <span>{user.email}</span>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <span className="text-green-400">Premium Üye</span>
-                              <span className="text-gray-400 text-sm">
-                                Son giriş: {new Date(user.lastSignIn).toLocaleDateString('tr-TR')}
-                              </span>
-                              <button
-                                onClick={() => {
-                                  if (window.confirm(`${user.email} adresinin premium üyeliğini kaldırmak istediğinize emin misiniz?`)) {
-                                    handleRemovePremium(user.email);
-                                  }
-                                }}
-                                className="text-red-400 hover:text-red-300 transition-colors"
-                                title="Premium üyeliği kaldır"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-
-                  {/* Yetkisiz Kullanıcılar */}
-                  <div className="mt-8">
-                    <h3 className="text-lg font-medium text-gray-300 mb-4">Yetkisiz Kullanıcılar</h3>
-                    <div className="bg-black/30 rounded-lg">
-                      {allUsers
-                        .filter(user => !user.customClaims?.premium && !user.customClaims?.admin && !user.customClaims?.superAdmin)
-                        .map((user) => (
-                          <div key={user.uid} className="flex items-center justify-between py-3 px-4 border-b border-white/5">
-                            <div className="flex items-center gap-2">
-                              {user.photoURL && (
-                                <img src={user.photoURL} alt="" className="w-6 h-6 rounded-full" />
-                              )}
-                              <span>{user.email}</span>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <span className="text-gray-400">Normal Kullanıcı</span>
-                              <span className="text-gray-400 text-sm">
-                                Son giriş: {new Date(user.lastSignIn).toLocaleDateString('tr-TR')}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
