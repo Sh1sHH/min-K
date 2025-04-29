@@ -12,6 +12,8 @@ import {
   sendEmailVerification
 } from 'firebase/auth';
 import { auth } from '@/config/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { firestore } from '@/config/firebase';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -104,6 +106,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const idTokenResult = await user.getIdTokenResult();
       setIsAdmin(!!idTokenResult.claims.admin || !!idTokenResult.claims.superAdmin);
       setIsPremium(!!idTokenResult.claims.premium);
+
+      // Google kullanıcı bilgilerini Firestore'a kaydet
+      const userDocRef = doc(firestore, 'users', user.uid);
+      await setDoc(userDocRef, {
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        providerData: user.providerData,
+        lastLoginAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge: true }); // merge: true ile mevcut verileri koruyoruz
       
     } catch (error) {
       console.error('Google ile giriş hatası:', error);

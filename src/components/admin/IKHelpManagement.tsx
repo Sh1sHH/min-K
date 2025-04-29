@@ -14,9 +14,10 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 const IKHelpManagement = () => {
   const { currentUser } = useAuth();
   const [questions, setQuestions] = useState<IKQuestion[]>([]);
+  const [answers, setAnswers] = useState<Record<string, IKAnswer[]>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<'all' | 'pending' | 'answered'>('all');
+  const [selectedStatus, setSelectedStatus] = useState<'all' | 'pending' | 'answered' | 'solved'>('all');
   const [selectedCategory, setSelectedCategory] = useState<'all' | typeof IK_CATEGORIES[number]>('all');
   const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
@@ -31,58 +32,26 @@ const IKHelpManagement = () => {
     try {
       const allQuestions = await ikHelpService.getAllQuestions();
       setQuestions(allQuestions);
+
+      // Yanıtları getir
+      const answersPromises = allQuestions.map(q => ikHelpService.getQuestionAnswers(q.id!));
+      const answersResults = await Promise.all(answersPromises);
+      
+      // Yanıtları questionId'ye göre grupla
+      const answersMap: Record<string, IKAnswer[]> = {};
+      allQuestions.forEach((q, index) => {
+        if (q.id) {
+          answersMap[q.id] = answersResults[index];
+        }
+      });
+      
+      setAnswers(answersMap);
     } catch (error) {
       console.error('Error fetching questions:', error);
       toast.error('Sorular yüklenirken bir hata oluştu');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
-    const validFiles = selectedFiles.filter(file => {
-      const isValidType = [
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'image/png',
-        'image/jpeg'
-      ].includes(file.type);
-      
-      const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
-      
-      if (!isValidType) {
-        toast.error('Desteklenmeyen dosya formatı');
-      }
-      if (!isValidSize) {
-        toast.error('Dosya boyutu 5MB\'dan büyük olamaz');
-      }
-      
-      return isValidType && isValidSize;
-    });
-
-    setReplyFiles(prev => [...prev, ...validFiles]);
-  };
-
-  const removeFile = (index: number) => {
-    setReplyFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const uploadFiles = async (): Promise<string[]> => {
-    if (replyFiles.length === 0) return [];
-
-    const uploadPromises = replyFiles.map(async file => {
-      const fileName = `ik-help/answers/${Date.now()}-${file.name}`;
-      const fileRef = ref(storage, fileName);
-      
-      await uploadBytes(fileRef, file);
-      return getDownloadURL(fileRef);
-    });
-
-    return Promise.all(uploadPromises);
   };
 
   const handleSubmitReply = async (questionId: string) => {
@@ -105,9 +74,10 @@ const IKHelpManagement = () => {
       // Yanıtı kaydet
       await ikHelpService.addAnswer({
         questionId,
-        expertId: currentUser.uid,
+        userId: currentUser.uid,
         content: replyContent.trim(),
-        attachments: attachmentUrls
+        attachments: attachmentUrls,
+        isExpert: true
       });
 
       // Formu sıfırla
@@ -126,11 +96,46 @@ const IKHelpManagement = () => {
     }
   };
 
+  const handleMarkAsSolved = async (questionId: string) => {
+    if (!currentUser) {
+      toast.error('Yetkilendirme hatası');
+      return;
+    }
+
+    try {
+      await ikHelpService.markQuestionAsSolved(questionId, currentUser.uid);
+      await fetchQuestions();
+      toast.success('Soru çözüldü olarak işaretlendi');
+    } catch (error) {
+      console.error('Error marking as solved:', error);
+      toast.error('İşlem sırasında bir hata oluştu');
+    }
+  };
+
+  const uploadFiles = async (): Promise<string[]> => {
+    if (!replyFiles.length) return [];
+
+    try {
+      const uploadPromises = replyFiles.map(async file => {
+        const storageRef = ref(storage, `ik-help/${Date.now()}-${file.name}`);
+        const snapshot = await uploadBytes(storageRef, file);
+        return getDownloadURL(snapshot.ref);
+      });
+
+      return await Promise.all(uploadPromises);
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      throw new Error('Dosyalar yüklenirken bir hata oluştu');
+    }
+  };
+
   const getStatusColor = (status: IKQuestion['status']) => {
     switch (status) {
       case 'pending':
         return 'text-yellow-500';
       case 'answered':
+        return 'text-blue-500';
+      case 'solved':
         return 'text-green-500';
       default:
         return 'text-gray-500';
@@ -142,25 +147,53 @@ const IKHelpManagement = () => {
       case 'pending':
         return <Clock className="w-5 h-5" />;
       case 'answered':
+        return <MessageSquare className="w-5 h-5" />;
+      case 'solved':
         return <CheckCircle className="w-5 h-5" />;
       default:
         return <AlertCircle className="w-5 h-5" />;
     }
   };
 
-  const filteredQuestions = questions.filter(question => {
-    const matchesSearch = 
-      question.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      question.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = 
-      selectedStatus === 'all' || question.status === selectedStatus;
-    
-    const matchesCategory = 
-      selectedCategory === 'all' || question.category === selectedCategory;
+  const getStatusText = (status: IKQuestion['status']) => {
+    switch (status) {
+      case 'pending':
+        return 'Yanıt Bekliyor';
+      case 'answered':
+        return 'Yanıtlandı';
+      case 'solved':
+        return 'Çözüldü';
+      default:
+        return 'Bilinmiyor';
+    }
+  };
 
+  const filteredQuestions = questions.filter(question => {
+    const matchesSearch = question.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = selectedStatus === 'all' || question.status === selectedStatus;
+    const matchesCategory = selectedCategory === 'all' || question.category === selectedCategory;
     return matchesSearch && matchesStatus && matchesCategory;
   });
+
+  // Soruları durumlarına göre gruplandır
+  const groupedQuestions = filteredQuestions.reduce((acc, question) => {
+    const status = question.status;
+    if (!acc[status]) {
+      acc[status] = [];
+    }
+    acc[status].push(question);
+    return acc;
+  }, {} as Record<IKQuestion['status'], IKQuestion[]>);
+
+  // Durum sıralaması
+  const statusOrder: IKQuestion['status'][] = ['pending', 'answered', 'solved'];
+
+  // Durum başlıkları
+  const statusTitles: Record<IKQuestion['status'], string> = {
+    pending: 'Yanıt Bekleyenler',
+    answered: 'Yanıtlananlar',
+    solved: 'Çözülenler'
+  };
 
   if (loading) {
     return (
@@ -173,206 +206,321 @@ const IKHelpManagement = () => {
   return (
     <div className="space-y-6">
       {/* Filtreler */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-black/30 p-4 rounded-lg border border-white/10">
+        <div className="relative w-full sm:w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
             type="text"
-            placeholder="Sorularda ara..."
+            placeholder="Soru ara..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-black/50 border-white/10 text-white placeholder:text-gray-400"
+            className="pl-9 bg-black/50 border-white/10"
           />
         </div>
-        
-        <select
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value as 'all' | 'pending' | 'answered')}
-          className="rounded-md border border-white/10 bg-black/50 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-        >
-          <option value="all">Tüm Durumlar</option>
-          <option value="pending">Yanıt Bekleyenler</option>
-          <option value="answered">Yanıtlananlar</option>
-        </select>
-
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value as 'all' | typeof IK_CATEGORIES[number])}
-          className="rounded-md border border-white/10 bg-black/50 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-        >
-          <option value="all">Tüm Kategoriler</option>
-          {IK_CATEGORIES.map((category) => (
-            <option key={category} value={category}>{category}</option>
-          ))}
-        </select>
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value as any)}
+            className="bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm min-w-[140px]"
+          >
+            <option value="all">Tüm Durumlar</option>
+            <option value="pending">Yanıt Bekleyenler</option>
+            <option value="answered">Yanıtlananlar</option>
+            <option value="solved">Çözülenler</option>
+          </select>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value as any)}
+            className="bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm min-w-[140px]"
+          >
+            <option value="all">Tüm Kategoriler</option>
+            {IK_CATEGORIES.map(category => (
+              <option key={category} value={category}>{category}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Soru Listesi */}
-      <div className="space-y-4">
-        {filteredQuestions.map((question) => (
-          <div
-            key={question.id}
-            className="bg-black/50 backdrop-blur-sm rounded-lg border border-white/10 overflow-hidden"
-          >
-            {/* Soru Başlığı ve Durum */}
-            <div
-              className="p-4 cursor-pointer hover:bg-white/5"
-              onClick={() => setExpandedQuestionId(
-                expandedQuestionId === question.id ? null : question.id!
-              )}
-            >
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <h3 className="text-lg font-medium text-white">
-                    {question.title}
-                  </h3>
-                  <div className="flex items-center gap-4 text-sm text-gray-400">
-                    <span>{question.category}</span>
-                    <span>•</span>
-                    <span>
-                      {format(question.createdAt.toDate(), 'd MMMM yyyy', { locale: tr })}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className={`flex items-center gap-1 ${getStatusColor(question.status)}`}>
-                    {getStatusIcon(question.status)}
-                    <span className="text-sm font-medium">
-                      {question.status === 'pending' ? 'Yanıt Bekliyor' : 'Yanıtlandı'}
-                    </span>
-                  </div>
-                  {expandedQuestionId === question.id ? (
-                    <ChevronUp className="w-5 h-5 text-gray-400" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400" />
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Soru Detayı ve Yanıt Formu */}
-            {expandedQuestionId === question.id && (
-              <div className="border-t border-white/10">
-                <div className="p-4 bg-black/30">
-                  <h4 className="text-sm font-medium text-white mb-2">
-                    Soru Detayı
-                  </h4>
-                  <p className="text-gray-300 whitespace-pre-wrap">
-                    {question.description}
-                  </p>
-
-                  {/* Dosya Ekleri */}
-                  {question.attachments && question.attachments.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium text-white mb-2">
-                        Ekler
-                      </h4>
-                      <div className="space-y-2">
-                        {question.attachments.map((url, index) => (
-                          <a
-                            key={index}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-purple-400 hover:text-purple-300"
-                          >
-                            <FileText className="w-4 h-4" />
-                            <span className="text-sm">Ek {index + 1}</span>
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Yanıt Formu */}
-                <div className="p-4">
-                  <h4 className="text-sm font-medium text-white mb-4">
-                    Yanıt Yaz
-                  </h4>
-                  <div className="space-y-4">
-                    <Textarea
-                      value={replyContent}
-                      onChange={(e) => setReplyContent(e.target.value)}
-                      placeholder="Yanıtınızı yazın..."
-                      className="w-full min-h-[150px] bg-black/30 border-white/10 text-white placeholder:text-gray-500"
-                      disabled={replying}
-                    />
-
-                    {/* Dosya Ekleri */}
-                    <div className="space-y-4">
-                      {replyFiles.length > 0 && (
-                        <div className="space-y-2">
-                          {replyFiles.map((file, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between p-2 bg-black/30 rounded-md border border-white/10"
-                            >
-                              <span className="text-sm text-gray-300 truncate">{file.name}</span>
-                              <button
-                                type="button"
-                                onClick={() => removeFile(index)}
-                                className="text-red-400 hover:text-red-300"
-                                disabled={replying}
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      
-                      <div className="flex items-center gap-4">
-                        <Button
-                          type="button"
-                          onClick={() => document.getElementById('reply-file-upload')?.click()}
-                          disabled={replying}
-                          className="border border-white/10 text-white hover:bg-white/5"
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Dosya Ekle
-                        </Button>
-                        <input
-                          id="reply-file-upload"
-                          type="file"
-                          className="hidden"
-                          onChange={handleFileChange}
-                          accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                          multiple
-                          disabled={replying}
-                        />
-                        <span className="text-sm text-gray-400">
-                          PDF, Word, Excel veya Görsel (max 5MB)
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end">
-                      <Button
-                        onClick={() => handleSubmitReply(question.id!)}
-                        className="bg-purple-600 hover:bg-purple-700 text-white"
-                        disabled={replying}
-                      >
-                        {replying ? 'Gönderiliyor...' : 'Yanıtı Gönder'}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-
-        {filteredQuestions.length === 0 && (
+      <div className="space-y-8">
+        {filteredQuestions.length === 0 ? (
           <div className="text-center py-12 bg-black/30 rounded-lg border border-white/10">
             <MessageSquare className="w-12 h-12 mx-auto text-gray-500 mb-4" />
-            <h3 className="text-lg font-medium text-white">
-              Soru Bulunamadı
-            </h3>
+            <h3 className="text-lg font-medium text-white">Soru Bulunamadı</h3>
             <p className="text-gray-400 mt-2">
-              Seçilen kriterlere uygun soru bulunmamaktadır.
+              Seçili filtrelerle eşleşen soru bulunmamaktadır.
             </p>
           </div>
+        ) : (
+          // Duruma göre gruplandırılmış sorular
+          statusOrder.map(status => {
+            const questions = groupedQuestions[status];
+            if (!questions?.length) return null;
+
+            return (
+              <div key={status} className="space-y-4">
+                {/* Grup Başlığı */}
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-medium text-white flex items-center gap-2">
+                    {getStatusIcon(status)}
+                    {statusTitles[status]}
+                  </h2>
+                  <div className="text-sm text-gray-400">({questions.length})</div>
+                </div>
+
+                {/* Grup Soruları */}
+                <div className="space-y-3">
+                  {questions.map((question) => (
+                    <div
+                      key={question.id}
+                      className={`bg-black/50 backdrop-blur-sm rounded-lg border transition-colors ${
+                        expandedQuestionId === question.id 
+                          ? 'border-purple-500/30' 
+                          : 'border-white/10 hover:border-white/20'
+                      }`}
+                    >
+                      {/* Soru Başlığı ve Durum */}
+                      <div
+                        className="p-4 cursor-pointer"
+                        onClick={() => setExpandedQuestionId(
+                          expandedQuestionId === question.id ? null : question.id!
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="space-y-2 flex-1 min-w-0">
+                            <div className="flex items-center gap-3">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 text-xs font-medium">
+                                {question.category}
+                              </span>
+                              {/* Yanıt Sayısı */}
+                              <span className="inline-flex items-center gap-1 text-sm text-gray-400">
+                                <MessageSquare className="w-4 h-4" />
+                                {answers[question.id!]?.length || 0} yanıt
+                              </span>
+                            </div>
+                            <h3 className="text-lg font-medium text-white truncate">
+                              {question.title}
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-400">
+                              {/* Gönderen Bilgileri */}
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="w-5 h-5 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-xs text-white">
+                                    {(question.userName || 'K').charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                                <span className="truncate">
+                                  {question.userName || 'İsimsiz Kullanıcı'}
+                                </span>
+                                {question.userEmail && (
+                                  <>
+                                    <span className="text-gray-600">•</span>
+                                    <span className="truncate text-gray-500">{question.userEmail}</span>
+                                  </>
+                                )}
+                              </div>
+                              {/* Tarih */}
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-4 h-4" />
+                                {format(question.createdAt.toDate(), 'd MMMM yyyy', { locale: tr })}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center">
+                            {expandedQuestionId === question.id ? (
+                              <ChevronUp className="w-5 h-5 text-gray-400" />
+                            ) : (
+                              <ChevronDown className="w-5 h-5 text-gray-400" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Soru Detayı ve Yanıt Formu */}
+                      {expandedQuestionId === question.id && (
+                        <div className="border-t border-white/10">
+                          {/* Soru İçeriği */}
+                          <div className="p-4 space-y-4">
+                            <p className="text-gray-300 whitespace-pre-wrap">
+                              {question.description}
+                            </p>
+
+                            {/* Soru Ekleri */}
+                            {question.attachments && question.attachments.length > 0 && (
+                              <div className="space-y-2">
+                                <h4 className="text-sm font-medium text-white">Ekler</h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {question.attachments.map((url, index) => (
+                                    <a
+                                      key={index}
+                                      href={url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-1 text-sm text-purple-400 hover:text-purple-300"
+                                    >
+                                      <FileText className="w-4 h-4" />
+                                      Ek {index + 1}
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Yanıtlar */}
+                            {answers[question.id!]?.length > 0 && (
+                              <div className="space-y-4">
+                                <h4 className="text-sm font-medium text-white">Yanıtlar</h4>
+                                <div className="space-y-4">
+                                  {answers[question.id!].map((answer) => (
+                                    <div
+                                      key={answer.id}
+                                      className={`rounded-lg p-4 ${
+                                        answer.isExpert 
+                                          ? 'bg-purple-900/20 border border-purple-900/30' 
+                                          : 'bg-gray-900/20 border border-gray-900/30'
+                                      }`}
+                                    >
+                                      <div className="flex items-start justify-between mb-3">
+                                        <div className="flex items-start gap-3">
+                                          {/* Avatar */}
+                                          <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
+                                            <span className="text-sm font-medium text-white">
+                                              {answer.isExpert ? 'İK' : (question.userName || 'K').charAt(0).toUpperCase()}
+                                            </span>
+                                          </div>
+
+                                          {/* Kullanıcı Bilgileri */}
+                                          <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-sm font-medium text-white">
+                                                {answer.isExpert ? 'İK Uzmanı' : question.userName || 'İsimsiz Kullanıcı'}
+                                              </span>
+                                              {!answer.isExpert && question.userEmail && (
+                                                <span className="text-xs text-gray-400">
+                                                  {question.userEmail}
+                                                </span>
+                                              )}
+                                            </div>
+                                            <span className="text-xs text-gray-400">
+                                              {format(answer.createdAt.toDate(), 'd MMMM yyyy, HH:mm', { locale: tr })}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className="pl-11">
+                                        <p className="text-gray-300 whitespace-pre-wrap">
+                                          {answer.content}
+                                        </p>
+
+                                        {/* Yanıt Ekleri */}
+                                        {answer.attachments && answer.attachments.length > 0 && (
+                                          <div className="mt-3 space-y-2">
+                                            <h5 className="text-sm font-medium text-white">Ekler</h5>
+                                            <div className="flex flex-wrap gap-2">
+                                              {answer.attachments.map((url, index) => (
+                                                <a
+                                                  key={index}
+                                                  href={url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="flex items-center gap-1 px-3 py-1.5 bg-black/30 rounded-lg text-sm text-purple-400 hover:text-purple-300 hover:bg-black/40 transition-colors"
+                                                >
+                                                  <FileText className="w-4 h-4" />
+                                                  Ek {index + 1}
+                                                </a>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Yanıt Formu */}
+                            {question.status !== 'solved' && (
+                              <div className="space-y-4 mt-6">
+                                <Textarea
+                                  placeholder="Yanıtınızı yazın..."
+                                  value={replyContent}
+                                  onChange={(e) => setReplyContent(e.target.value)}
+                                  className="min-h-[100px]"
+                                />
+
+                                {/* Dosya Yükleme */}
+                                <div className="space-y-3">
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      type="button"
+                                      onClick={() => document.getElementById(`file-upload-${question.id}`)?.click()}
+                                      className="text-sm"
+                                    >
+                                      <Upload className="w-4 h-4 mr-1" />
+                                      Dosya Ekle
+                                    </Button>
+                                    <input
+                                      id={`file-upload-${question.id}`}
+                                      type="file"
+                                      multiple
+                                      onChange={(e) => {
+                                        const files = Array.from(e.target.files || []);
+                                        setReplyFiles(files);
+                                      }}
+                                      className="hidden"
+                                    />
+                                  </div>
+
+                                  {/* Seçilen Dosyalar */}
+                                  {replyFiles.length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                      {replyFiles.map((file, index) => (
+                                        <div
+                                          key={index}
+                                          className="flex items-center gap-1 bg-white/5 rounded px-2 py-1"
+                                        >
+                                          <span className="text-sm text-gray-300">{file.name}</span>
+                                          <button
+                                            onClick={() => setReplyFiles(files => files.filter((_, i) => i !== index))}
+                                            className="text-gray-400 hover:text-gray-300"
+                                          >
+                                            <X className="w-4 h-4" />
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                  <Button
+                                    onClick={() => handleSubmitReply(question.id!)}
+                                    disabled={replying || !replyContent.trim()}
+                                  >
+                                    {replying ? 'Gönderiliyor...' : 'Yanıtla'}
+                                  </Button>
+
+                                  <Button
+                                    onClick={() => handleMarkAsSolved(question.id!)}
+                                    variant="ghost"
+                                    className="border border-green-600 text-green-500 hover:bg-green-900/20"
+                                  >
+                                    Çözüldü Olarak İşaretle
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
     </div>

@@ -21,6 +21,10 @@
   - Rol etiketleri (badges)
   - İşlem butonları için ikonlar ve tooltips
   - Hover efektleri ve geçişler
+- İK Yardım Hattı için yeni özellikler:
+  - Aylık soru limiti aşıldıktan sonra mevcut sorulara yanıt yazabilme
+  - Google ile giriş yapan kullanıcılar için profil bilgisi entegrasyonu
+  - Dosya yükleme sistemi iyileştirmeleri
 
 ### Changed
 - Admin Panel kullanıcı yönetimi arayüzü yenilendi:
@@ -41,6 +45,18 @@
   - Email gönderme özelliği kaldırıldı
   - Sadece 5 dakika sonra silme işlemi yapılıyor
   - Kod optimize edildi
+- Firestore güvenlik kuralları güncellendi:
+  - İK soruları için yeni erişim kuralları
+  - Yanıt yazma izinleri düzenlendi (kota aşımı sonrası)
+  - Dosya yükleme izinleri iyileştirildi
+- Firebase Storage kuralları güncellendi:
+  - Premium kullanıcılar için dosya yükleme izinleri
+  - İK Yardım Hattı dosyaları için özel kurallar
+  - Güvenlik kontrolleri geliştirildi
+- Google Auth entegrasyonu iyileştirildi:
+  - Kullanıcı bilgileri Firestore'a otomatik kaydediliyor
+  - Profil bilgileri (isim, email, fotoğraf) doğru şekilde alınıyor
+  - Auth Context güncellemeleri
 
 ### Fixed
 - Premium kullanıcılara "Premium Yap" butonu gösterilmesi sorunu giderildi
@@ -49,6 +65,10 @@
 - Yetki değişikliklerinde anlık UI güncellenmesi sağlandı
 - `index.js` dosyasındaki tekrarlanan export'lar düzeltildi
 - Firebase Functions yapılandırması iyileştirildi
+- Google ile giriş yapan kullanıcıların profil bilgilerinin görüntülenmemesi sorunu çözüldü
+- Aylık soru kotası dolan kullanıcıların mevcut sorularına yanıt yazamaması sorunu giderildi
+- Dosya yükleme izinleri sorunu çözüldü
+- İK Yardım Hattı'nda "İsimsiz Kullanıcı" görüntülenme problemi giderildi
 
 ### Technical Details
 - Email bildirimi sistemi için Firebase Cloud Functions güncellendi:
@@ -66,6 +86,21 @@
   - Conditional rendering optimizasyonları
   - Tailwind sınıfları düzenlendi
   - Responsive tasarım iyileştirmeleri
+- Firestore Rules:
+  - İK soruları ve yanıtları için yeni güvenlik kuralları
+  - Premium kullanıcılar için özel izinler
+  - Admin yetkileri düzenlendi
+- Storage Rules:
+  - `/ik-help` klasörü için özel kurallar
+  - Dosya yükleme/okuma izinleri
+  - Güvenlik fonksiyonları eklendi
+- Auth Context:
+  - Google Sign-In sürecinde Firestore entegrasyonu
+  - Kullanıcı bilgileri yönetimi iyileştirildi
+- İK Yardım Servisi:
+  - Kullanıcı bilgileri getirme fonksiyonu güncellendi
+  - Yanıt ekleme mantığı iyileştirildi
+  - Dosya yükleme sistemi entegrasyonu
 
 ## [2025-04-28]
 
@@ -119,35 +154,4 @@
   - `src/components/layout/Layout.tsx`
   - `src/pages/SubscriberPanel.tsx`
 - Backend: Eski koleksiyonlar ve alanlar kaldırıldı:
-  - `subscribers` koleksiyonu silindi
-  - Kullanıcı dokümanlarından `subscriberType` alanı kaldırıldı
-- Admin Panel'den kaldırılan özellikler:
-  - Hesaplama Araçları modülü
-  - Dosya Yönetimi sistemi
-  - Soru-Cevap modülü
-  - Fatura/Abonelik yönetimi
-  - Geri Bildirim sistemi
-  - AI Tavsiyeler özelliği
-  - Ayarlar sayfası
-
-### Technical Details
-- `IK_CATEGORIES` için özel tip tanımlaması eklendi
-- Firestore güvenlik kuralları gözden geçirildi
-- Premium panel yetkilendirme kontrolleri iyileştirildi
-- Tüm "subscriber" referansları "premium" olarak güncellendi
-- Route yapılandırmaları güncellendi
-- Backend Değişiklikleri:
-  - Firebase Functions:
-    - Premium üyelik kontrolü için yeni fonksiyonlar eklendi
-    - İK soruları için CRUD operasyonları eklendi
-    - Dosya yükleme/silme işlemleri için yeni fonksiyonlar
-  - Storage Kuralları:
-    - İK soruları için dosya yükleme kuralları eklendi
-    - Premium kullanıcılar için özel klasör erişimi
-  - Veritabanı Şemaları:
-    - İK soruları için yeni şema tanımları
-    - Kullanıcı profili güncellemeleri
-  - Servis Katmanı:
-    - `ikHelpService` servisi eklendi
-    - Aylık soru limiti kontrolü implementasyonu
-    - Dosya yükleme servisi güncellendi 
+  - `

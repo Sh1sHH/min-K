@@ -25,12 +25,6 @@ service cloud.firestore {
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) || hasAdminRole();
       allow delete: if hasAdminRole();
-      
-      // Nested collections under users
-      match /{document=**} {
-        allow read: if isOwner(userId);
-        allow write: if isOwner(userId);
-      }
     }
 
     // IK Questions collection rules
@@ -38,14 +32,32 @@ service cloud.firestore {
       allow read: if hasAdminRole() || 
         (hasPremiumRole() && request.auth.uid == resource.data.userId);
       allow create: if hasPremiumRole();
-      allow update, delete: if hasAdminRole();
+      allow update: if hasAdminRole() || 
+        (hasPremiumRole() && request.auth.uid == resource.data.userId);
+      allow delete: if hasAdminRole();
     }
 
     // IK Answers collection rules
     match /ikAnswers/{answerId} {
+      // Yanıt okuma kuralları
       allow read: if hasAdminRole() || 
-        (hasPremiumRole() && request.auth.uid == get(/databases/$(database)/documents/ikQuestions/$(resource.data.questionId)).data.userId);
-      allow create, update, delete: if hasAdminRole();
+        (hasPremiumRole() && (
+          request.auth.uid == resource.data.userId || // Kendi yanıtını okuyabilir
+          request.auth.uid == get(/databases/$(database)/documents/ikQuestions/$(resource.data.questionId)).data.userId // Sorunun sahibi yanıtları okuyabilir
+        ));
+
+      // Yanıt yazma kuralları
+      allow create: if hasAdminRole() || 
+        (hasPremiumRole() && (
+          request.auth.uid == get(/databases/$(database)/documents/ikQuestions/$(request.resource.data.questionId)).data.userId // Sorunun sahibi yanıt yazabilir
+        ));
+
+      // Yanıt güncelleme kuralları
+      allow update: if hasAdminRole() || 
+        (hasPremiumRole() && request.auth.uid == resource.data.userId); // Kendi yanıtını güncelleyebilir
+
+      // Yanıt silme kuralları
+      allow delete: if hasAdminRole();
     }
 
     // Public collections (if needed)

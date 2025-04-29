@@ -5,26 +5,40 @@ rules_version = '2';
 //    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
 service firebase.storage {
   match /b/{bucket}/o {
-    // Yetki kontrolleri
-    function isAdmin() {
-      return request.auth != null && (request.auth.token.admin == true || request.auth.token.superAdmin == true);
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
     }
     
-    function isPremium() {
-      return request.auth != null && request.auth.token.premium == true;
+    function hasAdminRole() {
+      return request.auth.token.admin == true || request.auth.token.superAdmin == true;
     }
 
-    // İK Yardım Hattı dosya kuralları - Tam dosya yolu eşleşmesi
-    match /ik-help/{userId}/{fileName} {
-      // Premium üyeler ve adminler kendi dosyalarını yükleyebilir
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && (isPremium() || isAdmin());
+    function hasPremiumRole() {
+      return request.auth.token.premium == true;
     }
 
-    // Diğer tüm dosyalar için genel kurallar
+    // IK Help dosyaları için kurallar
+    match /ik-help/{fileName} {
+      // Okuma kuralları
+      allow read: if isAuthenticated() && (
+        hasAdminRole() || hasPremiumRole()
+      );
+
+      // Yazma kuralları
+      allow write: if isAuthenticated() && (
+        hasAdminRole() || hasPremiumRole()
+      );
+
+      // Silme kuralları
+      allow delete: if isAuthenticated() && (
+        hasAdminRole()
+      );
+    }
+
+    // Diğer tüm dosyalar için varsayılan reddetme
     match /{allPaths=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && isAdmin();
+      allow read, write: if false;
     }
   }
 }

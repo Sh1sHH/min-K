@@ -63,9 +63,10 @@ const AdminPanel = () => {
     { id: 'dashboard', title: 'Dashboard', icon: <BarChart3 className="w-5 h-5" /> },
     { id: 'users', title: 'Kullanıcı Yönetimi', icon: <Users className="w-5 h-5" /> },
     { id: 'blog', title: 'Blog Yönetimi', icon: <FileText className="w-5 h-5" /> },
+    { id: 'ikyardim', title: 'İKyardım Hattı', icon: <MessageSquare className="w-5 h-5" /> },
     { id: 'api', title: 'API Dokümantasyonu', icon: <Code2 className="w-5 h-5" /> },
-    { id: 'components', title: 'UI Components', icon: <Blocks className="w-5 h-5" /> },
-    { id: 'ikyardim', title: 'İKyardım Hattı', icon: <MessageSquare className="w-5 h-5" /> }
+    { id: 'components', title: 'UI Components', icon: <Blocks className="w-5 h-5" /> }
+    
   ];
 
   // Kullanıcı ve admin kontrolü
