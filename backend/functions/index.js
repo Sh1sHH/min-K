@@ -29,3 +29,9 @@ exports.removeUserPremium = require('./auth/admin').removeUserPremium;
 // Automated cleanup functions
 exports.deleteUnverifiedUsers = require('./cleanup').deleteUnverifiedUsers;
 
+// CV Processing functions (YENİ EKLENECEK KISIM)
+exports.processUploadedCV = require('./cvProcessor').processUploadedCV;
+
+// YENİ EKLENECEK SATIR:
+exports.findBestCandidateByPrompt = require('./comparator').findBestCandidateByPrompt;
+

@@ -25,6 +25,15 @@ service cloud.firestore {
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) || hasAdminRole();
       allow delete: if hasAdminRole();
+
+      // --- YENİ KURALLAR (Doğru Yer) ---
+      // analyzedCVs alt koleksiyonu için kurallar
+      match /analyzedCVs/{cvId} {
+        // Kuralı read/write ile basitleştir:
+        allow read, write: if isOwner(userId);
+      }
+      // --- YENİ KURALLAR BİTTİ ---
+
     }
 
     // IK Questions collection rules

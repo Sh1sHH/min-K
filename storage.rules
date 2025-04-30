@@ -11,11 +11,21 @@ service firebase.storage {
     }
     
     function hasAdminRole() {
-      return request.auth.token.admin == true || request.auth.token.superAdmin == true;
+      // Check for potential null token if not authenticated, though isAuthenticated should handle it
+      return isAuthenticated() && (request.auth.token.admin == true || request.auth.token.superAdmin == true);
     }
 
     function hasPremiumRole() {
-      return request.auth.token.premium == true;
+      // Check for potential null token
+      return isAuthenticated() && request.auth.token.premium == true;
+    }
+
+    // Kullanıcı CV dosyaları için kurallar (/userCVs/{userId}/{fileName})
+    match /userCVs/{userId}/{fileName} {
+      // Kullanıcının kendi klasöründeki dosyaları okumasına (get),
+      // yazmasına (create), ve silmesine (delete) izin ver.
+      // list izni verilmedi (kullanıcı tüm CV'leri listeleyemez).
+      allow get, create, delete: if isAuthenticated() && request.auth.uid == userId;
     }
 
     // Blog görselleri için kurallar

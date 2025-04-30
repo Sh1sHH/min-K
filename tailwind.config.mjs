@@ -10,52 +10,82 @@ export default {
   ],
   darkMode: ['class', "class"],
   theme: {
-    extend: {
-      container: {
-        center: true,
-        padding: '1rem',
-        screens: {
-          sm: '640px',
-          md: '768px',
-          lg: '1024px',
-          xl: '1280px',
-        },
-      },
-      colors: {
-        brand: {
-          plum: '#f7adee',
-          persian: '#3434ad',
-          tyrian: '#440829',
-        },
-        border: "hsl(var(--border))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-      },
-      fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-      },
-      backgroundImage: {
-        'gradient-brand': 'linear-gradient(to bottom, #440829, #3434ad)',
-      },
-      boxShadow: {
-        input: "0px 2px 3px -1px rgba(0,0,0,0.1), 0px 1px 0px 0px rgba(25,28,33,0.02), 0px 0px 0px 1px rgba(25,28,33,0.08)",
-      },
-      keyframes: {
-        float: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-20px)' },
-        },
-        floatSlow: {
-          '0%, 100%': { transform: 'translateY(0) scale(1)' },
-          '50%': { transform: 'translateY(-10px) scale(1.02)' },
-        },
-      },
-      animation: {
-        float: 'float 6s ease-in-out infinite',
-        'float-delay': 'float 6s ease-in-out infinite 3s',
-        'float-slow': 'floatSlow 12s ease-in-out infinite 1s',
-      },
-    },
+  	extend: {
+  		container: {
+  			center: true,
+  			padding: '1rem',
+  			screens: {
+  				sm: '640px',
+  				md: '768px',
+  				lg: '1024px',
+  				xl: '1280px'
+  			}
+  		},
+  		colors: {
+  			brand: {
+  				plum: '#f7adee',
+  				persian: '#3434ad',
+  				tyrian: '#440829'
+  			},
+  			border: 'hsl(var(--border))',
+  			background: 'hsl(var(--background))',
+  			foreground: 'hsl(var(--foreground))'
+  		},
+  		fontFamily: {
+  			sans: [
+  				'Inter',
+  				'system-ui',
+  				'sans-serif'
+  			]
+  		},
+  		backgroundImage: {
+  			'gradient-brand': 'linear-gradient(to bottom, #440829, #3434ad)'
+  		},
+  		boxShadow: {
+  			input: '0px 2px 3px -1px rgba(0,0,0,0.1), 0px 1px 0px 0px rgba(25,28,33,0.02), 0px 0px 0px 1px rgba(25,28,33,0.08)'
+  		},
+  		keyframes: {
+  			float: {
+  				'0%, 100%': {
+  					transform: 'translateY(0)'
+  				},
+  				'50%': {
+  					transform: 'translateY(-20px)'
+  				}
+  			},
+  			floatSlow: {
+  				'0%, 100%': {
+  					transform: 'translateY(0) scale(1)'
+  				},
+  				'50%': {
+  					transform: 'translateY(-10px) scale(1.02)'
+  				}
+  			},
+  			'accordion-down': {
+  				from: {
+  					height: '0'
+  				},
+  				to: {
+  					height: 'var(--radix-accordion-content-height)'
+  				}
+  			},
+  			'accordion-up': {
+  				from: {
+  					height: 'var(--radix-accordion-content-height)'
+  				},
+  				to: {
+  					height: '0'
+  				}
+  			}
+  		},
+  		animation: {
+  			float: 'float 6s ease-in-out infinite',
+  			'float-delay': 'float 6s ease-in-out infinite 3s',
+  			'float-slow': 'floatSlow 12s ease-in-out infinite 1s',
+  			'accordion-down': 'accordion-down 0.2s ease-out',
+  			'accordion-up': 'accordion-up 0.2s ease-out'
+  		}
+  	}
   },
   plugins: [
     typography,
