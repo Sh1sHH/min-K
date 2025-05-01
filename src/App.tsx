@@ -20,6 +20,13 @@ import BlogDetail from '@/pages/BlogDetail';
 import PremiumPanel from '@/pages/PremiumPanel';
 import NotFound from '@/pages/NotFound';
 import Profile from '@/components/Profile';
+import BordroHesaplamaPage from './pages/BordroHesaplamaPage';
+import DanismanlikPage from './pages/DanismanlikPage';
+import HakkimizdaPage from './pages/HakkimizdaPage';
+
+import PerformansYonetimiPage from './pages/PerformansYonetimiPage';
+import IseAlimPage from './pages/IseAlimPage';
+import MevzuatsalIslemlerPage from './pages/MevzuatsalIslemlerPage';
 
 function App() {
   const location = useLocation();
@@ -130,6 +137,12 @@ function App() {
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/blog/:slug" element={<BlogDetail />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/bordro-hesaplama" element={<BordroHesaplamaPage />} />
+            <Route path="/danismanlik" element={<DanismanlikPage />} />
+            <Route path="/hakkimizda" element={<HakkimizdaPage />} />
+            <Route path="/performans-yonetimi" element={<PerformansYonetimiPage />} />
+            <Route path="/ise-alim" element={<IseAlimPage />} />
+            <Route path="/mevzuatsal-islemler" element={<MevzuatsalIslemlerPage />} />
             <Route path="/" element={
               <>
                 <Hero />

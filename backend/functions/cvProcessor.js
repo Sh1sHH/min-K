@@ -63,8 +63,8 @@ exports.processUploadedCV = onObjectFinalized(
     // --- Sırrı fonksiyona bağlayın ---
     secrets: [openaiApiKeySecret],
     region: 'us-west1',
-    timeoutSeconds: 300,
-    memory: "1GiB",
+    timeoutSeconds: 60,
+    memory: "512MiB",
   },
   async (event) => {
     // event nesnesi eski object parametresinin yerini alır

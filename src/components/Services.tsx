@@ -1,37 +1,44 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const services = [
   {
     title: "Bordro Yönetimi",
     description: "Maaş, SGK, vergi hesaplamaları ve bordro süreçlerinizi otomatik olarak yönetin.",
     image: "/bordro2.webp",
+    link: "/bordro-hesaplama"
   },
   {
     title: "Online Danışmanlık",
     description: "Uzman İK danışmanlarımızla online görüşmeler yapın, sorularınıza anında yanıt alın.",
     image: "/danismanlik4.webp",
+    link: "/danismanlik"
   },
   {
     title: "İK Analitikleri",
     description: "Detaylı raporlar ve analizlerle İK süreçlerinizi optimize edin.",
     image: "/analitik2.webp",
+    link: "/ik-analitikleri"
   },
   {
     title: "Performans Yönetimi",
     description: "İzin, mesai, performans takibi gibi süreçleri tek platformdan yönetin.",
     image: "/performans.webp",
+    link: "/performans-yonetimi"
   },
   {
     title: "İşe Alım",
     description: "Çalışanlarınızın gelişimi için online eğitimler ve sertifikasyon programları.",
     image: "/isealim2.webp",
+    link: "/ise-alim"
   },
   {
     title: "Mevzuatsal İşlemler",
     description: "Çalışanlarınızın gelişimi için online eğitimler ve sertifikasyon programları.",
     image: "/mevzuat.webp",
+    link: "/mevzuatsal-islemler"
   }
 ];
 
@@ -150,14 +157,16 @@ const Services = () => {
                 </p>
 
                 {/* Read More Link */}
-                <motion.div 
-                  className="flex items-center text-[#4DA3FF] font-medium group-hover:text-[#B1E5D3] transition-colors duration-300"
-                  whileHover={{ x: 10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <span>Daha Fazla</span>
-                  <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
-                </motion.div>
+                <Link to={service.link}>
+                  <motion.div 
+                    className="flex items-center text-[#4DA3FF] font-medium group-hover:text-[#B1E5D3] transition-colors duration-300"
+                    whileHover={{ x: 10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <span>Daha Fazla</span>
+                    <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
+                  </motion.div>
+                </Link>
               </motion.div>
             ))}
           </motion.div>

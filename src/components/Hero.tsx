@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calculator, Users, Calendar } from 'lucide-react';
 import { FlipCard, FlipCardFront, FlipCardBack } from "@/components/ui/flip-card";
@@ -11,19 +12,22 @@ const features = [
     title: "Bordro Hesaplama",
     image: "/hesaplama.webp",
     icon: <Calculator className="w-12 h-12 text-[#4DA3FF]" />,
-    description: "Gelişmiş algoritmalarımız ile maaş, izin, prim ve diğer tüm İK hesaplamalarınızı otomatik olarak yapın. Zaman kazanın, hata yapmayın."
+    description: "Gelişmiş algoritmalarımız ile maaş, izin, prim ve diğer tüm İK hesaplamalarınızı otomatik olarak yapın. Zaman kazanın, hata yapmayın.",
+    link: "/bordro-hesaplama"
   },
   {
     title: "Blog",
     image: "/blog.webp",
     icon: <Users className="w-12 h-12 text-[#4DA3FF]" />,
-    description: "Çalışanlarınızın bilgilerini güvenle saklayın, performanslarını takip edin ve kariyer gelişimlerini planlayın. Tek platformda tüm İK süreçleri."
+    description: "Çalışanlarınızın bilgilerini güvenle saklayın, performanslarını takip edin ve kariyer gelişimlerini planlayın. Tek platformda tüm İK süreçleri.",
+    link: "/blog"
   },
   {
     title: "Danışmanlık",
     image: "/danismanlik.webp",
     icon: <Calendar className="w-12 h-12 text-[#4DA3FF]" />,
-    description: "Yıllık izin, hastalık izni ve diğer tüm izin türlerini kolayca yönetin. Otomatik hesaplama ve onay süreçleri ile işinizi kolaylaştırın."
+    description: "Yıllık izin, hastalık izni ve diğer tüm izin türlerini kolayca yönetin. Otomatik hesaplama ve onay süreçleri ile işinizi kolaylaştırın.",
+    link: "/danismanlik"
   }
 ];
 
@@ -124,27 +128,29 @@ const Hero = () => {
                 key={index}
                 variants={itemVariants}
               >
-                <FlipCard className="h-[365px]">
-                  <FlipCardFront className="bg-white shadow-lg rounded-2xl p-6 border border-[#1F2A44]/10">
-                    <div className="w-full h-60 mb-6 overflow-hidden rounded-xl">
-                      <img 
-                        src={feature.image}
-                        alt={feature.title}
-                        className="w-full h-full object-contain hover:scale-110 transition-transform duration-300"
-                      />
-                    </div>
-                    <h3 className="text-2xl font-semibold text-[#1F2A44] text-center">{feature.title}</h3>
-                  </FlipCardFront>
-                  <FlipCardBack className="flex flex-col items-center justify-center rounded-2xl bg-[#4DA3FF] p-8 text-white">
-                    <div className="mb-6">
-                      {feature.icon}
-                    </div>
-                    <h3 className="text-2xl font-bold mb-4">{feature.title}</h3>
-                    <p className="text-center text-lg">
-                      {feature.description}
-                    </p>
-                  </FlipCardBack>
-                </FlipCard>
+                <Link to={feature.link} className="block h-full">
+                  <FlipCard className="h-[365px]">
+                    <FlipCardFront className="bg-white shadow-lg rounded-2xl p-6 border border-[#1F2A44]/10">
+                      <div className="w-full h-60 mb-6 overflow-hidden rounded-xl">
+                        <img 
+                          src={feature.image}
+                          alt={feature.title}
+                          className="w-full h-full object-contain hover:scale-110 transition-transform duration-300"
+                        />
+                      </div>
+                      <h3 className="text-2xl font-semibold text-[#1F2A44] text-center">{feature.title}</h3>
+                    </FlipCardFront>
+                    <FlipCardBack className="flex flex-col items-center justify-center rounded-2xl bg-[#4DA3FF] p-8 text-white">
+                      <div className="mb-6">
+                        {feature.icon}
+                      </div>
+                      <h3 className="text-2xl font-bold mb-4">{feature.title}</h3>
+                      <p className="text-center text-lg">
+                        {feature.description}
+                      </p>
+                    </FlipCardBack>
+                  </FlipCard>
+                </Link>
               </motion.div>
             ))}
           </motion.div>

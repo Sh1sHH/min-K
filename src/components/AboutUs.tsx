@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { motion } from 'framer-motion';
@@ -112,12 +113,14 @@ const AboutUs = () => {
                 variants={itemVariants}
                 className="pt-4"
               >
-                <Button 
-                  className="bg-[#4DA3FF] hover:bg-[#4DA3FF]/90 text-white px-8 py-6 rounded-full text-lg font-medium group"
-                >
-                  Daha Fazla Bilgi
-                  <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
-                </Button>
+                <Link to="/hakkimizda">
+                  <Button 
+                    className="bg-[#4DA3FF] hover:bg-[#4DA3FF]/90 text-white px-8 py-6 rounded-full text-lg font-medium group"
+                  >
+                    Daha Fazla Bilgi
+                    <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+                  </Button>
+                </Link>
               </motion.div>
             </motion.div>
           </motion.div>

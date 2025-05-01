@@ -3,12 +3,13 @@ import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'luc
 
 const Footer = () => {
   return (
-    <footer className="relative bg-white border-t border-[#1F2A44]/10">
+    <footer className="relative bg-blue-100 border-t border-[#1F2A44]/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo and Description */}
           <div className="col-span-1 md:col-span-2">
-            <h2 className="text-2xl font-semibold text-[#1F2A44] mb-4">minİK</h2>
+          <img src="/logo.png" alt="minİK Logo" className="h-12" />
+            <h2 className="text-2xl font-semibold text-[#1F2A44] mb-4">İKyardim</h2>
             <p className="text-[#1F2A44]/70 max-w-md">
               İK süreçlerinizi dijitalleştirin, zamandan tasarruf edin. 
               Modern çözümlerle işinizi kolaylaştırın.
@@ -98,8 +99,6 @@ const Footer = () => {
           </div>
         </div>
 
-{/* Bottom glow light effect with animation */}
-<div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[3000px] h-[950px] bg-[#4DA3FF]/15 blur-[3px] rounded-full pointer-events-none z-0 animate-glowPulse" />
 
       </div>
     </footer>

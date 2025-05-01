@@ -1,32 +1,47 @@
-const { onSchedule } = require('firebase-functions/v2/scheduler');
-const admin = require('firebase-admin');
+const { onSchedule } = require("firebase-functions/v2/scheduler");
+const admin = require("firebase-admin");
 
-// Doğrulanmamış kullanıcıları silen fonksiyon
-exports.deleteUnverifiedUsers = onSchedule('* * * * *', async (event) => {
-  try {
-    // Tüm kullanıcıları getir
-    const users = await admin.auth().listUsers();
-    const now = Date.now();
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
-    // Her kullanıcı için kontrol yap
-    for (const user of users.users) {
-      // Kullanıcı doğrulanmamışsa ve hesap oluşturma zamanı 5 dakikadan eskiyse
-      if (!user.emailVerified) {
-        const creationTime = new Date(user.metadata.creationTime).getTime();
-        const timeDiff = Math.floor((now - creationTime) / (1000 * 60)); // Dakika cinsinden fark
+exports.deleteUnverifiedUsers = onSchedule(
+  {
+    schedule: "0 4 * * *", // Her gün saat 04:00
+    timeZone: "Europe/Istanbul",
+    memory: "128MiB",
+    timeoutSeconds: 60,
+  },
+  async (event) => {
+    try {
+      let nextPageToken;
+      let deletedCount = 0;
 
-        // 5 dakika geçtiyse kullanıcıyı sil
-        if (timeDiff >= 5) {
-          await admin.auth().deleteUser(user.uid);
-          console.log(`Doğrulanmamış kullanıcı silindi: ${user.email}`);
+      do {
+        const listUsersResult = await admin
+          .auth()
+          .listUsers(1000, nextPageToken);
+
+        for (const user of listUsersResult.users) {
+          if (!user.emailVerified) {
+            const createdAt = new Date(user.metadata.creationTime).getTime();
+            const now = Date.now();
+            const diffMins = (now - createdAt) / 1000 / 60;
+
+            if (diffMins > 10) {
+              await admin.auth().deleteUser(user.uid);
+              console.log(`Silindi: ${user.email}`);
+              deletedCount++;
+            }
+          }
         }
-      }
+
+        nextPageToken = listUsersResult.pageToken;
+      } while (nextPageToken);
+
+      console.log(`Toplam silinen kullanıcı: ${deletedCount}`);
+    } catch (error) {
+      console.error("Hata:", error);
     }
-    
-    console.log('Doğrulanmamış kullanıcı kontrolü tamamlandı.');
-    return null;
-  } catch (error) {
-    console.error('Hata:', error);
-    return null;
   }
-});
+);
