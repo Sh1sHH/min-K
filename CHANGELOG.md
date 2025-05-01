@@ -1,5 +1,42 @@
 # Changelog
 
+## [2025-04-30]
+
+### Features
+- **Head Hunter (En Uygun Aday Bul) Geliştirmeleri:**
+  - PDF CV yükleme ve bireysel analiz (OpenAI ile) altyapısı oluşturuldu (`processUploadedCV` Cloud Function).
+  - Yüklenen CV'lerin durum takibi (uploading, processing, processed, error) ve listelenmesi sağlandı (`HeadHunter.tsx`).
+  - İşlenmiş CV'lerin analiz detaylarını gösterme özelliği eklendi.
+  - Kullanıcının girdiği iş tanımına göre, işlenmiş tüm CV'leri karşılaştıran backend fonksiyonu (`findBestCandidateByPrompt`) oluşturuldu.
+  - Karşılaştırma işlemi için UI eklendi (iş tanımı alanı, tetikleme butonu, sonuç gösterimi).
+  - AI'ın en uygun adayı seçerken kullanacağı ağırlıklandırılmış kriterler (Yetenekler, Deneyim vb.) prompt'a eklendi.
+  - AI'dan, seçilen adayın neden en uygun olduğuna dair karşılaştırmalı bir gerekçe (`justification`) sunması istendi.
+  - Karşılaştırma için OpenAI modeli `gpt-4-turbo`'ya yükseltildi.
+  - `analysis` verisi eksik olan CV'lerin karşılaştırmaya dahil edilmesi için "En İyi Çaba" doğrulama mantığı eklendi (henüz tam uygulanmadı).
+- **Abonelik ve Limit Yönetimi Dokümantasyonu:**
+  - Aktif abonelik dönemine göre AI özelliklerinin kullanımını sınırlama sistemi tasarlandı ve `docs/subscription_usage_limits.md` dosyasında belgelendi.
+
+### Fixes & Improvements
+- **Shadcn/ui Kurulum Sorunları:**
+  - `tailwind.config.js` yerine `tailwind.config.mjs` kullanımından kaynaklanan CLI hatası düzeltildi (`components.json` güncellendi).
+  - `@toast-ui/react-editor` paketinin React 18 ile uyumsuzluğundan kaynaklanan bağımlılık çakışması, paket kaldırılarak çözüldü.
+  - Eksik shadcn/ui bileşenleri (`label`, `alert`, `progress`, `badge`, `accordion`, `textarea`) projeye eklendi.
+- **Frontend (`HeadHunter.tsx`):**
+  - Çeşitli linter hataları (import, JSX, değişken tanımlama) düzeltildi.
+  - `httpsCallable` kullanımı düzeltildi.
+  - `toast.warn` yerine `toast.info` kullanıldı.
+  - `Badge` ve `Button` bileşenlerindeki prop hataları giderildi.
+  - Kullanıcı arayüzü `Card` bileşenleri kullanılarak yeniden düzenlendi.
+- **Backend (`comparator.js`):**
+  - OpenAI prompt'u defalarca iyileştirildi (net talimatlar, JSON formatı zorlama, ID listesi ekleme, ağırlıklı kriterler, karşılaştırmalı gerekçe).
+  - OpenAI API çağrısına `response_format: { type: "json_object" }` eklendi.
+  - Yanıt işleme ve ID doğrulama mantığı geliştirildi.
+  - Detaylı loglama eklendi (çekilen ID'ler, prompt, ham yanıt, eşleşme durumu).
+  - `HttpsError` kullanımı düzeltildi.
+  - Fonksiyon timeout ve memory ayarları güncellendi.
+
+---
+
 ## [2025-04-29]
 
 ### Added

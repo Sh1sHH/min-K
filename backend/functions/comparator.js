@@ -39,6 +39,7 @@ exports.findBestCandidateByPrompt = onCall(
   {
     secrets: [openaiApiKeySecret],
     timeoutSeconds: 120, // Increase timeout slightly more for potentially longer justification
+    memory: '512MiB', // May need more memory for processing JSON objects
   },
   async (request) => {
     // 1. Kimlik Doğrulama Kontrolü
@@ -73,91 +74,97 @@ exports.findBestCandidateByPrompt = onCall(
     }
 
     try {
-      // 4. Kullanıcının İşlenmiş CV Metinlerini Firestore'dan Çek
+      // 4. Fetch Processed CVs analysis data from Firestore
       const cvsSnapshot = await db
         .collection("users")
         .doc(userId)
         .collection("analyzedCVs")
-        .where("status", "==", "processed") // Sadece işlenmiş olanları al
-        // .where("extractedText", "!=", null) // extractedText alanı olanları filtrele (opsiyonel)
-        .limit(5) // En fazla 5 CV (limite uygun)
+        .where("status", "==", "processed")
+        .limit(5) // Keep the limit
         .get();
 
       if (cvsSnapshot.empty) {
         logger.warn(`User ${userId} has no processed CVs.`);
         throw new HttpsError(
           "not-found",
-          "Analiz edilecek işlenmiş CV bulunamadı. Lütfen önce CV yükleyip analizinin tamamlanmasını bekleyin."
+          "Karşılaştırılacak işlenmiş CV bulunamadı."
         );
       }
 
-      // CV metinlerini ve ID'lerini topla
-      const cvTexts = [];
-      const cvIds = []; // Explicitly store IDs for the prompt
+      // Collect CV analysis objects and IDs
+      const cvAnalyses = [];
+      const cvIds = [];
       cvsSnapshot.forEach(doc => {
         const data = doc.data();
-        if (data.extractedText && typeof data.extractedText === 'string' && data.extractedText.trim() !== '') {
-            cvTexts.push({ id: doc.id, text: data.extractedText.substring(0, 6000) });
-            cvIds.push(doc.id); // Add ID to the list
+        // Ensure analysis exists and is an object
+        if (data.analysis && typeof data.analysis === 'object' && Object.keys(data.analysis).length > 0) {
+            cvAnalyses.push({ id: doc.id, analysis: data.analysis });
+            cvIds.push(doc.id);
         } else {
-            logger.warn(`CV ${doc.id} for user ${userId} is processed but lacks valid extractedText.`);
+            logger.warn(`CV ${doc.id} for user ${userId} is processed but lacks valid analysis data.`);
         }
       });
 
-      if (cvTexts.length === 0) {
-         logger.warn(`User ${userId} has processed CVs, but none have usable extracted text.`);
+      if (cvAnalyses.length === 0) {
+         logger.warn(`User ${userId} has processed CVs, but none have usable analysis data.`);
          throw new HttpsError(
            "not-found",
-           "İşlenmiş CV'ler bulundu ancak karşılaştırılabilecek metin içerikleri eksik."
+           "İşlenmiş CV'ler bulundu ancak karşılaştırılabilecek analiz verileri eksik."
          );
        }
 
       // --- LOGGING: Log the fetched CV IDs ---
-      logger.info(`Fetched CV IDs for comparison for user ${userId}: ${cvIds.join(", ")}`);
+      logger.info(`Fetched CV IDs for analysis comparison for user ${userId}: ${cvIds.join(", ")}`);
 
-      // 5. Create OpenAI Prompt (Revised for JSON output with Justification)
-      let combinedCvText = "";
-      cvTexts.forEach((cv, index) => {
-        combinedCvText += `--- START CV ID: ${cv.id} ---
-${cv.text}
---- END CV ID: ${cv.id} ---
+      // 5. Create OpenAI Prompt using Analysis JSON and Weighted Criteria
+      // Prepare the analysis data string for the prompt
+      const analysisDataString = cvAnalyses.map(cv => 
+        `--- START CV ID: ${cv.id} ---\n${JSON.stringify(cv.analysis, null, 2)} \n--- END CV ID: ${cv.id} ---\n\n` // Use null, 2 for readable JSON formatting
+      ).join('');
 
-`;
-      });
+      const comparisonPrompt = `Aşağıda belirtilen iş gereksinimlerine göre, her biri daha önceden analiz edilmiş CV'lere ait aşağıdaki JSON analiz objelerini (${cvAnalyses.length} adet), belirtilen AĞIRLIKLANDIRILMIŞ KRİTERLERE göre karşılaştır:
 
-      // Revised prompt for JSON output
-      const comparisonPrompt = `Aşağıda belirtilen iş gereksinimlerine göre, verilen CV metinlerini (${cvTexts.length} adet) karşılaştır.
+**Değerlendirme Kriterleri ve Kullanılacak Analiz Alanları (Önerilen Ağırlıklar):**
+1.  **Yetenekler (%35):** \`analysis.anahtar_yetenekler\` ve \`analysis.sertifikalar_kurslar\` içindeki becerilerin, iş gereksinimlerindeki teknik yeteneklerle (React, JS vb.) uyumu. **(En Yüksek Önem)**
+2.  **İş Deneyimi (%30):** \`analysis.is_deneyimi_ozeti\` içindeki pozisyonlar, süreler ve özetlerin, aranan rolle ve istenen deneyim süresiyle uyumu. **(Yüksek Önem)**
+3.  **Sertifika & Ek Eğitim (%20):** \`analysis.sertifikalar_kurslar\` alanındaki ek eğitim ve sertifikaların güncelliği ve pozisyonla ilgisi. **(Orta Önem)**
+4.  **Eğitim (%10):** \`analysis.egitim_bilgileri\` içindeki bölüm ve seviyenin uygunluğu. **(Düşük Önem)**
+5.  **Genel Değerlendirme (%5):** \`analysis.genel_degerlendirme\` metnindeki adayın genel profilinin ve motivasyonunun (varsa) değerlendirilmesi. **(En Düşük Önem)**
+
 İş Gereksinimleri:
 "${userPrompt}"
 
-Karşılaştırılacak CV'ler ve ID'leri şunlardır:
-${combinedCvText}
+Karşılaştırılacak CV Analizleri ve ID'leri:
+${analysisDataString}
 Geçerli CV ID Listesi: [${cvIds.join(", ")}]
 
-Lütfen bu gereksinimlere en uygun olan SADECE BİR adayı belirle ve yanıtını aşağıdaki JSON formatında ver:
+Lütfen her adayı bu yapılandırılmış analiz verilerine ve ağırlıklı kriterlere göre değerlendirerek, iş gereksinimlerine en uygun olan SADECE BİR adayı belirle. Karar verirken özellikle **Yetenekler (%35)** ve **İş Deneyimi (%30)** kriterlerine odaklan. Yanıtını aşağıdaki JSON formatında ver:
 {
   "bestCandidateId": "SEÇİLEN_CV_ID",
-  "justification": "BU ADAYIN NEDEN EN UYGUN OLDUĞUNU 1-2 CÜMLE İLE AÇIKLA"
+  "justification": "BU ADAYIN ANALİZ VERİLERİNE VE BELİRTİLEN AĞIRLIKLI KRİTERLERE GÖRE NEDEN EN UYGUN OLDUĞUNU KISACA AÇIKLA. AYRICA, KARŞILAŞTIRILAN DİĞER ADAYLARA GÖRE ÖNE ÇIKAN TEMEL FARKLILIKLARI (örneğin: daha fazla deneyim, kritik bir yetenek, daha iyi eğitim uyumu vb.) BELİRT."
 }
 
 Eğer listedeki hiçbir aday belirgin şekilde uygun değilse, aşağıdaki JSON formatında yanıt ver:
 {
   "bestCandidateId": null,
-  "justification": "Uygun aday bulunamadı."
+  "justification": "Belirtilen ağırlıklı kriterlere ve analiz verilerine göre uygun aday bulunamadı veya adaylar arasında belirgin bir fark yok."
 }
 
 ÖNEMLİ: Yanıtın SADECE geçerli bir JSON objesi olmalıdır. Başka hiçbir metin veya açıklama ekleme. "bestCandidateId" değeri ya yukarıdaki "Geçerli CV ID Listesi" içinden bir ID ya da null olmalıdır.`;
 
       // --- LOGGING: Log the prompt being sent ---
-      logger.info(`Sending comparison prompt for JSON to OpenAI for user ${userId}:`, { prompt: comparisonPrompt });
+      // Avoid logging the full analysis data string directly if it's too large
+      logger.info(`Sending analysis-based comparison prompt for JSON to OpenAI for user ${userId} (Prompt length: ${comparisonPrompt.length})`); 
+      // Optionally log a truncated version or just the structure
+      // logger.debug("Prompt details:", { userPrompt, cvIds });
 
-      // 6. Send Request to OpenAI - Requesting JSON output
-      logger.info(`Calling OpenAI for user ${userId} with ${cvTexts.length} CVs (expecting JSON)...`);
+      // 6. Send Request to OpenAI
+      logger.info(`Calling OpenAI for user ${userId} with ${cvAnalyses.length} CV analyses (expecting JSON)...`);
       const completion = await openai.chat.completions.create({
         messages: [{ role: "user", content: comparisonPrompt }],
-        model: "gpt-3.5-turbo", // Or a model known to be good with JSON format
-        temperature: 0.2, // Keep low for consistency
-        response_format: { type: "json_object" }, // Enforce JSON output
+        model: "gpt-4-turbo",
+        temperature: 0.2,
+        response_format: { type: "json_object" },
       });
 
       // --- LOGGING: Log the raw OpenAI response ---
@@ -196,7 +203,8 @@ Eğer listedeki hiçbir aday belirgin şekilde uygun değilse, aşağıdaki JSON
           throw new HttpsError("internal", "Yapay zekadan geçersiz formatta aday ID'si alındı.");
       }
 
-      const foundCv = cvTexts.find(cv => cv.id === bestCandidateId);
+      // Find based on cvAnalyses array now
+      const foundCv = cvAnalyses.find(cv => cv.id === bestCandidateId);
       if (foundCv) {
           logger.info(`Successfully matched OpenAI result ID "${bestCandidateId}" for user ${userId}. Justification: "${justification}"`);
           // Return success with ID and justification
