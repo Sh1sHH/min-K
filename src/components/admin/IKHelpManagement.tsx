@@ -60,8 +60,16 @@ const IKHelpManagement = () => {
       return;
     }
 
-    if (!replyContent.trim()) {
-      toast.error('Lütfen bir yanıt yazın');
+    // Find the question to get the original user's ID
+    const question = questions.find(q => q.id === questionId);
+    if (!question) {
+      toast.error('Soru bulunamadı.');
+      return;
+    }
+    const targetUserId = question.userId;
+
+    if (!replyContent.trim() && replyFiles.length === 0) {
+      toast.error('Lütfen bir yanıt yazın veya dosya ekleyin');
       return;
     }
 
@@ -69,7 +77,7 @@ const IKHelpManagement = () => {
 
     try {
       // Dosyaları yükle
-      const attachmentUrls = await uploadFiles();
+      const attachmentUrls = await uploadFiles(targetUserId);
 
       // Yanıtı kaydet
       await ikHelpService.addAnswer({
@@ -112,12 +120,12 @@ const IKHelpManagement = () => {
     }
   };
 
-  const uploadFiles = async (): Promise<string[]> => {
+  const uploadFiles = async (targetUserId: string): Promise<string[]> => {
     if (!replyFiles.length) return [];
 
     try {
       const uploadPromises = replyFiles.map(async file => {
-        const storageRef = ref(storage, `ik-help/${Date.now()}-${file.name}`);
+        const storageRef = ref(storage, `ik-help/${targetUserId}/${Date.now()}-${file.name}`);
         const snapshot = await uploadBytes(storageRef, file);
         return getDownloadURL(snapshot.ref);
       });

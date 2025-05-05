@@ -34,28 +34,36 @@ service firebase.storage {
       allow read: if true;
 
       // Yazma kuralları - sadece admin yazabilir
-      allow write: if isAuthenticated() && hasAdminRole();
+      allow write, delete: if isAuthenticated() && hasAdminRole();
+    }
 
-      // Silme kuralları - sadece admin silebilir
+    // IK Help kullanıcıya özel dosyaları için kurallar (örn: ik-help/USER_ID/dosya.pdf)
+    match /ik-help/{userId}/{fileName} {
+      // Okuma: Kullanıcı kendisi (sahipse) VEYA admin okuyabilir.
+      allow read: if isAuthenticated() && (request.auth.uid == userId || hasAdminRole());
+
+      // Yazma:
+      // 1. Kullanıcı kendisi (ve premium ise) yazabilir
+      // VEYA
+      // 2. Admin yazabilir (herhangi bir kullanıcınınkine).
+      allow write: if isAuthenticated() &&
+                     ( (request.auth.uid == userId && hasPremiumRole()) || hasAdminRole() );
+
+      // Silme: Sadece adminler silebilir.
       allow delete: if isAuthenticated() && hasAdminRole();
     }
 
-    // IK Help dosyaları için kurallar
+    // Eski IK Help genel klasör kuralı (örn: ik-help/dosya.pdf)
+    // Eğer ik-help/ altına doğrudan dosya atılmıyorsa bu blok tamamen kaldırılabilir
+    // veya en azından yazma izni (write) kaldırılabilir.
     match /ik-help/{fileName} {
-      // Okuma kuralları
-      allow read: if isAuthenticated() && (
-        hasAdminRole() || hasPremiumRole()
-      );
+      // Okuma: Admin veya Premium ise okuyabilir (Eski dosyalar için?)
+      allow read: if isAuthenticated() && (hasAdminRole() || hasPremiumRole());
 
-      // Yazma kuralları
-      allow write: if isAuthenticated() && (
-        hasAdminRole() || hasPremiumRole()
-      );
+      // Yazma: İzin VERİLMEZ (write kuralı yok)
 
-      // Silme kuralları
-      allow delete: if isAuthenticated() && (
-        hasAdminRole()
-      );
+      // Silme: Sadece admin silebilir (Eski dosyalar için?)
+      allow delete: if isAuthenticated() && hasAdminRole();
     }
 
     // Diğer tüm dosyalar için varsayılan reddetme

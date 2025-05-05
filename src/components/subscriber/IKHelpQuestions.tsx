@@ -99,9 +99,14 @@ const IKHelpQuestions = () => {
   const uploadFiles = async (): Promise<string[]> => {
     if (!replyFiles.length) return [];
 
+    if (!currentUser) {
+        toast.error('Dosya yüklemek için giriş yapmanız gerekiyor.');
+        throw new Error('User not authenticated for file upload');
+    }
+
     try {
       const uploadPromises = replyFiles.map(async file => {
-        const storageRef = ref(storage, `ik-help/${Date.now()}-${file.name}`);
+        const storageRef = ref(storage, `ik-help/${currentUser.uid}/${Date.now()}-${file.name}`);
         const snapshot = await uploadBytes(storageRef, file);
         return getDownloadURL(snapshot.ref);
       });
@@ -109,6 +114,16 @@ const IKHelpQuestions = () => {
       return await Promise.all(uploadPromises);
     } catch (error) {
       console.error('Error uploading files:', error);
+      if (error instanceof Error && 'code' in error) {
+        const firebaseError = error as { code: string; message: string };
+        if (firebaseError.code === 'storage/unauthorized') {
+          toast.error('Dosya yükleme yetkiniz yok. Lütfen aboneliğinizi kontrol edin.');
+        } else {
+          toast.error(`Dosya yüklenirken hata: ${firebaseError.message}`);
+        }
+      } else {
+        toast.error('Dosyalar yüklenirken bilinmeyen bir hata oluştu');
+      }
       throw new Error('Dosyalar yüklenirken bir hata oluştu');
     }
   };
