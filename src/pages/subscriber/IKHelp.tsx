@@ -1,15 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import IKHelpForm from '@/components/subscriber/IKHelpForm';
 import IKHelpQuestions from '@/components/subscriber/IKHelpQuestions';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
 import { PlusCircle, MessageSquare } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const IKHelp = () => {
-  const { currentUser, isSubscriber } = useAuth();
+  const { currentUser, isPremium } = useAuth();
   const [showForm, setShowForm] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
-  if (!currentUser || !isSubscriber) {
+  // Check if dark mode is enabled by looking at html class
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark');
+    setIsDarkMode(isDark);
+
+    // Optional: Listen for changes in dark mode
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          setIsDarkMode(document.documentElement.classList.contains('dark'));
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, { attributes: true });
+
+    return () => observer.disconnect();
+  }, []);
+
+  if (!currentUser || !isPremium) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
         <MessageSquare className="w-16 h-16 text-gray-400 mb-4" />
@@ -21,7 +42,12 @@ const IKHelp = () => {
         </p>
         <Button
           onClick={() => window.location.href = '/pricing'}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className={cn(
+            "px-4 py-2 rounded-lg transition-all",
+            isDarkMode 
+              ? "bg-purple-600 hover:bg-purple-700 text-white" 
+              : "bg-purple-500 hover:bg-purple-600 text-white"
+          )}
         >
           Premium'a Geç
         </Button>
@@ -42,19 +68,24 @@ const IKHelp = () => {
         </div>
         <Button
           onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-lg transition-all",
+            isDarkMode 
+              ? "bg-purple-600 hover:bg-purple-700 text-white" 
+              : "bg-purple-500 hover:bg-purple-600 text-white"
+          )}
         >
-          <PlusCircle className="w-5 h-5 mr-2" />
+          <PlusCircle className="w-5 h-5" />
           {showForm ? 'Sorularımı Göster' : 'Yeni Soru Sor'}
         </Button>
       </div>
 
       {showForm ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <IKHelpForm onSuccess={() => setShowForm(false)} />
+          <IKHelpForm onSuccess={() => setShowForm(false)} isDarkMode={isDarkMode} />
         </div>
       ) : (
-        <IKHelpQuestions />
+        <IKHelpQuestions isDarkMode={isDarkMode} />
       )}
     </div>
   );

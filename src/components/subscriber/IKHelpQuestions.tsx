@@ -9,8 +9,13 @@ import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/config/firebase';
+import { cn } from '@/lib/utils';
 
-const IKHelpQuestions = () => {
+interface IKHelpQuestionsProps {
+  isDarkMode: boolean;
+}
+
+const IKHelpQuestions = ({ isDarkMode }: IKHelpQuestionsProps) => {
   const { currentUser } = useAuth();
   const [questions, setQuestions] = useState<IKQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, IKAnswer[]>>({});
@@ -71,13 +76,13 @@ const IKHelpQuestions = () => {
       // Dosyaları yükle
       const attachmentUrls = await uploadFiles();
 
-      // Yanıtı kaydet
+      // Yanıtı kaydet - isExpert: false olarak işaretliyoruz
       await ikHelpService.addAnswer({
         questionId,
         userId: currentUser.uid,
         content: replyContent.trim(),
         attachments: attachmentUrls,
-        isExpert: false
+        isExpert: false // Kullanıcı yanıtı olduğunu belirtiyoruz
       });
 
       // Formu sıfırla
@@ -128,52 +133,32 @@ const IKHelpQuestions = () => {
     }
   };
 
-  const getStatusColor = (status: IKQuestion['status']) => {
-    switch (status) {
-      case 'pending':
-        return 'text-yellow-500';
-      case 'answered':
-        return 'text-blue-500';
-      case 'solved':
-        return 'text-green-500';
-      default:
-        return 'text-gray-500';
-    }
-  };
-
-  const getStatusIcon = (status: IKQuestion['status']) => {
-    switch (status) {
-      case 'pending':
-        return <Clock className="w-5 h-5" />;
-      case 'answered':
-        return <MessageSquare className="w-5 h-5" />;
-      case 'solved':
-        return <CheckCircle className="w-5 h-5" />;
-      default:
-        return <AlertCircle className="w-5 h-5" />;
-    }
-  };
-
-  const getStatusText = (status: IKQuestion['status']) => {
-    switch (status) {
-      case 'pending':
-        return 'Yanıt Bekliyor';
-      case 'answered':
-        return 'Yanıtlandı';
-      case 'solved':
-        return 'Çözüldü';
-      default:
-        return 'Bilinmiyor';
-    }
-  };
-
   // Soruları durumlarına göre gruplandır
   const groupedQuestions = questions.reduce((acc, question) => {
-    const status = question.status;
-    if (!acc[status]) {
-      acc[status] = [];
+    const questionAnswers = answers[question.id!] || [];
+    const hasExpertAnswer = questionAnswers.some(answer => answer.isExpert);
+    const onlyUserAnswers = questionAnswers.length > 0 && !hasExpertAnswer;
+
+    // Sorunun durumunu belirle
+    let effectiveStatus: IKQuestion['status'];
+    
+    if (question.status === 'solved') {
+      effectiveStatus = 'solved';
+    } else if (hasExpertAnswer) {
+      effectiveStatus = 'answered';
+    } else {
+      effectiveStatus = 'pending';
     }
-    acc[status].push(question);
+
+    // Soruyu uygun kategoriye ekle
+    if (!acc[effectiveStatus]) {
+      acc[effectiveStatus] = [];
+    }
+    acc[effectiveStatus].push({
+      ...question,
+      status: effectiveStatus // Geçici durum güncelleme
+    });
+
     return acc;
   }, {} as Record<IKQuestion['status'], IKQuestion[]>);
 
@@ -187,267 +172,414 @@ const IKHelpQuestions = () => {
     solved: 'Çözülenler'
   };
 
+  // Durum ikonları ve renkleri için yardımcı fonksiyonlar
+  const getStatusColor = (status: IKQuestion['status'], questionAnswers: IKAnswer[] = []) => {
+    const hasExpertAnswer = questionAnswers.some(answer => answer.isExpert);
+    const onlyUserAnswers = questionAnswers.length > 0 && !hasExpertAnswer;
+
+    switch (status) {
+      case 'pending':
+        return onlyUserAnswers ? 'text-yellow-500' : 'text-yellow-500';
+      case 'answered':
+        return 'text-blue-500';
+      case 'solved':
+        return 'text-green-500';
+      default:
+        return 'text-gray-500';
+    }
+  };
+
+  const getStatusIcon = (status: IKQuestion['status'], questionAnswers: IKAnswer[] = []) => {
+    const hasExpertAnswer = questionAnswers.some(answer => answer.isExpert);
+    const onlyUserAnswers = questionAnswers.length > 0 && !hasExpertAnswer;
+
+    switch (status) {
+      case 'pending':
+        return onlyUserAnswers ? <Clock className="w-5 h-5" /> : <Clock className="w-5 h-5" />;
+      case 'answered':
+        return <MessageSquare className="w-5 h-5" />;
+      case 'solved':
+        return <CheckCircle className="w-5 h-5" />;
+      default:
+        return <AlertCircle className="w-5 h-5" />;
+    }
+  };
+
+  const getStatusText = (status: IKQuestion['status'], questionAnswers: IKAnswer[] = []) => {
+    const hasExpertAnswer = questionAnswers.some(answer => answer.isExpert);
+    const onlyUserAnswers = questionAnswers.length > 0 && !hasExpertAnswer;
+
+    switch (status) {
+      case 'pending':
+        return onlyUserAnswers ? 'Yanıt Bekliyor' : 'Yanıt Bekliyor';
+      case 'answered':
+        return 'Yanıtlandı';
+      case 'solved':
+        return 'Çözüldü';
+      default:
+        return statusTitles[status];
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || []);
+    const validFiles = selectedFiles.filter(file => {
+      const isValidType = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'image/png',
+        'image/jpeg'
+      ].includes(file.type);
+      
+      const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
+      
+      if (!isValidType) {
+        toast.error('Desteklenmeyen dosya formatı');
+        return false;
+      }
+      if (!isValidSize) {
+        toast.error('Dosya boyutu 5MB\'dan büyük olamaz');
+        return false;
+      }
+      
+      return isValidType && isValidSize;
+    });
+
+    if (validFiles.length > 0) {
+      setReplyFiles(prev => [...prev, ...validFiles]);
+      toast.success(`${validFiles.length} dosya başarıyla eklendi`);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setReplyFiles(prev => {
+      const newFiles = prev.filter((_, i) => i !== index);
+      toast.success('Dosya kaldırıldı');
+      return newFiles;
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-48">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        <div className={cn(
+          "animate-spin rounded-full h-8 w-8 border-b-2",
+          isDarkMode ? "border-purple-400" : "border-purple-600"
+        )}></div>
       </div>
     );
   }
 
   if (questions.length === 0) {
     return (
-      <div className="text-center py-12 bg-black/30 rounded-lg border border-white/10">
-        <MessageSquare className="w-12 h-12 mx-auto text-gray-500 mb-4" />
-        <h3 className="text-lg font-medium text-white">
-          Henüz soru sormadınız
-        </h3>
-        <p className="text-gray-400 mt-2">
-          İK uzmanlarımıza soru sormak için yukarıdaki formu kullanabilirsiniz.
-        </p>
+      <div className={cn(
+        "text-center py-12 rounded-lg",
+        isDarkMode 
+          ? "bg-gray-900/50 border border-white/10 text-gray-300" 
+          : "bg-gray-50 border border-gray-200 text-gray-600"
+      )}>
+        <MessageSquare className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+        <p>Henüz soru sormadınız.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* Duruma göre gruplandırılmış sorular */}
+    <div className="space-y-6">
       {statusOrder.map(status => {
-        const questions = groupedQuestions[status];
-        if (!questions?.length) return null;
+        const statusQuestions = groupedQuestions[status];
+        if (!statusQuestions?.length) return null;
 
         return (
           <div key={status} className="space-y-4">
-            {/* Grup Başlığı */}
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-medium text-white flex items-center gap-2">
-                {getStatusIcon(status)}
-                {statusTitles[status]}
-              </h2>
-              <div className="text-sm text-gray-400">({questions.length})</div>
-            </div>
+            <h3 className={cn(
+              "text-lg font-medium flex items-center gap-2",
+              isDarkMode ? "text-white" : "text-gray-900"
+            )}>
+              {getStatusIcon(status, answers[statusQuestions[0].id!] || [])}
+              <span>{statusTitles[status]}</span>
+              <span className={cn(
+                "text-sm font-normal ml-2 px-2 py-0.5 rounded-full",
+                isDarkMode ? "bg-gray-800" : "bg-gray-100"
+              )}>
+                {statusQuestions.length}
+              </span>
+            </h3>
 
-            {/* Grup Soruları */}
-            <div className="space-y-3">
-              {questions.map((question) => (
+            <div className="space-y-4">
+              {statusQuestions.map(question => (
                 <div
                   key={question.id}
-                  className={`bg-black/50 backdrop-blur-sm rounded-lg border transition-colors ${
-                    expandedQuestionId === question.id 
-                      ? 'border-purple-500/30' 
-                      : 'border-white/10 hover:border-white/20'
-                  }`}
+                  className={cn(
+                    "rounded-lg overflow-hidden transition-all duration-200",
+                    isDarkMode 
+                      ? "bg-gray-900/50 border border-white/10" 
+                      : "bg-white border border-gray-200"
+                  )}
                 >
-                  {/* Soru Başlığı ve Durum */}
                   <div
-                    className="p-4 cursor-pointer"
-                    onClick={() => setExpandedQuestionId(
-                      expandedQuestionId === question.id ? null : question.id!
+                    className={cn(
+                      "p-4 cursor-pointer",
+                      isDarkMode ? "hover:bg-white/5" : "hover:bg-gray-50"
                     )}
+                    onClick={() => question.id && setExpandedQuestionId(expandedQuestionId === question.id ? null : question.id)}
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-2 flex-1 min-w-0">
-                        <div className="flex items-center gap-3">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 text-xs font-medium">
-                            {question.category}
-                          </span>
-                          {/* Yanıt Sayısı */}
-                          <span className="inline-flex items-center gap-1 text-sm text-gray-400">
-                            <MessageSquare className="w-4 h-4" />
-                            {answers[question.id!]?.length || 0} yanıt
-                          </span>
-                        </div>
-                        <h3 className="text-lg font-medium text-white truncate">
-                          {question.title}
-                        </h3>
-                        <div className="flex items-center gap-1 text-sm text-gray-400">
-                          <Clock className="w-4 h-4" />
-                          {format(question.createdAt.toDate(), 'd MMMM yyyy', { locale: tr })}
-                        </div>
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <h4 className={cn(
+                          "font-medium",
+                          isDarkMode ? "text-white" : "text-gray-900"
+                        )}>{question.title}</h4>
+                        <p className={cn(
+                          "text-sm",
+                          isDarkMode ? "text-gray-400" : "text-gray-600"
+                        )}>
+                          {format(question.createdAt.toDate(), 'dd MMMM yyyy HH:mm', { locale: tr })}
+                        </p>
                       </div>
-                      <div className="flex items-center">
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "text-sm px-2 py-1 rounded-full",
+                          isDarkMode ? "bg-gray-800" : "bg-gray-100",
+                          getStatusColor(question.status, answers[question.id!] || [])
+                        )}>
+                          {getStatusText(question.status, answers[question.id!] || [])}
+                        </span>
                         {expandedQuestionId === question.id ? (
-                          <ChevronUp className="w-5 h-5 text-gray-400" />
+                          <ChevronUp className={cn(
+                            "w-5 h-5",
+                            isDarkMode ? "text-gray-400" : "text-gray-600"
+                          )} />
                         ) : (
-                          <ChevronDown className="w-5 h-5 text-gray-400" />
+                          <ChevronDown className={cn(
+                            "w-5 h-5",
+                            isDarkMode ? "text-gray-400" : "text-gray-600"
+                          )} />
                         )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Soru Detayı ve Yanıtlar */}
                   {expandedQuestionId === question.id && (
-                    <div className="border-t border-white/10">
-                      <div className="p-4 space-y-4">
-                        <p className="text-gray-300 whitespace-pre-wrap">
-                          {question.description}
-                        </p>
-
-                        {/* Soru Ekleri */}
-                        {question.attachments && question.attachments.length > 0 && (
-                          <div className="space-y-2">
-                            <h4 className="text-sm font-medium text-white">Ekler</h4>
-                            <div className="flex flex-wrap gap-2">
-                              {question.attachments.map((url, index) => (
-                                <a
-                                  key={index}
-                                  href={url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-1 px-3 py-1.5 bg-black/30 rounded-lg text-sm text-purple-400 hover:text-purple-300 hover:bg-black/40 transition-colors"
-                                >
-                                  <FileText className="w-4 h-4" />
-                                  Ek {index + 1}
-                                </a>
-                              ))}
+                    <div className={cn(
+                      "p-4 border-t",
+                      isDarkMode ? "border-white/10" : "border-gray-100"
+                    )}>
+                      <div className="space-y-4">
+                        <div className={cn(
+                          "p-4 rounded-lg",
+                          isDarkMode ? "bg-black/30" : "bg-gray-50"
+                        )}>
+                          <p className={cn(
+                            isDarkMode ? "text-gray-300" : "text-gray-700"
+                          )}>{question.description}</p>
+                          {question.attachments && question.attachments.length > 0 && (
+                            <div className="mt-4 space-y-2">
+                              <p className={cn(
+                                "text-sm font-medium",
+                                isDarkMode ? "text-gray-400" : "text-gray-600"
+                              )}>Ekler:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {question.attachments.map((url, index) => (
+                                  <a
+                                    key={index}
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={cn(
+                                      "flex items-center gap-1 px-2 py-1 rounded text-sm",
+                                      isDarkMode 
+                                        ? "bg-gray-800 text-gray-300 hover:bg-gray-700" 
+                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    )}
+                                  >
+                                    <FileText className="w-4 h-4" />
+                                    Ek {index + 1}
+                                  </a>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
 
                         {/* Yanıtlar */}
-                        {answers[question.id!]?.length > 0 && (
-                          <div className="space-y-4">
-                            <h4 className="text-sm font-medium text-white">Yanıtlar</h4>
-                            <div className="space-y-4">
-                              {answers[question.id!].map((answer) => (
-                                <div
-                                  key={answer.id}
-                                  className={`rounded-lg p-4 ${
-                                    answer.isExpert 
-                                      ? 'bg-purple-900/20 border border-purple-900/30' 
-                                      : 'bg-gray-900/20 border border-gray-900/30'
-                                  }`}
-                                >
-                                  <div className="flex items-start justify-between mb-3">
-                                    <div className="flex items-start gap-3">
-                                      {/* Avatar */}
-                                      <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
-                                        <span className="text-sm font-medium text-white">
-                                          {answer.isExpert ? 'İK' : 'S'}
-                                        </span>
-                                      </div>
-
-                                      {/* Kullanıcı Bilgileri */}
-                                      <div className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                          <span className="text-sm font-medium text-white">
-                                            {answer.isExpert ? 'İK Uzmanı' : 'Siz'}
-                                          </span>
-                                        </div>
-                                        <span className="text-xs text-gray-400">
-                                          {format(answer.createdAt.toDate(), 'd MMMM yyyy, HH:mm', { locale: tr })}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className="pl-11">
-                                    <p className="text-gray-300 whitespace-pre-wrap">
-                                      {answer.content}
-                                    </p>
-
-                                    {/* Yanıt Ekleri */}
-                                    {answer.attachments && answer.attachments.length > 0 && (
-                                      <div className="mt-3 space-y-2">
-                                        <h5 className="text-sm font-medium text-white">Ekler</h5>
-                                        <div className="flex flex-wrap gap-2">
-                                          {answer.attachments.map((url, index) => (
-                                            <a
-                                              key={index}
-                                              href={url}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="flex items-center gap-1 px-3 py-1.5 bg-black/30 rounded-lg text-sm text-purple-400 hover:text-purple-300 hover:bg-black/40 transition-colors"
-                                            >
-                                              <FileText className="w-4 h-4" />
-                                              Ek {index + 1}
-                                            </a>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
+                        {answers[question.id!]?.map((answer, index) => (
+                          <div
+                            key={answer.id}
+                            className={cn(
+                              "p-4 rounded-lg",
+                              answer.isExpert
+                                ? isDarkMode ? "bg-purple-950/30 border border-purple-500/20" : "bg-purple-50 border border-purple-100"
+                                : isDarkMode ? "bg-gray-800/50" : "bg-gray-50"
+                            )}
+                          >
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className={cn(
+                                "text-sm font-medium",
+                                answer.isExpert
+                                  ? isDarkMode ? "text-purple-400" : "text-purple-700"
+                                  : isDarkMode ? "text-gray-300" : "text-gray-700"
+                              )}>
+                                {answer.isExpert ? 'Uzman Yanıtı' : 'Sizin Yanıtınız'}
+                              </span>
+                              <span className={cn(
+                                "text-sm",
+                                isDarkMode ? "text-gray-500" : "text-gray-600"
+                              )}>
+                                • {format(answer.createdAt.toDate(), 'dd MMMM yyyy HH:mm', { locale: tr })}
+                              </span>
                             </div>
+                            <p className={cn(
+                              isDarkMode ? "text-gray-300" : "text-gray-700"
+                            )}>{answer.content}</p>
+                            {answer.attachments && answer.attachments.length > 0 && (
+                              <div className="mt-4 space-y-2">
+                                <p className={cn(
+                                  "text-sm font-medium",
+                                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                                )}>Ekler:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {answer.attachments.map((url, index) => (
+                                    <a
+                                      key={index}
+                                      href={url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={cn(
+                                        "flex items-center gap-1 px-2 py-1 rounded text-sm",
+                                        isDarkMode 
+                                          ? "bg-gray-800 text-gray-300 hover:bg-gray-700" 
+                                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                      )}
+                                    >
+                                      <FileText className="w-4 h-4" />
+                                      Ek {index + 1}
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        )}
+                        ))}
 
                         {/* Yanıt Formu */}
-                        {question.status !== 'solved' && (
-                          <div className="space-y-4 mt-6">
-                            <Textarea
-                              placeholder="Yanıtınızı yazın..."
-                              value={replyContent}
-                              onChange={(e) => setReplyContent(e.target.value)}
-                              className="min-h-[100px]"
-                            />
+                        <div className="space-y-4">
+                          <Textarea
+                            value={replyContent}
+                            onChange={(e) => setReplyContent(e.target.value)}
+                            placeholder="Yanıtınızı yazın..."
+                            className={cn(
+                              "min-h-[100px]",
+                              isDarkMode 
+                                ? "bg-black/30 border-white/10 text-white placeholder:text-gray-500" 
+                                : "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
+                            )}
+                            disabled={replying}
+                          />
 
-                            {/* Dosya Yükleme */}
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  type="button"
-                                  onClick={() => document.getElementById(`file-upload-${question.id}`)?.click()}
-                                  className="text-sm px-4"
-                                >
-                                  <Upload className="w-4 h-4 mr-2" />
-                                  Dosya Ekle
-                                </Button>
-                                <input
-                                  id={`file-upload-${question.id}`}
-                                  type="file"
-                                  multiple
-                                  onChange={(e) => {
-                                    const files = Array.from(e.target.files || []);
-                                    setReplyFiles(files);
-                                  }}
-                                  className="hidden"
-                                />
-                              </div>
-
-                              {/* Seçilen Dosyalar */}
-                              {replyFiles.length > 0 && (
-                                <div className="flex flex-wrap gap-2">
+                          {/* Dosya Yükleme ve Önizleme */}
+                          <div className="space-y-4">
+                            {replyFiles.length > 0 && (
+                              <div className="space-y-2">
+                                <p className={cn(
+                                  "text-sm font-medium",
+                                  isDarkMode ? "text-white/70" : "text-gray-700"
+                                )}>
+                                  Ekli Dosyalar ({replyFiles.length})
+                                </p>
+                                <div className="space-y-2">
                                   {replyFiles.map((file, index) => (
                                     <div
                                       key={index}
-                                      className="flex items-center gap-1 bg-white/5 rounded px-2 py-1"
+                                      className={cn(
+                                        "flex items-center justify-between p-3 rounded-lg border transition-colors",
+                                        isDarkMode 
+                                          ? "bg-black/20 border-purple-500/20 text-white/80" 
+                                          : "bg-purple-50 border-purple-100 text-gray-700"
+                                      )}
                                     >
-                                      <span className="text-sm text-gray-300">{file.name}</span>
+                                      <div className="flex items-center gap-2">
+                                        <FileText className={cn(
+                                          "w-4 h-4",
+                                          isDarkMode ? "text-purple-400" : "text-purple-500"
+                                        )} />
+                                        <span className="text-sm truncate max-w-[200px]">{file.name}</span>
+                                        <span className="text-xs opacity-60">
+                                          ({(file.size / 1024).toFixed(1)} KB)
+                                        </span>
+                                      </div>
                                       <button
-                                        onClick={() => setReplyFiles(files => files.filter((_, i) => i !== index))}
-                                        className="text-gray-400 hover:text-gray-300"
+                                        type="button"
+                                        onClick={() => removeFile(index)}
+                                        className={cn(
+                                          "p-1 rounded-md transition-colors",
+                                          isDarkMode 
+                                            ? "hover:bg-red-500/20 text-red-400" 
+                                            : "hover:bg-red-100 text-red-500"
+                                        )}
                                       >
-                                        <X className="w-4 h-4" />
+                                        <X className="w-3 h-3" />
                                       </button>
                                     </div>
                                   ))}
                                 </div>
-                              )}
-                            </div>
+                              </div>
+                            )}
 
-                            <div className="flex items-center gap-3 mt-4">
-                              <Button
-                                onClick={() => handleSubmitReply(question.id!)}
-                                disabled={replying || !replyContent.trim()}
-                                className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 min-w-[100px] px-3 py-1.5 text-sm transition-all duration-200 ease-in-out"
-                              >
-                                {replying ? (
-                                  <>
-                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white/100" />
-                                    <span>Gönderiliyor</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <MessageSquare className="w-4 h-4" />
-                                    <span>Yanıtla</span>
-                                  </>
-                                )}
-                              </Button>
+                            <div className="flex items-center gap-4">
+                              <div className="relative">
+                                <Button
+                                  type="button"
+                                  variant={isDarkMode ? "outline" : "secondary"}
+                                  onClick={() => document.getElementById('reply-file')?.click()}
+                                  disabled={replying}
+                                  className={cn(
+                                    "relative flex items-center gap-2",
+                                    isDarkMode 
+                                      ? "border-purple-400/20 hover:bg-purple-400/10 text-purple-400" 
+                                      : "border-purple-200 hover:bg-purple-50 text-purple-600",
+                                    "disabled:opacity-50 disabled:cursor-not-allowed"
+                                  )}
+                                >
+                                  <Upload className="w-4 h-4" />
+                                  Dosya Ekle
+                                </Button>
+                                <input
+                                  id="reply-file"
+                                  type="file"
+                                  className="hidden"
+                                  onChange={handleFileChange}
+                                  accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                  multiple
+                                  disabled={replying}
+                                />
+                              </div>
+                              <p className={cn(
+                                "text-xs",
+                                isDarkMode ? "text-gray-400" : "text-gray-500"
+                              )}>
+                                PDF, Word, Excel veya Resim (max 5MB)
+                              </p>
                             </div>
                           </div>
-                        )}
+
+                          <Button
+                            onClick={() => handleSubmitReply(question.id!)}
+                            disabled={!replyContent.trim() || replying}
+                            className={cn(
+                              "px-4 py-2 rounded-lg transition-all",
+                              isDarkMode 
+                                ? "bg-purple-600 hover:bg-purple-700 text-white disabled:bg-purple-800/40" 
+                                : "bg-purple-500 hover:bg-purple-600 text-white disabled:bg-purple-300",
+                              "disabled:cursor-not-allowed"
+                            )}
+                          >
+                            {replying ? 'Gönderiliyor...' : 'Yanıtla'}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   )}

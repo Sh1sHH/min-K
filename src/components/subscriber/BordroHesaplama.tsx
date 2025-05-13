@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { cn } from "@/lib/utils";
 
 // Sabit Değerler
 const RATES = {
@@ -128,7 +129,11 @@ type YardimTipi = 'yok' | 'nakdi' | 'ayni';
 // Maaş Tipi
 type MaasTipi = 'aylik' | 'gunluk';
 
-const BordroHesaplama = () => {
+interface BordroHesaplamaProps {
+  isDarkMode: boolean;
+}
+
+const BordroHesaplama = ({ isDarkMode }: BordroHesaplamaProps) => {
   const [calisanTipi, setCalisanTipi] = useState<'normal' | 'emekli'>('normal');
   const [temelUcret, setTemelUcret] = useState<string>('');
   const [aylikSonuclar, setAylikSonuclar] = useState<AylikSonuc[]>([]);
@@ -346,35 +351,58 @@ const BordroHesaplama = () => {
 
   return (
     <TooltipProvider>
-    <div className="bg-black/50 rounded-xl shadow-lg p-6 md:p-8 backdrop-blur-sm border border-white/5">
+    <div className={cn(
+      "rounded-xl shadow-lg p-6 md:p-8 backdrop-blur-sm border transition-colors",
+      isDarkMode 
+        ? "bg-gray-900/50 border-white/10 text-white" 
+        : "bg-white border-gray-200"
+    )}>
       <div className="flex items-center gap-3 mb-6">
         <Calculator className="w-6 h-6 text-blue-400" />
-        <h2 className="text-xl font-semibold text-white">Detaylı Bordro Hesaplama ({hesaplamaYili})</h2>
+        <h2 className={cn(
+          "text-xl font-semibold",
+          isDarkMode ? "text-white" : "text-gray-900"
+        )}>Detaylı Bordro Hesaplama ({hesaplamaYili})</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="space-y-4">
-          <h3 className="text-lg font-medium text-white/80 border-b border-white/10 pb-2 mb-4">Maaş Bilgileri</h3>
+          <h3 className={cn(
+            "text-lg font-medium border-b pb-2 mb-4",
+            isDarkMode 
+              ? "text-white/80 border-white/10" 
+              : "text-gray-900 border-gray-200"
+          )}>Maaş Bilgileri</h3>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-white/70">Maaş Tipi</Label>
+            <Label className={cn(
+              "text-sm font-medium",
+              isDarkMode ? "text-white/70" : "text-gray-700"
+            )}>Maaş Tipi</Label>
             <RadioGroup value={maasTipi} onValueChange={(value: string) => setMaasTipi(value as MaasTipi)} className="flex gap-4">
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="aylik" id="r_aylik" />
-                <Label htmlFor="r_aylik" className="text-white/80">Aylık</Label>
+                <Label htmlFor="r_aylik" className={cn(
+                  isDarkMode ? "text-white/80" : "text-gray-700"
+                )}>Aylık</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="gunluk" id="r_gunluk" />
-                <Label htmlFor="r_gunluk" className="text-white/80">Günlük</Label>
+                <Label htmlFor="r_gunluk" className={cn(
+                  isDarkMode ? "text-white/80" : "text-gray-700"
+                )}>Günlük</Label>
               </div>
             </RadioGroup>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="temelUcret" className="text-sm font-medium text-white/70">
+            <Label htmlFor="temelUcret" className={cn(
+              "text-sm font-medium",
+              isDarkMode ? "text-white/70" : "text-gray-700"
+            )}>
               {maasTipi === 'aylik' ? 'Aylık Brüt Ücret' : 'Günlük Brüt Ücret'}
             </Label>
-             <div className="relative">
+            <div className="relative">
               <Input
                 id="temelUcret"
                 type="text"
@@ -382,59 +410,99 @@ const BordroHesaplama = () => {
                 pattern="[0-9]*"
                 value={temelUcret}
                 onChange={(e) => setTemelUcret(smartFormat(e.target.value))}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all text-blue-400 placeholder:text-white/30"
+                className={cn(
+                  "w-full px-4 py-2 rounded-lg transition-all",
+                  isDarkMode 
+                    ? "bg-black/20 border-white/10 text-blue-400 placeholder:text-white/30 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50" 
+                    : "bg-white border-gray-200 text-blue-600 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
+                )}
                 placeholder="0,00"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40">₺</span>
+              <span className={cn(
+                "absolute right-4 top-1/2 -translate-y-1/2",
+                isDarkMode ? "text-white/40" : "text-gray-400"
+              )}>₺</span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
              <div className="space-y-2">
-               <Label htmlFor="normalGun" className="text-sm font-medium text-white/70">Normal Gün</Label>
+               <Label htmlFor="normalGun" className={cn(
+                 "text-sm font-medium",
+                 isDarkMode ? "text-white/70" : "text-gray-700"
+               )}>Normal Gün</Label>
                <Input
                  id="normalGun"
                  type="number"
                  value={normalGun}
                  onChange={(e) => handleNumericInputChange(setNormalGun)(e)}
-                 className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all text-white/80 placeholder:text-white/30"
+                 className={cn(
+                   "w-full px-4 py-2 rounded-lg transition-all",
+                   isDarkMode 
+                     ? "bg-black/20 border-white/10 text-white placeholder:text-white/30 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50" 
+                     : "bg-white border-gray-200 text-gray-800 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
+                 )}
                  placeholder="22"
                />
              </div>
              <div className="space-y-2">
-                <Label htmlFor="haftaTatiliGun" className="text-sm font-medium text-white/70">Hafta Tatili</Label>
+                <Label htmlFor="haftaTatiliGun" className={cn(
+                  "text-sm font-medium",
+                  isDarkMode ? "text-white/70" : "text-gray-700"
+                )}>Hafta Tatili</Label>
                 <Input
                   id="haftaTatiliGun"
                   type="number"
                   value={haftaTatiliGun}
                   onChange={(e) => handleNumericInputChange(setHaftaTatiliGun)(e)}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all text-white/80 placeholder:text-white/30"
+                  className={cn(
+                    "w-full px-4 py-2 rounded-lg transition-all",
+                    isDarkMode 
+                      ? "bg-black/20 border-white/10 text-white placeholder:text-white/30 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50" 
+                      : "bg-white border-gray-200 text-gray-800 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
+                  )}
                   placeholder="8"
                 />
              </div>
           </div>
 
            <div className="space-y-2">
-            <Label className="text-sm font-medium text-white/70">Çalışan Tipi</Label>
+            <Label className={cn(
+              "text-sm font-medium",
+              isDarkMode ? "text-white/70" : "text-gray-700"
+            )}>Çalışan Tipi</Label>
              <RadioGroup value={calisanTipi} onValueChange={(value: string) => setCalisanTipi(value as 'normal' | 'emekli')} className="flex gap-4">
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="normal" id="r_normal" />
-                <Label htmlFor="r_normal" className="text-white/80">Normal</Label>
+                <Label htmlFor="r_normal" className={cn(
+                  isDarkMode ? "text-white/80" : "text-gray-700"
+                )}>Normal</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="emekli" id="r_emekli" />
-                <Label htmlFor="r_emekli" className="text-white/80">Emekli</Label>
+                <Label htmlFor="r_emekli" className={cn(
+                  isDarkMode ? "text-white/80" : "text-gray-700"
+                )}>Emekli</Label>
               </div>
             </RadioGroup>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-white/70">Engellilik Durumu</Label>
+            <Label className={cn(
+              "text-sm font-medium",
+              isDarkMode ? "text-white/70" : "text-gray-700"
+            )}>Engellilik Durumu</Label>
             <Select value={engellilikDerecesi} onValueChange={(value: string) => setEngellilikDerecesi(value as EngellilikDerecesi)}>
-                <SelectTrigger className="w-full bg-white/5 border-white/10 text-white/80">
+                <SelectTrigger className={cn(
+                  "w-full bg-white/5 border-white/10 text-white/80",
+                  isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
+                )}>
                     <SelectValue placeholder="Seçiniz" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-white/20 text-white">
+                <SelectContent className={cn(
+                  "bg-gray-800 border-white/20 text-white",
+                  isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
+                )}>
                     <SelectItem value="yok">Engellilik Yok</SelectItem>
                     <SelectItem value="1">1. Derece</SelectItem>
                     <SelectItem value="2">2. Derece</SelectItem>
@@ -442,7 +510,10 @@ const BordroHesaplama = () => {
                 </SelectContent>
             </Select>
              {engellilikDerecesi !== 'yok' && (
-               <p className="text-xs text-white/50">
+               <p className={cn(
+                 "text-xs",
+                 isDarkMode ? "text-white/50" : "text-gray-500"
+               )}>
                  Aylık İndirim: {ISTISNALAR_LIMITLER_2024.ENGELLILIK_INDIRIMI_AYLIK[engellilikDerecesi].toLocaleString('tr-TR')} ₺
                </p>
              )}
@@ -451,14 +522,28 @@ const BordroHesaplama = () => {
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-lg font-medium text-white/80 border-b border-white/10 pb-2 mb-4">Yardımlar</h3>
+          <h3 className={cn(
+            "text-lg font-medium border-b pb-2 mb-4",
+            isDarkMode 
+              ? "text-white/80 border-white/10" 
+              : "text-gray-900 border-gray-200"
+          )}>Yardımlar</h3>
 
-           <div className="space-y-2 p-3 bg-white/5 rounded-lg border border-white/10">
-             <Label className="text-sm font-medium text-white/70 flex items-center gap-1">
+           <div className={cn(
+             "space-y-2 p-3 bg-white/5 rounded-lg border border-white/10",
+             isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
+           )}>
+             <Label className={cn(
+               "text-sm font-medium flex items-center gap-1",
+               isDarkMode ? "text-white/70" : "text-gray-700"
+             )}>
                Yemek Yardımı
                 <Tooltip>
                   <TooltipTrigger><Info className="w-3 h-3 text-white/50"/></TooltipTrigger>
-                  <TooltipContent className="bg-gray-800 text-white border-white/20">
+                  <TooltipContent className={cn(
+                    "bg-gray-800 text-white border-white/20",
+                    isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
+                  )}>
                     <p className="text-xs">Ayni: Kart/Çek. Nakdi: Nakit ödeme.</p>
                     <p className="text-xs">2024 GV İstisnası (Ayni): {ISTISNALAR_LIMITLER_2024.YEMEK_ISTISNASI_GUNLUK.toLocaleString('tr-TR')} ₺/gün</p>
                      <p className="text-xs">2024 SGK İstisnası: {ISTISNALAR_LIMITLER_2024.SGK_YEMEK_ISTISNASI_GUNLUK.toLocaleString('tr-TR')} ₺/gün</p>
@@ -466,25 +551,49 @@ const BordroHesaplama = () => {
                 </Tooltip>
              </Label>
              <RadioGroup value={yemekYardimiTipi} onValueChange={(value: string) => setYemekYardimiTipi(value as YardimTipi)} className="flex gap-4 mb-2">
-               <div className="flex items-center space-x-2"> <RadioGroupItem value="yok" id="y_yok"/> <Label htmlFor="y_yok" className="text-white/80">Yok</Label> </div>
-               <div className="flex items-center space-x-2"> <RadioGroupItem value="nakdi" id="y_nakdi"/> <Label htmlFor="y_nakdi" className="text-white/80">Nakdi</Label> </div>
-               <div className="flex items-center space-x-2"> <RadioGroupItem value="ayni" id="y_ayni"/> <Label htmlFor="y_ayni" className="text-white/80">Ayni</Label> </div>
+               <div className="flex items-center space-x-2"> <RadioGroupItem value="yok" id="y_yok"/> <Label htmlFor="y_yok" className={cn(
+                 isDarkMode ? "text-white/80" : "text-gray-700"
+               )}>Yok</Label> </div>
+               <div className="flex items-center space-x-2"> <RadioGroupItem value="nakdi" id="y_nakdi"/> <Label htmlFor="y_nakdi" className={cn(
+                 isDarkMode ? "text-white/80" : "text-gray-700"
+               )}>Nakdi</Label> </div>
+               <div className="flex items-center space-x-2"> <RadioGroupItem value="ayni" id="y_ayni"/> <Label htmlFor="y_ayni" className={cn(
+                 isDarkMode ? "text-white/80" : "text-gray-700"
+               )}>Ayni</Label> </div>
              </RadioGroup>
              {yemekYardimiTipi !== 'yok' && (
                <div className="relative">
-                 <Label htmlFor="yemekGunluk" className="text-xs font-medium text-white/60 mb-1 block">Günlük Brüt Tutar</Label>
-                 <Input id="yemekGunluk" type="text" inputMode="numeric" pattern="[0-9]*" value={yemekGunlukTutar} onChange={(e) => setYemekGunlukTutar(smartFormat(e.target.value))} className="w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/50 text-blue-300 text-sm" placeholder="0,00" />
-                 <span className="absolute right-4 bottom-2 text-white/40 text-sm">₺</span>
+                 <Label htmlFor="yemekGunluk" className={cn(
+                   "text-xs font-medium text-white/60 mb-1 block",
+                   isDarkMode ? "text-white/60" : "text-gray-600"
+                 )}>Günlük Brüt Tutar</Label>
+                 <Input id="yemekGunluk" type="text" inputMode="numeric" pattern="[0-9]*" value={yemekGunlukTutar} onChange={(e) => setYemekGunlukTutar(smartFormat(e.target.value))} className={cn(
+                   "w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/50 text-blue-300 text-sm",
+                   isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
+                 )} placeholder="0,00" />
+                 <span className={cn(
+                   "absolute right-4 bottom-2 text-white/40 text-sm",
+                   isDarkMode ? "text-white/40" : "text-gray-400"
+                 )}>₺</span>
                </div>
              )}
            </div>
 
-            <div className="space-y-2 p-3 bg-white/5 rounded-lg border border-white/10">
-             <Label className="text-sm font-medium text-white/70 flex items-center gap-1">
+            <div className={cn(
+              "space-y-2 p-3 bg-white/5 rounded-lg border border-white/10",
+              isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
+            )}>
+             <Label className={cn(
+               "text-sm font-medium flex items-center gap-1",
+               isDarkMode ? "text-white/70" : "text-gray-700"
+             )}>
                Yol Yardımı
                 <Tooltip>
                   <TooltipTrigger><Info className="w-3 h-3 text-white/50"/></TooltipTrigger>
-                   <TooltipContent className="bg-gray-800 text-white border-white/20">
+                   <TooltipContent className={cn(
+                     "bg-gray-800 text-white border-white/20",
+                     isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
+                   )}>
                     <p className="text-xs">Ayni: Servis/Kart. Nakdi: Nakit ödeme.</p>
                     <p className="text-xs">2024 GV İstisnası (Ayni): {ISTISNALAR_LIMITLER_2024.YOL_ISTISNASI_GUNLUK.toLocaleString('tr-TR')} ₺/gün</p>
                     <p className="text-xs">SGK İstisnası Yoktur.</p>
@@ -492,15 +601,30 @@ const BordroHesaplama = () => {
                 </Tooltip>
              </Label>
              <RadioGroup value={yolYardimiTipi} onValueChange={(value: string) => setYolYardimiTipi(value as YardimTipi)} className="flex gap-4 mb-2">
-               <div className="flex items-center space-x-2"> <RadioGroupItem value="yok" id="yo_yok"/> <Label htmlFor="yo_yok" className="text-white/80">Yok</Label> </div>
-               <div className="flex items-center space-x-2"> <RadioGroupItem value="nakdi" id="yo_nakdi"/> <Label htmlFor="yo_nakdi" className="text-white/80">Nakdi</Label> </div>
-               <div className="flex items-center space-x-2"> <RadioGroupItem value="ayni" id="yo_ayni"/> <Label htmlFor="yo_ayni" className="text-white/80">Ayni</Label> </div>
+               <div className="flex items-center space-x-2"> <RadioGroupItem value="yok" id="yo_yok"/> <Label htmlFor="yo_yok" className={cn(
+                 isDarkMode ? "text-white/80" : "text-gray-700"
+               )}>Yok</Label> </div>
+               <div className="flex items-center space-x-2"> <RadioGroupItem value="nakdi" id="yo_nakdi"/> <Label htmlFor="yo_nakdi" className={cn(
+                 isDarkMode ? "text-white/80" : "text-gray-700"
+               )}>Nakdi</Label> </div>
+               <div className="flex items-center space-x-2"> <RadioGroupItem value="ayni" id="yo_ayni"/> <Label htmlFor="yo_ayni" className={cn(
+                 isDarkMode ? "text-white/80" : "text-gray-700"
+               )}>Ayni</Label> </div>
              </RadioGroup>
              {yolYardimiTipi !== 'yok' && (
                <div className="relative">
-                 <Label htmlFor="yolGunluk" className="text-xs font-medium text-white/60 mb-1 block">Günlük Brüt Tutar</Label>
-                 <Input id="yolGunluk" type="text" inputMode="numeric" pattern="[0-9]*" value={yolGunlukTutar} onChange={(e) => setYolGunlukTutar(smartFormat(e.target.value))} className="w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/50 text-blue-300 text-sm" placeholder="0,00" />
-                 <span className="absolute right-4 bottom-2 text-white/40 text-sm">₺</span>
+                 <Label htmlFor="yolGunluk" className={cn(
+                   "text-xs font-medium text-white/60 mb-1 block",
+                   isDarkMode ? "text-white/60" : "text-gray-600"
+                 )}>Günlük Brüt Tutar</Label>
+                 <Input id="yolGunluk" type="text" inputMode="numeric" pattern="[0-9]*" value={yolGunlukTutar} onChange={(e) => setYolGunlukTutar(smartFormat(e.target.value))} className={cn(
+                   "w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/50 text-blue-300 text-sm",
+                   isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
+                 )} placeholder="0,00" />
+                 <span className={cn(
+                   "absolute right-4 bottom-2 text-white/40 text-sm",
+                   isDarkMode ? "text-white/40" : "text-gray-400"
+                 )}>₺</span>
                </div>
              )}
            </div>
@@ -508,29 +632,56 @@ const BordroHesaplama = () => {
         </div>
 
         <div className="space-y-4">
-            <h3 className="text-lg font-medium text-white/80 border-b border-white/10 pb-2 mb-4">Ek Gelir & Kesintiler</h3>
+            <h3 className={cn(
+              "text-lg font-medium border-b pb-2 mb-4",
+              isDarkMode ? "text-white/80 border-white/10" : "text-gray-900 border-gray-200"
+            )}>Ek Gelir & Kesintiler</h3>
 
-            <div className="space-y-2 p-3 bg-white/5 rounded-lg border border-white/10">
+            <div className={cn(
+              "space-y-2 p-3 bg-white/5 rounded-lg border border-white/10",
+              isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
+            )}>
                 <div className="flex items-center justify-between">
-                    <Label htmlFor="primVarMi" className="text-sm font-medium text-white/70">Prim / İkramiye</Label>
+                    <Label htmlFor="primVarMi" className={cn(
+                      "text-sm font-medium",
+                      isDarkMode ? "text-white/70" : "text-gray-700"
+                    )}>Prim / İkramiye</Label>
                     <Switch id="primVarMi" checked={primVarMi} onCheckedChange={setPrimVarMi} />
                 </div>
                  {primVarMi && (
                     <div className="relative mt-2">
-                        <Label htmlFor="primTutari" className="text-xs font-medium text-white/60 mb-1 block">Aylık Brüt Tutar</Label>
-                        <Input id="primTutari" type="text" inputMode="numeric" pattern="[0-9]*" value={primTutari} onChange={(e) => setPrimTutari(smartFormat(e.target.value))} className="w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/50 text-blue-300 text-sm" placeholder="0,00" />
-                        <span className="absolute right-4 bottom-2 text-white/40 text-sm">₺</span>
+                        <Label htmlFor="primTutari" className={cn(
+                          "text-xs font-medium text-white/60 mb-1 block",
+                          isDarkMode ? "text-white/60" : "text-gray-600"
+                        )}>Aylık Brüt Tutar</Label>
+                        <Input id="primTutari" type="text" inputMode="numeric" pattern="[0-9]*" value={primTutari} onChange={(e) => setPrimTutari(smartFormat(e.target.value))} className={cn(
+                          "w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/50 text-blue-300 text-sm",
+                          isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
+                        )} placeholder="0,00" />
+                        <span className={cn(
+                          "absolute right-4 bottom-2 text-white/40 text-sm",
+                          isDarkMode ? "text-white/40" : "text-gray-400"
+                        )}>₺</span>
                     </div>
                 )}
             </div>
 
-             <div className="space-y-2 p-3 bg-white/5 rounded-lg border border-white/10">
+             <div className={cn(
+               "space-y-2 p-3 bg-white/5 rounded-lg border border-white/10",
+               isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
+             )}>
                 <div className="flex items-center justify-between">
-                    <Label htmlFor="besVarMi" className="text-sm font-medium text-white/70 flex items-center gap-1">
+                    <Label htmlFor="besVarMi" className={cn(
+                      "text-sm font-medium flex items-center gap-1",
+                      isDarkMode ? "text-white/70" : "text-gray-700"
+                    )}>
                         BES Kesintisi (%{RATES.BES_ORAN * 100})
                          <Tooltip>
                            <TooltipTrigger><Info className="w-3 h-3 text-white/50"/></TooltipTrigger>
-                           <TooltipContent className="bg-gray-800 text-white border-white/20">
+                           <TooltipContent className={cn(
+                             "bg-gray-800 text-white border-white/20",
+                             isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
+                           )}>
                              <p className="text-xs">Otomatik Katılım Sistemi kesintisi.</p>
                              <p className="text-xs">SGK Matrahı üzerinden hesaplanır.</p>
                            </TooltipContent>
@@ -556,20 +707,56 @@ const BordroHesaplama = () => {
 
       {/* Sonuçlar - Tabs Yapısı */}
       {loading && (
-        <div className="mt-8 text-center text-white/60">
+        <div className={cn(
+          "mt-8 text-center",
+          isDarkMode ? "text-white/60" : "text-gray-600"
+        )}>
           Hesaplanıyor...
         </div>
       )}
       {aylikSonuclar.length > 0 && !loading && (
         <Tabs defaultValue="genel" className="mt-8">
           {/* Sekme Başlıkları */}
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 gap-1 h-auto mb-4 bg-white/5 p-1">
-            <TabsTrigger value="genel" className="text-xs md:text-sm px-2 py-1.5 data-[state=active]:bg-blue-600 data-[state=active]:text-white">Genel Sonuçlar</TabsTrigger>
-            <TabsTrigger value="yemekNakdi" className="text-xs md:text-sm px-2 py-1.5 data-[state=active]:bg-blue-600 data-[state=active]:text-white">Yemek Nakdi</TabsTrigger>
-            <TabsTrigger value="yemekAyni" className="text-xs md:text-sm px-2 py-1.5 data-[state=active]:bg-blue-600 data-[state=active]:text-white">Yemek Ayni</TabsTrigger>
-            <TabsTrigger value="prim" className="text-xs md:text-sm px-2 py-1.5 data-[state=active]:bg-blue-600 data-[state=active]:text-white">Prim/İkramiye</TabsTrigger>
-            <TabsTrigger value="yolNakdi" className="text-xs md:text-sm px-2 py-1.5 data-[state=active]:bg-blue-600 data-[state=active]:text-white">Yol Nakdi</TabsTrigger>
-            <TabsTrigger value="yolAyni" className="text-xs md:text-sm px-2 py-1.5 data-[state=active]:bg-blue-600 data-[state=active]:text-white">Yol Ayni</TabsTrigger>
+          <TabsList className={cn(
+            "grid w-full grid-cols-3 md:grid-cols-6 gap-1 h-auto mb-4 p-1",
+            isDarkMode ? "bg-black/20" : "bg-gray-100"
+          )}>
+            <TabsTrigger value="genel" className={cn(
+              "text-xs md:text-sm px-2 py-1.5",
+              isDarkMode 
+                ? "data-[state=active]:bg-blue-600 data-[state=active]:text-white" 
+                : "data-[state=active]:bg-blue-500 data-[state=active]:text-white"
+            )}>Genel Sonuçlar</TabsTrigger>
+            <TabsTrigger value="yemekNakdi" className={cn(
+              "text-xs md:text-sm px-2 py-1.5",
+              isDarkMode 
+                ? "data-[state=active]:bg-blue-600 data-[state=active]:text-white" 
+                : "data-[state=active]:bg-blue-500 data-[state=active]:text-white"
+            )}>Yemek Nakdi</TabsTrigger>
+            <TabsTrigger value="yemekAyni" className={cn(
+              "text-xs md:text-sm px-2 py-1.5",
+              isDarkMode 
+                ? "data-[state=active]:bg-blue-600 data-[state=active]:text-white" 
+                : "data-[state=active]:bg-blue-500 data-[state=active]:text-white"
+            )}>Yemek Ayni</TabsTrigger>
+            <TabsTrigger value="prim" className={cn(
+              "text-xs md:text-sm px-2 py-1.5",
+              isDarkMode 
+                ? "data-[state=active]:bg-blue-600 data-[state=active]:text-white" 
+                : "data-[state=active]:bg-blue-500 data-[state=active]:text-white"
+            )}>Prim/İkramiye</TabsTrigger>
+            <TabsTrigger value="yolNakdi" className={cn(
+              "text-xs md:text-sm px-2 py-1.5",
+              isDarkMode 
+                ? "data-[state=active]:bg-blue-600 data-[state=active]:text-white" 
+                : "data-[state=active]:bg-blue-500 data-[state=active]:text-white"
+            )}>Yol Nakdi</TabsTrigger>
+            <TabsTrigger value="yolAyni" className={cn(
+              "text-xs md:text-sm px-2 py-1.5",
+              isDarkMode 
+                ? "data-[state=active]:bg-blue-600 data-[state=active]:text-white" 
+                : "data-[state=active]:bg-blue-500 data-[state=active]:text-white"
+            )}>Yol Ayni</TabsTrigger>
           </TabsList>
 
           {/* Genel Sonuçlar İçeriği */}
@@ -577,30 +764,66 @@ const BordroHesaplama = () => {
              <div className="space-y-6">
                  {/* Özet Bilgiler (Zaten vardı)*/}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                        <p className="text-sm text-white/60">Aylık Toplam Brüt</p>
-                        <p className="text-lg font-semibold text-white mt-1">
+                    <div className={cn(
+                      "rounded-xl p-4 border",
+                      isDarkMode ? "bg-black/20 border-white/10" : "bg-white border-gray-200"
+                    )}>
+                        <p className={cn(
+                          "text-sm",
+                          isDarkMode ? "text-white/60" : "text-gray-600"
+                        )}>Aylık Toplam Brüt</p>
+                        <p className={cn(
+                          "text-lg font-semibold mt-1",
+                          isDarkMode ? "text-white" : "text-gray-900"
+                        )}>
                         {aylikSonuclar[0]?.toplamBrut?.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) || '0,00'} ₺
                         </p>
                     </div>
-                    <div className="bg-green-500/10 rounded-xl p-4 border border-green-500/20">
-                        <p className="text-sm text-white/60">Ortalama Net Ücret</p>
-                        <p className="text-lg font-semibold text-green-400 mt-1">
+                    <div className={cn(
+                      "rounded-xl p-4 border border-green-500/20",
+                      isDarkMode ? "bg-black/20 border-white/10" : "bg-white border-gray-200"
+                    )}>
+                        <p className={cn(
+                          "text-sm",
+                          isDarkMode ? "text-white/60" : "text-gray-600"
+                        )}>Ortalama Net Ücret</p>
+                        <p className={cn(
+                          "text-lg font-semibold mt-1",
+                          isDarkMode ? "text-green-400" : "text-gray-900"
+                        )}>
                         {(aylikSonuclar.reduce((acc, curr) => acc + curr.net, 0) / 12).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                         </p>
                     </div>
-                        <div className="bg-red-500/10 rounded-xl p-4 border border-red-500/20">
-                        <p className="text-sm text-white/60">Ortalama İşveren Maliyeti</p>
-                        <p className="text-lg font-semibold text-red-400 mt-1">
+                        <div className={cn(
+                          "rounded-xl p-4 border border-red-500/20",
+                          isDarkMode ? "bg-black/20 border-white/10" : "bg-white border-gray-200"
+                        )}>
+                        <p className={cn(
+                          "text-sm",
+                          isDarkMode ? "text-white/60" : "text-gray-600"
+                        )}>Ortalama İşveren Maliyeti</p>
+                        <p className={cn(
+                          "text-lg font-semibold mt-1",
+                          isDarkMode ? "text-red-400" : "text-gray-900"
+                        )}>
                         {(aylikSonuclar.reduce((acc, curr) => acc + curr.toplamMaliyet, 0) / 12).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                         </p>
                     </div>
                 </div>
 
                 {/* 12 Aylık Detay Tablosu (Zaten vardı) */}
-                <div className="bg-white/5 rounded-xl p-4 border border-white/10 overflow-x-auto">
-                  <h3 className="text-lg font-medium text-white/80 mb-4">Aylık Detaylar (Genel)</h3>
-                  <table className="w-full min-w-[1800px] text-sm text-white/70 whitespace-nowrap">
+                <div className={cn(
+                  "rounded-xl p-4 border overflow-x-auto",
+                  isDarkMode ? "bg-black/20 border-white/10" : "bg-white border-gray-200"
+                )}>
+                  <h3 className={cn(
+                    "text-lg font-medium mb-4",
+                    isDarkMode ? "text-white/80" : "text-gray-900"
+                  )}>Aylık Detaylar (Genel)</h3>
+                  <table className={cn(
+                    "w-full min-w-[1800px] text-sm whitespace-nowrap",
+                    isDarkMode ? "text-white/70" : "text-gray-600"
+                  )}>
                      {/* ... thead ve tbody içeriği aynı kalıyor ... */}
                      <thead>
                        <tr className="border-b border-white/10">
@@ -676,62 +899,122 @@ const BordroHesaplama = () => {
 
           {/* Diğer Sekme İçerikleri (Placeholder) */}
           <TabsContent value="yemekNakdi">
-             <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-               <h3 className="text-lg font-medium text-white/80 mb-4">Aylık Detaylar (Yemek Nakdi Etkisi)</h3>
+             <div className={cn(
+               "bg-white/5 rounded-xl p-4 border border-white/10",
+               isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
+             )}>
+               <h3 className={cn(
+                 "text-lg font-medium mb-4",
+                 isDarkMode ? "text-white/80" : "text-gray-900"
+               )}>Aylık Detaylar (Yemek Nakdi Etkisi)</h3>
                {yemekYardimiTipi === 'nakdi' && parseTurkishCurrency(yemekGunlukTutar) > 0 ? (
-                 <p className="text-white/70">Nakdi yemek yardımının aylık brüt, kesinti ve net etki tablosu burada gösterilecek.</p>
+                 <p className={cn(
+                   "text-white/70",
+                   isDarkMode ? "text-white/70" : "text-gray-700"
+                 )}>Nakdi yemek yardımının aylık brüt, kesinti ve net etki tablosu burada gösterilecek.</p>
                  // TODO: Buraya Yemek Nakdi mini tablosu gelecek
                ) : (
-                 <p className="text-white/50">Nakdi yemek yardımı seçili değil veya tutar girilmemiş.</p>
+                 <p className={cn(
+                   "text-white/50",
+                   isDarkMode ? "text-white/50" : "text-gray-500"
+                 )}>Nakdi yemek yardımı seçili değil veya tutar girilmemiş.</p>
                )}
              </div>
            </TabsContent>
 
           <TabsContent value="yemekAyni">
-             <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-               <h3 className="text-lg font-medium text-white/80 mb-4">Aylık Detaylar (Yemek Ayni Etkisi)</h3>
-               {yemekYardimiTipi === 'ayni' && parseTurkishCurrency(yemekGunlukTutar) > 0 ? (
-                <p className="text-white/70">Ayni yemek yardımının (istisnalar sonrası) aylık brüt, kesinti ve net etki tablosu burada gösterilecek.</p>
-                 // TODO: Buraya Yemek Ayni mini tablosu gelecek
-               ) : (
-                 <p className="text-white/50">Ayni yemek yardımı seçili değil veya tutar girilmemiş.</p>
-               )}
+             <div className={cn(
+               "bg-white/5 rounded-xl p-4 border border-white/10",
+               isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
+             )}>
+               <h3 className={cn(
+                 "text-lg font-medium mb-4",
+                 isDarkMode ? "text-white/80" : "text-gray-900"
+               )}>Aylık Detaylar (Yemek Ayni Etkisi)</h3>
+                {yemekYardimiTipi === 'ayni' && parseTurkishCurrency(yemekGunlukTutar) > 0 ? (
+                  <p className={cn(
+                    "text-white/70",
+                    isDarkMode ? "text-white/70" : "text-gray-700"
+                  )}>Ayni yemek yardımının (istisnalar sonrası) aylık brüt, kesinti ve net etki tablosu burada gösterilecek.</p>
+                  // TODO: Buraya Yemek Ayni mini tablosu gelecek
+                ) : (
+                  <p className={cn(
+                    "text-white/50",
+                    isDarkMode ? "text-white/50" : "text-gray-500"
+                  )}>Ayni yemek yardımı seçili değil veya tutar girilmemiş.</p>
+                )}
             </div>
           </TabsContent>
 
           <TabsContent value="prim">
-            <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-              <h3 className="text-lg font-medium text-white/80 mb-4">Aylık Detaylar (Prim/İkramiye Etkisi)</h3>
+            <div className={cn(
+              "bg-white/5 rounded-xl p-4 border border-white/10",
+              isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
+            )}>
+              <h3 className={cn(
+                "text-lg font-medium mb-4",
+                isDarkMode ? "text-white/80" : "text-gray-900"
+              )}>Aylık Detaylar (Prim/İkramiye Etkisi)</h3>
               {primVarMi && parseTurkishCurrency(primTutari) > 0 ? (
-                <p className="text-white/70">Prim/İkramiyenin aylık brüt, kesinti ve net etki tablosu burada gösterilecek.</p>
+                <p className={cn(
+                  "text-white/70",
+                  isDarkMode ? "text-white/70" : "text-gray-700"
+                )}>Prim/İkramiyenin aylık brüt, kesinti ve net etki tablosu burada gösterilecek.</p>
                  // TODO: Buraya Prim mini tablosu gelecek
                ) : (
-                 <p className="text-white/50">Prim/İkramiye seçili değil veya tutar girilmemiş.</p>
+                 <p className={cn(
+                   "text-white/50",
+                   isDarkMode ? "text-white/50" : "text-gray-500"
+                 )}>Prim/İkramiye seçili değil veya tutar girilmemiş.</p>
                )}
             </div>
           </TabsContent>
 
           <TabsContent value="yolNakdi">
-             <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-               <h3 className="text-lg font-medium text-white/80 mb-4">Aylık Detaylar (Yol Nakdi Etkisi)</h3>
+             <div className={cn(
+               "bg-white/5 rounded-xl p-4 border border-white/10",
+               isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
+             )}>
+               <h3 className={cn(
+                 "text-lg font-medium mb-4",
+                 isDarkMode ? "text-white/80" : "text-gray-900"
+               )}>Aylık Detaylar (Yol Nakdi Etkisi)</h3>
                {yolYardimiTipi === 'nakdi' && parseTurkishCurrency(yolGunlukTutar) > 0 ? (
-                 <p className="text-white/70">Nakdi yol yardımının aylık brüt, kesinti ve net etki tablosu burada gösterilecek.</p>
+                 <p className={cn(
+                   "text-white/70",
+                   isDarkMode ? "text-white/70" : "text-gray-700"
+                 )}>Nakdi yol yardımının aylık brüt, kesinti ve net etki tablosu burada gösterilecek.</p>
                  // TODO: Buraya Yol Nakdi mini tablosu gelecek
                ) : (
-                 <p className="text-white/50">Nakdi yol yardımı seçili değil veya tutar girilmemiş.</p>
+                 <p className={cn(
+                   "text-white/50",
+                   isDarkMode ? "text-white/50" : "text-gray-500"
+                 )}>Nakdi yol yardımı seçili değil veya tutar girilmemiş.</p>
                )}
              </div>
            </TabsContent>
 
            <TabsContent value="yolAyni">
-             <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-               <h3 className="text-lg font-medium text-white/80 mb-4">Aylık Detaylar (Yol Ayni Etkisi)</h3>
+             <div className={cn(
+               "bg-white/5 rounded-xl p-4 border border-white/10",
+               isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
+             )}>
+               <h3 className={cn(
+                 "text-lg font-medium mb-4",
+                 isDarkMode ? "text-white/80" : "text-gray-900"
+               )}>Aylık Detaylar (Yol Ayni Etkisi)</h3>
                 {yolYardimiTipi === 'ayni' && parseTurkishCurrency(yolGunlukTutar) > 0 ? (
-                  <p className="text-white/70">Ayni yol yardımının (istisnalar sonrası) aylık brüt, kesinti ve net etki tablosu burada gösterilecek.</p>
+                  <p className={cn(
+                    "text-white/70",
+                    isDarkMode ? "text-white/70" : "text-gray-700"
+                  )}>Ayni yol yardımının (istisnalar sonrası) aylık brüt, kesinti ve net etki tablosu burada gösterilecek.</p>
                   // TODO: Buraya Yol Ayni mini tablosu gelecek
                 ) : (
-                  <p className="text-white/50">Ayni yol yardımı seçili değil veya tutar girilmemiş.</p>
-               )}
+                  <p className={cn(
+                    "text-white/50",
+                    isDarkMode ? "text-white/50" : "text-gray-500"
+                  )}>Ayni yol yardımı seçili değil veya tutar girilmemiş.</p>
+                )}
             </div>
            </TabsContent>
 
@@ -740,12 +1023,18 @@ const BordroHesaplama = () => {
 
       {/* Henüz hesaplama yapılmadıysa mesajlar (Tabs dışı) */}
       {aylikSonuclar.length === 0 && !loading && parseTurkishCurrency(temelUcret) > 0 && (
-          <div className="mt-8 text-center text-white/60">
+          <div className={cn(
+            "mt-8 text-center",
+            isDarkMode ? "text-white/60" : "text-gray-600"
+          )}>
               Hesaplama yapılamadı. Lütfen girdileri kontrol edin.
           </div>
        )}
         {parseTurkishCurrency(temelUcret) <= 0 && !loading && (
-             <div className="mt-8 text-center text-white/60">
+             <div className={cn(
+               "mt-8 text-center",
+               isDarkMode ? "text-white/60" : "text-gray-600"
+             )}>
                 Lütfen geçerli bir brüt ücret girerek hesaplamayı başlatın.
             </div>
         )}

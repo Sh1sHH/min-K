@@ -9,7 +9,9 @@ import {
   Users,
   LogOut,
   MessageSquare,
-  ChevronRight
+  ChevronRight,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import BordroHesaplama from '@/components/subscriber/BordroHesaplama';
@@ -28,6 +30,7 @@ const PremiumPanel = () => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('calculator');
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const auth = getAuth();
 
   // Menü öğeleri
@@ -67,25 +70,42 @@ const PremiumPanel = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
+    <div className={cn(
+      "min-h-screen transition-colors duration-300",
+      isDarkMode ? "bg-[#0F0F0F]" : "bg-gray-50"
+    )}>
       <div className="flex h-screen">
         {/* Sol Menü - Küçük Versiyon */}
         <div 
           className={cn(
-            "bg-black/50 backdrop-blur-sm border-r border-white/5 flex flex-col transition-all duration-300",
+            "flex flex-col transition-all duration-300 shadow-sm",
+            isDarkMode 
+              ? "bg-black/50 backdrop-blur-sm border-r border-white/5" 
+              : "bg-white border-r border-gray-200",
             isExpanded ? "w-64" : "w-16"
           )}
         >
           {/* Logo ve Başlık */}
           <div className={cn(
-            "p-4 flex items-center gap-2 mb-4",
+            "h-16 px-4 flex items-center gap-2",
+            isDarkMode ? "border-b border-white/5" : "border-b border-gray-100",
             isExpanded ? "justify-between" : "justify-center"
           )}>
-            {isExpanded && <h1 className="text-xl font-semibold">Premium Panel</h1>}
+            {isExpanded && (
+              <h1 className={cn(
+                "text-lg font-semibold",
+                isDarkMode ? "text-white" : "text-gray-900"
+              )}>
+                Premium Panel
+              </h1>
+            )}
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className={cn(
-                "p-1.5 rounded-lg hover:bg-white/5 transition-all",
+                "p-1.5 rounded-lg transition-all",
+                isDarkMode 
+                  ? "hover:bg-white/5 text-gray-300" 
+                  : "hover:bg-gray-100 text-gray-500",
                 isExpanded ? "ml-auto" : "mx-auto"
               )}
             >
@@ -100,27 +120,34 @@ const PremiumPanel = () => {
           <Link 
             to="/"
             className={cn(
-              "flex items-center gap-2 text-gray-300 hover:bg-white/5 rounded-lg transition-colors mb-4",
-              isExpanded ? "mx-2 px-4 py-3" : "mx-auto p-3"
+              "flex items-center gap-2 rounded-lg transition-colors",
+              isDarkMode 
+                ? "text-gray-300 hover:bg-white/5" 
+                : "text-gray-600 hover:bg-gray-50",
+              isExpanded ? "mx-2 px-4 py-3 mt-4" : "mx-auto p-3 mt-4"
             )}
             title="Ana Sayfaya Dön"
           >
             <Home className="w-5 h-5" />
-            {isExpanded && <span>Ana Sayfaya Dön</span>}
+            {isExpanded && <span className="text-sm">Ana Sayfaya Dön</span>}
           </Link>
 
           {/* Menü Öğeleri */}
-          <nav className="flex-1 py-2">
+          <nav className="flex-1 mt-2">
             {menuItems.map((item) => (
               <React.Fragment key={item.id}>
                 <button
                   onClick={() => setActiveSection(item.id)}
                   className={cn(
                     "flex items-center transition-colors w-full",
-                    isExpanded ? "px-6 py-2.5" : "py-2.5 justify-center",
-                    activeSection === item.id 
-                      ? 'bg-white/10 text-white' 
-                      : 'text-gray-300 hover:bg-white/5'
+                    isExpanded ? "px-6 py-3" : "py-3 justify-center",
+                    isDarkMode
+                      ? activeSection === item.id 
+                        ? 'bg-white/10 text-white' 
+                        : 'text-gray-300 hover:bg-white/5'
+                      : activeSection === item.id 
+                        ? 'bg-gray-100 text-gray-900 font-medium' 
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   )}
                   title={!isExpanded ? item.title : undefined}
                 >
@@ -128,46 +155,91 @@ const PremiumPanel = () => {
                   {isExpanded && <span className="ml-3 text-sm">{item.title}</span>}
                 </button>
                 {item.divider && isExpanded && (
-                  <div className="my-2 border-t border-white/5" />
+                  <div className={cn(
+                    "my-2 border-t",
+                    isDarkMode ? "border-white/5" : "border-gray-100"
+                  )} />
                 )}
               </React.Fragment>
             ))}
           </nav>
 
+          {/* Tema Değiştirme */}
+          <div className={cn(
+            "border-t",
+            isDarkMode ? "border-white/5" : "border-gray-100",
+            isExpanded ? "px-4 py-3" : "p-2"
+          )}>
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className={cn(
+                "flex items-center gap-2 rounded-lg transition-colors w-full",
+                isDarkMode
+                  ? "text-gray-300 hover:bg-white/5"
+                  : "text-gray-600 hover:bg-gray-50",
+                isExpanded ? "px-4 py-2" : "p-2 justify-center"
+              )}
+              title={!isExpanded ? (isDarkMode ? "Açık Tema" : "Koyu Tema") : undefined}
+            >
+              {isDarkMode ? (
+                <>
+                  <Sun className="w-4 h-4" />
+                  {isExpanded && <span className="text-sm">Açık Tema</span>}
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4" />
+                  {isExpanded && <span className="text-sm">Koyu Tema</span>}
+                </>
+              )}
+            </button>
+          </div>
+
           {/* Çıkış Butonu */}
           <div className={cn(
-            "border-t border-white/5",
+            "border-t",
+            isDarkMode ? "border-white/5" : "border-gray-100",
             isExpanded ? "p-4" : "p-2"
           )}>
             <button
               onClick={handleLogout}
               className={cn(
-                "flex items-center gap-2 text-red-500 hover:bg-white/5 rounded-lg transition-colors",
+                "flex items-center gap-2 text-red-600 rounded-lg transition-colors",
+                isDarkMode ? "hover:bg-white/5" : "hover:bg-red-50",
                 isExpanded ? "w-full px-4 py-2" : "mx-auto p-2"
               )}
               title={!isExpanded ? "Çıkış Yap" : undefined}
             >
               <LogOut className="w-4 h-4" />
-              {isExpanded && <span>Çıkış Yap</span>}
+              {isExpanded && <span className="text-sm">Çıkış Yap</span>}
             </button>
           </div>
         </div>
 
         {/* Ana İçerik */}
         <div className="flex-1 overflow-auto p-8">
-          {/* Her bölüm için içerik */}
           {activeSection === 'calculator' ? (
-            <BordroHesaplama />
+            <BordroHesaplama isDarkMode={isDarkMode} />
           ) : activeSection === 'headhunter' ? (
-            <HeadHunter />
+            <HeadHunter isDarkMode={isDarkMode} />
           ) : activeSection === 'askexpert' ? (
-            <AskExpert />
+            <AskExpert isDarkMode={isDarkMode} />
           ) : (
-            <div className="bg-black/50 rounded-xl p-6 backdrop-blur-sm border border-white/5">
-              <h2 className="text-xl font-semibold mb-4">
+            <div className={cn(
+              "rounded-xl p-6",
+              isDarkMode 
+                ? "bg-black/50 backdrop-blur-sm border border-white/5" 
+                : "bg-white shadow-sm border border-gray-200"
+            )}>
+              <h2 className={cn(
+                "text-xl font-semibold mb-4",
+                isDarkMode ? "text-white" : "text-gray-900"
+              )}>
                 {menuItems.find(item => item.id === activeSection)?.title || 'Head Hunter'}
               </h2>
-              <p className="text-gray-400">Bu bölüm yakında eklenecek...</p>
+              <p className={isDarkMode ? "text-gray-400" : "text-gray-600"}>
+                Bu bölüm yakında eklenecek...
+              </p>
             </div>
           )}
         </div>

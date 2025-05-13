@@ -4,18 +4,20 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, FileText } from 'lucide-react';
 import { storage } from '@/config/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ikHelpService, IK_CATEGORIES } from '@/lib/services/ikHelpService';
+import { cn } from '@/lib/utils';
 
 interface IKHelpFormProps {
   onSuccess?: () => void;
+  isDarkMode: boolean;
 }
 
 type IKCategory = typeof IK_CATEGORIES[number];
 
-const IKHelpForm: React.FC<IKHelpFormProps> = ({ onSuccess }) => {
+const IKHelpForm: React.FC<IKHelpFormProps> = ({ onSuccess, isDarkMode }) => {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -124,7 +126,10 @@ const IKHelpForm: React.FC<IKHelpFormProps> = ({ onSuccess }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-white mb-2">
+        <label className={cn(
+          "block text-sm font-medium mb-2",
+          isDarkMode ? "text-white" : "text-gray-900"
+        )}>
           Soru Başlığı
         </label>
         <Input
@@ -132,20 +137,33 @@ const IKHelpForm: React.FC<IKHelpFormProps> = ({ onSuccess }) => {
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           placeholder="Sorunuzun kısa başlığı"
-          className="w-full bg-black/30 border-white/10 text-white placeholder:text-gray-500"
+          className={cn(
+            "w-full",
+            isDarkMode 
+              ? "bg-black/30 border-white/10 text-white placeholder:text-gray-500" 
+              : "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
+          )}
           required
           disabled={loading}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-white mb-2">
+        <label className={cn(
+          "block text-sm font-medium mb-2",
+          isDarkMode ? "text-white" : "text-gray-900"
+        )}>
           Kategori
         </label>
         <select
           value={formData.category}
           onChange={(e) => setFormData({ ...formData, category: e.target.value as IKCategory })}
-          className="w-full rounded-md border border-white/10 bg-black/30 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className={cn(
+            "w-full rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500",
+            isDarkMode 
+              ? "border-white/10 bg-black/30 text-white" 
+              : "border-gray-200 bg-white text-gray-900"
+          )}
           disabled={loading}
         >
           {IK_CATEGORIES.map((category) => (
@@ -157,21 +175,32 @@ const IKHelpForm: React.FC<IKHelpFormProps> = ({ onSuccess }) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-white mb-2">
+        <label className={cn(
+          "block text-sm font-medium mb-2",
+          isDarkMode ? "text-white" : "text-gray-900"
+        )}>
           Soru Detayı
         </label>
         <Textarea
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           placeholder="Sorunuzu detaylı bir şekilde açıklayın..."
-          className="w-full min-h-[150px] bg-black/30 border-white/10 text-white placeholder:text-gray-500"
+          className={cn(
+            "w-full min-h-[150px]",
+            isDarkMode 
+              ? "bg-black/30 border-white/10 text-white placeholder:text-gray-500" 
+              : "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
+          )}
           required
           disabled={loading}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-white mb-2">
+        <label className={cn(
+          "block text-sm font-medium mb-2",
+          isDarkMode ? "text-white" : "text-gray-900"
+        )}>
           Dosya Ekle (Opsiyonel)
         </label>
         <div className="space-y-4">
@@ -180,13 +209,32 @@ const IKHelpForm: React.FC<IKHelpFormProps> = ({ onSuccess }) => {
               {files.map((file, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-2 bg-black/30 border border-white/10 rounded-md"
+                  className={cn(
+                    "flex items-center justify-between p-3 rounded-lg border",
+                    isDarkMode 
+                      ? "bg-black/20 border-white/10 text-white/80" 
+                      : "bg-gray-50 border-gray-200 text-gray-700"
+                  )}
                 >
-                  <span className="text-sm text-gray-300 truncate">{file.name}</span>
+                  <div className="flex items-center gap-2">
+                    <FileText className={cn(
+                      "w-4 h-4",
+                      isDarkMode ? "text-gray-400" : "text-gray-600"
+                    )} />
+                    <span className="text-sm truncate">{file.name}</span>
+                    <span className="text-xs opacity-60">
+                      ({(file.size / 1024).toFixed(1)} KB)
+                    </span>
+                  </div>
                   <button
                     type="button"
                     onClick={() => removeFile(index)}
-                    className="text-red-400 hover:text-red-300"
+                    className={cn(
+                      "p-1.5 rounded-md transition-colors",
+                      isDarkMode 
+                        ? "hover:bg-red-500/20 text-red-400" 
+                        : "hover:bg-red-100 text-red-500"
+                    )}
                     disabled={loading}
                   >
                     <X className="w-4 h-4" />
@@ -199,45 +247,55 @@ const IKHelpForm: React.FC<IKHelpFormProps> = ({ onSuccess }) => {
           <div className="flex items-center gap-4">
             <Button
               type="button"
-              onClick={() => document.getElementById('file-input')?.click()}
-              className="text-sm px-4 py-1.5 bg-black/30 border border-white/10 hover:bg-black/40 text-white"
+              variant={isDarkMode ? "outline" : "secondary"}
+              onClick={() => document.getElementById('file-upload')?.click()}
               disabled={loading}
+              className={cn(
+                "relative flex items-center gap-2",
+                isDarkMode 
+                  ? "bg-black/20 border-white/10 text-white hover:bg-white/5" 
+                  : "bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200",
+                "disabled:opacity-50 disabled:cursor-not-allowed"
+              )}
             >
-              <Upload className="w-4 h-4 mr-2" />
+              <Upload className={cn(
+                "w-4 h-4",
+                isDarkMode ? "text-gray-400" : "text-gray-600"
+              )} />
               Dosya Seç
             </Button>
             <input
-              id="file-input"
+              id="file-upload"
               type="file"
-              multiple
-              onChange={handleFileChange}
               className="hidden"
+              onChange={handleFileChange}
               accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+              multiple
               disabled={loading}
             />
-            <span className="text-xs text-gray-400">
-              PDF, Word, Excel veya Görsel (max 5MB)
-            </span>
+            <p className={cn(
+              "text-xs",
+              isDarkMode ? "text-gray-400" : "text-gray-500"
+            )}>
+              PDF, Word, Excel veya Resim (max 5MB)
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="flex justify-end">
-        <Button
-          type="submit"
-          disabled={loading}
-          className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 px-4 py-1.5 text-sm min-w-[100px]"
-        >
-          {loading ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white/100" />
-              <span>Gönderiliyor</span>
-            </>
-          ) : (
-            <span>Gönder</span>
-          )}
-        </Button>
-      </div>
+      <Button
+        type="submit"
+        disabled={loading}
+        className={cn(
+          "w-full transition-colors",
+          isDarkMode 
+            ? "bg-blue-600 hover:bg-blue-700 text-white disabled:bg-blue-800/40" 
+            : "bg-blue-500 hover:bg-blue-600 text-white disabled:bg-blue-300",
+          "disabled:cursor-not-allowed"
+        )}
+      >
+        {loading ? 'Gönderiliyor...' : 'Gönder'}
+      </Button>
     </form>
   );
 };

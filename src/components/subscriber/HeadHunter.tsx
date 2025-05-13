@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, X, FileText, Loader2, User, CheckCircle2, AlertCircle, BrainCircuit, Info } from 'lucide-react';
+import { Upload, X, FileText, Loader2, User, CheckCircle2, AlertCircle, BrainCircuit, Info, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
@@ -32,6 +32,9 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { ScrollArea } from "@/components/ui/scroll-area"; 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface AnalyzedCV {
   id: string;
@@ -56,123 +59,111 @@ interface ComparisonResult {
 
 const MAX_CVS = 3;
 
-const CVSlot = ({ 
+interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: "default" | "secondary" | "destructive" | "outline" | "success";
+}
+
+interface HeadHunterProps {
+  isDarkMode: boolean;
+}
+
+const CVCard = ({ 
   cv, 
   onRemove, 
   uploadProgress,
-  onSelect
+  onSelect,
+  isSelected,
+  isBestMatch,
+  isDarkMode
 }: { 
-  cv?: AnalyzedCV; 
+  cv: AnalyzedCV; 
   onRemove: () => void; 
   uploadProgress?: number | null;
   onSelect: () => void;
+  isSelected: boolean;
+  isBestMatch: boolean;
+  isDarkMode: boolean;
 }) => {
-  const isLoading = cv?.status === 'uploading' || cv?.status === 'processing';
-  const isError = cv?.status === 'error';
-  const isSuccess = cv?.status === 'processed';
-  
-  const getStatusColor = (status?: AnalyzedCV['status']) => {
-    if (!status) return 'bg-gray-500';
-    if (status === 'processed') return 'bg-green-500';
-    if (status === 'error') return 'bg-red-500';
-    if (status === 'processing' || status === 'uploading') return 'bg-blue-500';
-    return 'bg-yellow-500';
-  };
-
-  const currentProgress = cv?.status === 'uploading' ? uploadProgress : null;
+  const isLoading = cv.status === 'uploading' || cv.status === 'processing';
+  const isError = cv.status === 'error';
+  const isSuccess = cv.status === 'processed';
+  const currentProgress = uploadProgress ?? 0;
 
   return (
-    <div 
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
       className={cn(
-        "relative group w-40 h-48 rounded-2xl flex flex-col items-center justify-center",
-        "border-2 border-dashed transition-all duration-300",
-        cv ? "border-white/20 bg-white/5" : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-blue-500/50",
-        "hover:shadow-lg hover:shadow-blue-500/5",
-        cv ? "cursor-pointer" : "cursor-default"
+        "group relative p-4 rounded-xl transition-all duration-300",
+        "border bg-card hover:shadow-xl",
+        isDarkMode && "bg-gray-900/50 border-gray-700 text-white",
+        isSelected && "ring-2 ring-primary",
+        isBestMatch && "ring-2 ring-green-500",
+        "cursor-pointer"
       )}
-      onClick={cv ? onSelect : undefined}
+      onClick={onSelect}
     >
-      {cv ? (
-        <>
-          <div className="absolute -top-2 -right-2 z-10">
-            <button
+      <div className="flex items-start gap-4">
+        <div className={cn(
+          "w-12 h-12 rounded-lg flex items-center justify-center",
+          "bg-primary/10 relative"
+        )}>
+          <FileText className="w-6 h-6 text-primary" />
+          <div className={cn(
+            "absolute -bottom-1 -right-1 w-3 h-3 rounded-full",
+            isSuccess ? "bg-green-500" :
+            isError ? "bg-red-500" :
+            "bg-blue-500 animate-pulse"
+          )} />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="font-medium line-clamp-1">{cv.fileName}</p>
+              <p className="text-xs text-muted-foreground">
+                {cv.uploadedAt?.toDate().toLocaleDateString()}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={(e) => {
                 e.stopPropagation();
                 onRemove();
               }}
-              className="bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-full p-2 transition-colors"
             >
-              <X className="w-5 h-5" />
-            </button>
+              <X className="w-4 h-4" />
+            </Button>
           </div>
-          
-          <div className={cn(
-            "w-24 h-24 rounded-full flex items-center justify-center",
-            "bg-white/10 relative overflow-hidden border border-white/10",
-            "shadow-lg shadow-black/20"
-          )}>
-            <User className="w-14 h-14 text-white/60" />
-             <div className={cn(
-                "absolute bottom-0 w-full h-2",
-                getStatusColor(cv.status)
-              )} />
-          </div>
-          
-          <span className="mt-4 text-sm text-center text-white/70 line-clamp-2 px-3 w-full font-medium">
-            {cv.fileName}
-          </span>
 
-           <div className="mt-2 flex items-center gap-1.5">
-              <div className={cn(
-                "w-2 h-2 rounded-full",
-                getStatusColor(cv.status)
-              )} />
-              <span className={cn(
-                "text-sm capitalize",
-                 isSuccess ? "text-green-400" :
-                 isError ? "text-red-400" :
-                 isLoading ? "text-blue-400" :
-                 "text-yellow-400" 
-              )}>
-                {cv.status}
-              </span>
+          {isLoading && currentProgress !== 0 && (
+            <div className="mt-2">
+              <Progress value={currentProgress} className="h-1" />
+              <p className="text-xs text-muted-foreground mt-1">
+                {cv.status === 'uploading' ? 'Yükleniyor' : 'İşleniyor'}... {Math.round(currentProgress)}%
+              </p>
             </div>
+          )}
 
-          {isLoading ? (
-            <div className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-              <div className="flex flex-col items-center gap-3">
-                <Loader2 className="w-10 h-10 text-blue-400 animate-spin" />
-                <span className="text-sm text-blue-400 capitalize">{cv.status}...</span>
-                 {cv.status === 'uploading' && currentProgress !== null && (
-                    <div className="w-24 h-1 mt-2 bg-blue-900/50 rounded-full overflow-hidden">
-                       <div className="h-full bg-blue-500 transition-all duration-150" style={{ width: `${currentProgress}%` }}></div>
-                    </div>
-                 )}
-              </div>
-            </div>
-          ) : isError ? (
-             <div className="absolute top-2 left-2" title={cv.errorMessage}>
-               <AlertCircle className="w-6 h-6 text-red-400" />
-             </div>
-          ) : isSuccess ? (
-            <div className="absolute top-2 left-2">
-               <CheckCircle2 className="w-6 h-6 text-green-400" />
-            </div>
-          ) : null}
-        </>
-      ) : (
-         <div className="text-white/40 flex flex-col items-center gap-3">
-          <div className="w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-blue-500/50 transition-colors">
-            <User className="w-14 h-14" />
-          </div>
-          <span className="text-sm font-medium">Boş Slot</span>
+          {isError && cv.errorMessage && (
+            <p className="text-xs text-destructive mt-2">{cv.errorMessage}</p>
+          )}
+
+          {isBestMatch && (
+            <Badge variant="success" className="mt-2">
+              En Uygun Aday
+            </Badge>
+          )}
         </div>
-      )}
-    </div>
+      </div>
+    </motion.div>
   );
 };
 
-const HeadHunter = () => {
+const HeadHunter = ({ isDarkMode }: HeadHunterProps) => {
   const [cvs, setCvs] = useState<AnalyzedCV[]>([]);
   const [jobRequirements, setJobRequirements] = useState<string>("");
   const [isComparing, setIsComparing] = useState<boolean>(false);
@@ -433,198 +424,278 @@ const HeadHunter = () => {
    };
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      <h2 className="text-2xl font-semibold text-primary">AI Destekli CV Analizi</h2>
+    <div className={cn(
+      "container mx-auto py-8 space-y-8",
+      isDarkMode && "text-white"
+    )}>
+      {/* Header Section */}
+      <div className="space-y-2">
+        <h1 className={cn(
+          "text-3xl font-bold tracking-tight",
+          isDarkMode && "text-white"
+        )}>HeadHunter AI</h1>
+        <p className={cn(
+          "text-muted-foreground",
+          isDarkMode && "text-gray-300"
+        )}>
+          Yapay zeka destekli CV analizi ve aday değerlendirme sistemi
+        </p>
+      </div>
 
-      <Card>
-          <CardHeader>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left Panel - CV Management */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Upload Section */}
+          <Card className={cn(
+            "relative overflow-hidden border-dashed hover:border-primary/50 transition-colors",
+            isDarkMode && "bg-gray-900/50 border-gray-700"
+          )}>
+            <CardHeader className="space-y-1">
               <CardTitle className="flex items-center gap-2">
-                  <BrainCircuit className="w-5 h-5" /> En Uygun Adayı Bul
+                <Upload className="w-5 h-5 text-primary" />
+                CV Yönetimi
               </CardTitle>
               <CardDescription>
-                  Aşağıya iş tanımını veya aradığınız temel kriterleri yazın. Sistem, yüklediğiniz ve analizi tamamlanmış CV'ler arasından en uygun olanı bulacaktır.
+                PDF formatında, maksimum {MAX_CVS} adet CV yükleyebilirsiniz
               </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-              {comparisonResult && (
-                  <Alert variant={comparisonResult.type === 'error' ? 'destructive' : 'default'} className={comparisonResult.type === 'success' ? 'border-green-500' : ''}>
-                       {comparisonResult.type === 'success' && <CheckCircle2 className="h-4 w-4" />}
-                       {comparisonResult.type === 'error' && <AlertCircle className="h-4 w-4" />}
-                       {comparisonResult.type === 'info' && <Loader2 className="h-4 w-4 animate-spin" />}
-                      <AlertTitle>
-                          {comparisonResult.type === 'success' ? 'Başarılı' : comparisonResult.type === 'error' ? 'Hata/Bilgi' : 'İşleniyor'}
-                      </AlertTitle>
-                      <AlertDescription>
-                          {comparisonResult.message}
-                          {comparisonResult.type === 'success' && comparisonResult.justification && (
-                              <>
-                                <p className="mt-2 text-sm font-medium">Neden:</p>
-                                <p className="text-sm">{comparisonResult.justification}</p>
-                              </>
-                          )}
-                      </AlertDescription>
-                  </Alert>
-              )}
-              <div>
-                  <Label htmlFor="job-requirements">İş Tanımı / Kriterler</Label>
-                  <Textarea
+            </CardHeader>
+            <CardContent>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                className="hidden"
+                accept=".pdf"
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full relative group"
+                disabled={!!uploadingCvId || cvs.length >= MAX_CVS}
+                variant="outline"
+              >
+                {uploadingCvId ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Yükleniyor...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5 mr-2" />
+                    PDF CV Seç
+                  </>
+                )}
+              </Button>
+
+              <div className="mt-4">
+                <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+                  <span>Yüklenen CV'ler</span>
+                  <Badge variant="outline">{cvs.length}/{MAX_CVS}</Badge>
+                </div>
+                
+                <ScrollArea className="h-[400px] rounded-md border">
+                  <div className="p-4 space-y-4">
+                    <AnimatePresence>
+                      {loading && cvs.length === 0 ? (
+                        <div className="flex justify-center items-center h-32">
+                          <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
+                        </div>
+                      ) : cvs.length === 0 ? (
+                        <div className="text-center text-muted-foreground py-8">
+                          Henüz CV yüklemediniz
+                        </div>
+                      ) : (
+                        cvs.map((cv) => (
+                          <CVCard
+                            key={cv.id}
+                            cv={cv}
+                            onRemove={() => handleRemoveCV(cv.id)}
+                            uploadProgress={uploadProgress[cv.id]}
+                            onSelect={() => handleSelectCV(cv)}
+                            isSelected={selectedCV?.id === cv.id}
+                            isBestMatch={comparisonResult?.bestCandidateId === cv.id}
+                            isDarkMode={isDarkMode}
+                          />
+                        ))
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </ScrollArea>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Panel - Analysis */}
+        <div className="lg:col-span-8">
+          <Tabs defaultValue="search" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="search">Aday Ara</TabsTrigger>
+              <TabsTrigger value="analysis">Analiz Sonuçları</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="search" className="space-y-6">
+              {/* Job Requirements Card */}
+              <Card className={cn(
+                "relative",
+                isDarkMode && "bg-gray-900/50 border-gray-700"
+              )}>
+                <CardHeader>
+                  <CardTitle className={cn(
+                    "flex items-center gap-2",
+                    isDarkMode && "text-white"
+                  )}>
+                    <BrainCircuit className="w-5 h-5 text-primary" />
+                    En Uygun Adayı Bul
+                  </CardTitle>
+                  <CardDescription className={cn(
+                    isDarkMode && "text-gray-300"
+                  )}>
+                    Pozisyon gereksinimlerini girin ve yapay zeka destekli analiz başlasın
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="job-requirements" className={cn(
+                      isDarkMode && "text-white"
+                    )}>Pozisyon Gereksinimleri</Label>
+                    <Textarea
                       id="job-requirements"
-                      placeholder="Örn: En az 5 yıl React tecrübesi, iyi derecede İngilizce bilen, Next.js konusunda deneyimli bir Frontend Developer arıyoruz..."
+                      placeholder="Örn: En az 5 yıl React tecrübesi, iyi derecede İngilizce..."
                       value={jobRequirements}
                       onChange={(e) => setJobRequirements(e.target.value)}
                       rows={4}
-                      className="mt-1"
-                      disabled={isComparing}
-                  />
-              </div>
-              <Button
-                  onClick={handleFindBestCandidate}
-                  disabled={!jobRequirements.trim() || isComparing || cvs.filter(cv => cv.status === 'processed').length === 0}
-                  className="w-full sm:w-auto"
-              >
-                  {isComparing ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Karşılaştırılıyor...</>
-                  ) : (
-                      <><BrainCircuit className="mr-2 h-4 w-4" /> En Uygun Adayı Bul</>
-                  )}
-              </Button>
-              {cvs.filter(cv => cv.status === 'processed').length === 0 && !isComparing && (
-                  <p className="text-sm text-muted-foreground italic">Karşılaştırma yapmak için önce en az bir CV yükleyip analizinin tamamlanmasını beklemelisiniz.</p>
-              )}
-          </CardContent>
-      </Card>
-
-      <Card>
-          <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                  <Upload className="w-5 h-5" /> CV Yükle (.pdf)
-              </CardTitle>
-              <CardDescription>
-                  Analiz etmek ve karşılaştırmak için CV dosyalarınızı (PDF) yükleyin. (Maks: {MAX_CVS})
-              </CardDescription>
-          </CardHeader>
-          <CardContent>
-               <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      id="cv-upload-input"
-                      accept=".pdf"
-                  />
-                  <Button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-full sm:w-auto"
-                      disabled={!!uploadingCvId || cvs.length >= MAX_CVS}
-                  >
-                      {uploadingCvId ? (
-                          <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Yükleniyor...
-                          </>
-                      ) : (
-                          <>
-                              <Upload className="mr-2 h-4 w-4" /> PDF CV Yükle
-                          </>
+                      className={cn(
+                        "resize-none",
+                        isDarkMode && "bg-gray-900/50 text-white placeholder:text-gray-400"
                       )}
+                    />
+                  </div>
+                  <Button
+                    onClick={handleFindBestCandidate}
+                    className="w-full"
+                    disabled={!jobRequirements.trim() || isComparing || cvs.filter(cv => cv.status === 'processed').length === 0}
+                  >
+                    {isComparing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Analiz Ediliyor...
+                      </>
+                    ) : (
+                      <>
+                        <BrainCircuit className="w-4 h-4 mr-2" />
+                        Analizi Başlat
+                      </>
+                    )}
                   </Button>
-                  {cvs.length >= MAX_CVS && !uploadingCvId && (
-                     <p className="text-sm text-destructive">Maksimum CV sayısına ulaştınız ({MAX_CVS}).</p>
-                  )}
-               </div>
-               {uploadingCvId && uploadProgress[uploadingCvId] !== undefined && (
-                   <Progress value={uploadProgress[uploadingCvId]} className="mt-3 h-2" />
-               )}
-          </CardContent>
-      </Card>
+                </CardContent>
+              </Card>
 
-      <Card>
-           <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" /> Yüklenen CV'ler ({cvs.length} / {MAX_CVS})
-              </CardTitle>
-               <CardDescription>
-                  Yüklediğiniz CV'ler ve analiz durumları. İşlenmiş olanlara tıklayarak detayları görebilirsiniz.
-              </CardDescription>
-          </CardHeader>
-          <CardContent>
-             {loading && cvs.length === 0 && (
-                <div className="flex justify-center items-center h-32">
-                   <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
-                </div>
-             )}
-             {!loading && cvs.length === 0 && (
-                <p className="text-center text-muted-foreground mt-8">Henüz CV yüklemediniz.</p>
-             )}
-             {cvs.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {cvs.map((cv) => (
-                    <div key={cv.id} className={`p-3 rounded-md border ${
-                        comparisonResult?.bestCandidateId === cv.id ? 'border-primary ring-2 ring-primary shadow-md' : 'border-border'
-                    } ${
-                        selectedCV?.id === cv.id ? 'bg-muted/50' : ''
-                    }`}>
-                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                            <div className="flex-grow min-w-0">
-                                <button
-                                    onClick={() => handleSelectCV(cv)}
-                                    disabled={!(cv.status === 'processed' || cv.status === 'error')}
-                                    className={`font-medium truncate text-left w-full ${ (cv.status === 'processed' || cv.status === 'error') ? 'hover:underline cursor-pointer' : 'cursor-not-allowed text-muted-foreground'}`}
-                                    title={(cv.status === 'processed' || cv.status === 'error') ? `${cv.fileName} detaylarını gör/gizle` : `Durum: ${cv.status}`}
-                                >
-                                    {cv.fileName}
-                                </button>
-                                <p className="text-xs text-muted-foreground">
-                                    {cv.uploadedAt ? cv.uploadedAt.toDate().toLocaleString() : 'Tarih yok'}
-                                </p>
-                           </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                                <Badge variant={
-                                    cv.status === 'processed' ? 'default' :
-                                    cv.status === 'error' ? 'destructive' :
-                                    'secondary'
-                                } className="whitespace-nowrap">
-                                     {cv.status}
-                                </Badge>
-                                <Button variant="ghost" onClick={() => handleRemoveCV(cv.id)} title={`${cv.fileName} adlı CV'yi sil`} className="p-1 h-auto">
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </div>
-                         {cv.status === 'uploading' && uploadProgress[cv.id] !== undefined && (
-                           <Progress value={uploadProgress[cv.id]} className="mt-2 h-1" />
-                         )}
-                        {cv.status === 'error' && cv.errorMessage && (
-                            <p className="text-xs text-destructive mt-1">{cv.errorMessage}</p>
+              {/* Comparison Result */}
+              {comparisonResult && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      {comparisonResult.type === 'success' && <CheckCircle2 className="w-5 h-5 text-green-500" />}
+                      {comparisonResult.type === 'error' && <AlertCircle className="w-5 h-5 text-destructive" />}
+                      {comparisonResult.type === 'info' && <Info className="w-5 h-5 text-blue-500" />}
+                      Analiz Sonucu
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Alert 
+                      variant={comparisonResult.type === 'error' ? 'destructive' : 'default'}
+                      className={cn(
+                        "transition-all duration-300",
+                        comparisonResult.type === 'success' && 'border-green-500 bg-green-500/10',
+                        comparisonResult.type === 'error' && 'border-destructive bg-destructive/10'
+                      )}
+                    >
+                      <AlertTitle className="flex items-center gap-2">
+                        {comparisonResult.type === 'success' ? 'Başarılı' : 
+                         comparisonResult.type === 'error' ? 'Hata/Bilgi' : 
+                         'İşleniyor'}
+                      </AlertTitle>
+                      <AlertDescription className="mt-2">
+                        {comparisonResult.message}
+                        {comparisonResult.type === 'success' && comparisonResult.justification && (
+                          <div className="mt-4 p-4 rounded-lg bg-card border">
+                            <p className="font-medium mb-2">Seçim Nedeni:</p>
+                            <p className="text-sm text-muted-foreground">{comparisonResult.justification}</p>
+                          </div>
                         )}
+                      </AlertDescription>
+                    </Alert>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
 
-                         {selectedCV?.id === cv.id && (
-                             <div className="mt-3 border-t pt-3">
-                                {selectedCV.status === 'processed' && selectedCV.analysis ? (
-                                    <Accordion type="single" collapsible defaultValue="item-1">
-                                        <AccordionItem value="item-1">
-                                            <AccordionTrigger>Analiz Detayları</AccordionTrigger>
-                                            <AccordionContent>
-                                                 <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto whitespace-pre-wrap break-words">
-                                                    {JSON.stringify(selectedCV.analysis, null, 2)}
-                                                </pre>
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                    </Accordion>
-                                ) : selectedCV.status === 'error' ? (
-                                     <p className="text-sm text-destructive italic">Analiz sırasında hata oluştu: {selectedCV.errorMessage}</p>
-                                ) : (
-                                     <p className="text-sm text-muted-foreground italic">Analiz detayları yükleniyor veya mevcut değil.</p>
-                                )}
-                             </div>
-                         )}
-                    </div>
-                  ))}
-                </div>
-             )}
-          </CardContent>
-      </Card>
+            <TabsContent value="analysis" className="space-y-6">
+              {selectedCV ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-primary" />
+                        CV Analiz Detayları
+                      </div>
+                      <Badge variant={
+                        selectedCV.status === 'processed' ? 'default' :
+                        selectedCV.status === 'error' ? 'destructive' :
+                        'secondary'
+                      }>
+                        {selectedCV.status}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {selectedCV.status === 'processed' && selectedCV.analysis ? (
+                      <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="analysis">
+                          <AccordionTrigger>
+                            <span className="flex items-center gap-2">
+                              <Info className="w-4 h-4" />
+                              Detaylı Analiz Sonuçları
+                            </span>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="rounded-lg bg-muted p-4 mt-2">
+                              <pre className="text-xs whitespace-pre-wrap break-words">
+                                {JSON.stringify(selectedCV.analysis, null, 2)}
+                              </pre>
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    ) : selectedCV.status === 'error' ? (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Hata</AlertTitle>
+                        <AlertDescription>
+                          {selectedCV.errorMessage}
+                        </AlertDescription>
+                      </Alert>
+                    ) : (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-8 text-center">
+                    <FileText className="w-12 h-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">
+                      Analiz detaylarını görüntülemek için bir CV seçin
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
     </div>
   );
 };
