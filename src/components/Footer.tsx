@@ -8,8 +8,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo and Description */}
           <div className="col-span-1 md:col-span-2">
-          <img src="/logo.png" alt="minİK Logo" className="h-12" />
-            <h2 className="text-2xl font-semibold text-[#1F2A44] mb-4">İKyardim</h2>
+          <img src="/logo.webp" alt="minİK Logo" className="h-12" />
+            
+            <br></br>
             <p className="text-[#1F2A44]/70 max-w-md">
               İK süreçlerinizi dijitalleştirin, zamandan tasarruf edin. 
               Modern çözümlerle işinizi kolaylaştırın.

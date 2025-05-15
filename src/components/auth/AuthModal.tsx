@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { updateProfile } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { firestore as db, auth } from '@/config/firebase';
+import { Input } from '../ui/input';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -177,248 +178,263 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop with blur */}
-      <div 
-        className="absolute inset-0 bg-[#1F2A44]/60 backdrop-blur-sm" 
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="relative w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl">
-        {/* Close button */}
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 text-[#1F2A44]/60 hover:text-[#1F2A44] transition-colors"
-          disabled={loading}
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-[#1F2A44] mb-2">
-            {mode === 'login' ? 'Hoş Geldiniz' : 
-             mode === 'register' ? 'Hesap Oluşturun' : 
-             mode === 'forgot-password' ? 'Şifre Sıfırlama' :
-             'E-posta Doğrulama'}
-          </h2>
-          <p className="text-[#1F2A44]/60">
-            {mode === 'login' ? 'İKyardım hesabınıza giriş yapın' :
-             mode === 'register' ? 'Hemen ücretsiz hesap oluşturun' :
-             mode === 'forgot-password' ? 'E-posta adresinize şifre sıfırlama bağlantısı göndereceğiz' :
-             'Lütfen e-posta adresinize gönderilen doğrulama bağlantısına tıklayın'}
-          </p>
+    <div className="fixed inset-0 z-50">
+      {/* Main Container */}
+      <div className="flex w-full h-full">
+        {/* Left Side - Image */}
+        <div className="relative hidden lg:block w-1/2 h-full">
+          <img 
+            src="/login.webp" 
+            alt="Login Background" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          {/* Sağa doğru gradient geçişi */}
+          <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-r from-transparent to-[#010304]" />
         </div>
 
-        {mode === 'verification-pending' ? (
-          <div className="space-y-6">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-yellow-600">
-                <p className="font-medium mb-1">E-posta doğrulaması gerekli</p>
-                <p>Hesabınızı kullanmaya başlamadan önce e-posta adresinizi doğrulamanız gerekmektedir. Doğrulama e-postası {currentUser?.email} adresine gönderildi.</p>
-              </div>
-            </div>
-            
-            <div className="flex flex-col gap-3">
-              <Button
-                type="button"
-                onClick={handleResendVerification}
-                className="w-full bg-[#4DA3FF] hover:bg-[#4DA3FF]/90 text-white py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#4DA3FF]/20"
-                disabled={loading}
-              >
-                {loading ? 'Gönderiliyor...' : 'Doğrulama E-postasını Tekrar Gönder'}
-              </Button>
-              
-              <button
-                type="button"
-                onClick={() => window.location.reload()}
-                className="text-sm text-[#4DA3FF] hover:text-[#4DA3FF]/80 transition-colors font-medium"
-              >
-                E-postanızı doğruladıysanız sayfayı yenileyin
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            {mode !== 'forgot-password' && (
-              <>
-                {/* Google Sign In Button */}
-                <button
-                  onClick={handleGoogleSignIn}
-                  disabled={loading}
-                  className="w-full bg-white border-2 border-[#1F2A44]/10 text-[#1F2A44] font-medium py-3 px-4 rounded-xl mb-6 flex items-center justify-center hover:bg-[#1F2A44]/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                >
-                  <img src="/google.svg" alt="Google logo" className="w-5 h-5 mr-3" />
-                  Google ile {mode === 'login' ? 'Giriş Yap' : 'Kayıt Ol'}
-                </button>
+        {/* Right Side - Form */}
+        <div className="w-full lg:w-1/2 h-full bg-[#010304] overflow-y-auto">
+          <div className="max-w-xl mx-auto p-8 lg:p-12 min-h-full flex flex-col">
+            {/* Close Button */}
+            <button 
+              onClick={onClose}
+              className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors"
+              disabled={loading}
+            >
+              <X className="w-6 h-6" />
+            </button>
 
-                <div className="relative my-8">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-[#1F2A44]/10"></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-4 text-[#1F2A44]/60 bg-white">veya</span>
-                  </div>
+            {/* Form Content */}
+            <div className="flex-1 flex flex-col justify-center space-y-8">
+              {/* Logo and Title */}
+              <div className="space-y-4">
+                <img src="/logo.webp" alt="Logo" className="h-16" />
+                <div className="space-y-2">
+                  <h2 className="text-3xl font-semibold text-white">
+                    {mode === 'login' ? 'Hesabınıza giriş yapın' : 
+                     mode === 'register' ? 'Yeni hesap oluşturun' : 
+                     mode === 'forgot-password' ? 'Şifrenizi sıfırlayın' :
+                     'E-posta Doğrulama'}
+                  </h2>
+                  <p className="text-gray-400">
+                    {mode === 'login' ? 'Tekrar hoş geldiniz! Lütfen bilgilerinizi girin.' : 
+                     mode === 'register' ? 'Hemen ücretsiz hesap oluşturun.' : 
+                     mode === 'forgot-password' ? 'E-posta adresinize şifre sıfırlama bağlantısı göndereceğiz.' :
+                     'Lütfen e-posta adresinize gönderilen doğrulama bağlantısına tıklayın.'}
+                  </p>
                 </div>
-              </>
-            )}
+              </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {mode === 'register' && (
-                <>
-                  {/* Ad Soyad Row */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4DA3FF]" />
-                      <input
-                        type="text"
-                        name="firstName"
-                        placeholder="Ad"
-                        value={formData.firstName}
-                        onChange={handleInputChange}
-                        className="w-full bg-[#1F2A44]/5 rounded-xl pl-10 pr-4 py-3 text-[#1F2A44] placeholder:text-[#1F2A44]/40 focus:outline-none focus:ring-2 focus:ring-[#4DA3FF]/20 focus:bg-white transition-all disabled:opacity-50"
-                        required
-                        disabled={loading}
-                      />
-                    </div>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        name="lastName"
-                        placeholder="Soyad"
-                        value={formData.lastName}
-                        onChange={handleInputChange}
-                        className="w-full bg-[#1F2A44]/5 rounded-xl px-4 py-3 text-[#1F2A44] placeholder:text-[#1F2A44]/40 focus:outline-none focus:ring-2 focus:ring-[#4DA3FF]/20 focus:bg-white transition-all disabled:opacity-50"
-                        required
-                        disabled={loading}
-                      />
+              {mode === 'verification-pending' ? (
+                <div className="space-y-6">
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-yellow-200">
+                      <p className="font-medium mb-1">E-posta doğrulaması gerekli</p>
+                      <p>Hesabınızı kullanmaya başlamadan önce e-posta adresinizi doğrulamanız gerekmektedir. Doğrulama e-postası {currentUser?.email} adresine gönderildi.</p>
                     </div>
                   </div>
                   
-                  {/* Şirket Adı */}
-                  <div className="relative">
-                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4DA3FF]" />
-                    <input
-                      type="text"
-                      name="company"
-                      placeholder="Şirket Adı"
-                      value={formData.company}
-                      onChange={handleInputChange}
-                      className="w-full bg-[#1F2A44]/5 rounded-xl pl-10 pr-4 py-3 text-[#1F2A44] placeholder:text-[#1F2A44]/40 focus:outline-none focus:ring-2 focus:ring-[#4DA3FF]/20 focus:bg-white transition-all disabled:opacity-50"
-                      required
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      type="button"
+                      onClick={handleResendVerification}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                       disabled={loading}
-                    />
+                    >
+                      {loading ? 'Gönderiliyor...' : 'Doğrulama E-postasını Tekrar Gönder'}
+                    </Button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => window.location.reload()}
+                      className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                      E-postanızı doğruladıysanız sayfayı yenileyin
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Form */}
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    {mode === 'register' && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Input
+                            type="text"
+                            name="firstName"
+                            placeholder="Ad"
+                            value={formData.firstName}
+                            onChange={handleInputChange}
+                            className="bg-[#010304]/80 border-[#2A2F3E] text-white placeholder:text-gray-400"
+                            icon={<User className="w-5 h-5 text-gray-400" />}
+                            disabled={loading}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Input
+                            type="text"
+                            name="lastName"
+                            placeholder="Soyad"
+                            value={formData.lastName}
+                            onChange={handleInputChange}
+                            className="bg-[#010304]/80 border-[#2A2F3E] text-white placeholder:text-gray-400"
+                            icon={<User className="w-5 h-5 text-gray-400" />}
+                            disabled={loading}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <Input
+                        type="email"
+                        name="email"
+                        placeholder="E-posta"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className="bg-[#010304]/80 border-[#2A2F3E] text-white placeholder:text-gray-400"
+                        icon={<Mail className="w-5 h-5 text-gray-400" />}
+                        disabled={loading}
+                      />
+                    </div>
+
+                    {mode !== 'forgot-password' && (
+                      <div className="space-y-2">
+                        <div className="relative">
+                          <Input
+                            type={showPassword ? 'text' : 'password'}
+                            name="password"
+                            placeholder="Şifre"
+                            value={formData.password}
+                            onChange={handleInputChange}
+                            className="bg-[#010304]/80 border-[#2A2F3E] text-white placeholder:text-gray-400"
+                            icon={<Lock className="w-5 h-5 text-gray-400" />}
+                            disabled={loading}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                          >
+                            {showPassword ? 
+                              <EyeOff className="w-5 h-5" /> : 
+                              <Eye className="w-5 h-5" />
+                            }
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {mode === 'register' && (
+                      <div className="space-y-2">
+                        <Input
+                          type="text"
+                          name="company"
+                          placeholder="Şirket Adı"
+                          value={formData.company}
+                          onChange={handleInputChange}
+                          className="bg-[#010304]/80 border-[#2A2F3E] text-white placeholder:text-gray-400"
+                          icon={<Building2 className="w-5 h-5 text-gray-400" />}
+                          disabled={loading}
+                        />
+                      </div>
+                    )}
+
+                    <Button
+                      type="submit"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                      disabled={loading}
+                    >
+                      {loading ? 'İşleniyor...' : 
+                       mode === 'login' ? 'Giriş Yap' : 
+                       mode === 'register' ? 'Kayıt Ol' : 
+                       'Şifremi Sıfırla'}
+                    </Button>
+                  </form>
+
+                  {mode !== 'forgot-password' && (
+                    <>
+                      {/* Divider */}
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-gray-700"></div>
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                          <span className="px-2 bg-[#010304] text-gray-400">veya</span>
+                        </div>
+                      </div>
+
+                      {/* Social Buttons */}
+                      <div className="space-y-4">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full bg-[#010304]/80 border-[#2A2F3E] text-white hover:bg-[#2A2F3E]"
+                          onClick={handleGoogleSignIn}
+                          disabled={loading}
+                        >
+                          <img src="/google.svg" alt="Google" className="w-5 h-5 mr-2" />
+                          Google ile devam et
+                        </Button>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Footer Links */}
+                  <div className="text-center text-sm">
+                    {mode === 'login' ? (
+                      <>
+                        <p className="text-gray-400">
+                          Hesabınız yok mu?{' '}
+                          <button
+                            type="button"
+                            className="text-blue-500 hover:text-blue-400"
+                            onClick={() => setMode('register')}
+                            disabled={loading}
+                          >
+                            Hemen kaydolun
+                          </button>
+                        </p>
+                        <button
+                          type="button"
+                          className="text-gray-400 hover:text-gray-300 mt-2"
+                          onClick={() => setMode('forgot-password')}
+                          disabled={loading}
+                        >
+                          Şifrenizi mi unuttunuz?
+                        </button>
+                      </>
+                    ) : mode === 'register' ? (
+                      <p className="text-gray-400">
+                        Zaten hesabınız var mı?{' '}
+                        <button
+                          type="button"
+                          className="text-blue-500 hover:text-blue-400"
+                          onClick={() => setMode('login')}
+                          disabled={loading}
+                        >
+                          Giriş yapın
+                        </button>
+                      </p>
+                    ) : (
+                      <button
+                        type="button"
+                        className="text-blue-500 hover:text-blue-400"
+                        onClick={() => setMode('login')}
+                        disabled={loading}
+                      >
+                        Giriş sayfasına dön
+                      </button>
+                    )}
                   </div>
                 </>
               )}
-              
-              {/* Email */}
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4DA3FF]" />
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="E-posta"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full bg-[#1F2A44]/5 rounded-xl pl-10 pr-4 py-3 text-[#1F2A44] placeholder:text-[#1F2A44]/40 focus:outline-none focus:ring-2 focus:ring-[#4DA3FF]/20 focus:bg-white transition-all disabled:opacity-50"
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              {mode !== 'forgot-password' && (
-                /* Password */
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4DA3FF]" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    placeholder="Şifre"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className="w-full bg-[#1F2A44]/5 rounded-xl pl-10 pr-12 py-3 text-[#1F2A44] placeholder:text-[#1F2A44]/40 focus:outline-none focus:ring-2 focus:ring-[#4DA3FF]/20 focus:bg-white transition-all disabled:opacity-50"
-                    required
-                    disabled={loading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1F2A44]/40 hover:text-[#1F2A44] transition-colors disabled:opacity-50"
-                    disabled={loading}
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              )}
-
-              {mode === 'login' && (
-                <div className="text-right">
-                  <button
-                    type="button"
-                    onClick={() => setMode('forgot-password')}
-                    className="text-sm text-[#4DA3FF] hover:text-[#4DA3FF]/80 transition-colors"
-                    disabled={loading}
-                  >
-                    Şifremi Unuttum
-                  </button>
-                </div>
-              )}
-
-              <Button 
-                type="submit"
-                className="w-full bg-[#4DA3FF] hover:bg-[#4DA3FF]/90 text-white py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#4DA3FF]/20"
-                disabled={loading}
-              >
-                {loading ? 'İşleniyor...' : 
-                 mode === 'login' ? 'Giriş Yap' : 
-                 mode === 'register' ? 'Kayıt Ol' : 
-                 'Şifre Sıfırlama Bağlantısı Gönder'}
-              </Button>
-            </form>
-
-            {/* Footer */}
-            <div className="mt-6 text-center text-[#1F2A44]/60">
-              {mode === 'login' ? (
-                <>
-                  Hesabınız yok mu?{' '}
-                  <button 
-                    onClick={() => setMode('register')}
-                    className="text-[#4DA3FF] hover:text-[#4DA3FF]/80 transition-colors font-medium"
-                    disabled={loading}
-                  >
-                    Hemen Oluşturun
-                  </button>
-                </>
-              ) : mode === 'register' ? (
-                <>
-                  Zaten hesabınız var mı?{' '}
-                  <button 
-                    onClick={() => setMode('login')}
-                    className="text-[#4DA3FF] hover:text-[#4DA3FF]/80 transition-colors font-medium"
-                    disabled={loading}
-                  >
-                    Giriş Yapın
-                  </button>
-                </>
-              ) : (
-                <>
-                  Giriş yapmak için{' '}
-                  <button 
-                    onClick={() => setMode('login')}
-                    className="text-[#4DA3FF] hover:text-[#4DA3FF]/80 transition-colors font-medium"
-                    disabled={loading}
-                  >
-                    buraya tıklayın
-                  </button>
-                </>
-              )}
             </div>
-          </>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   );

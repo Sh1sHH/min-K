@@ -97,7 +97,7 @@ const CVCard = ({
       className={cn(
         "group relative p-4 rounded-xl transition-all duration-300",
         "border bg-card hover:shadow-xl",
-        isDarkMode && "bg-gray-900/50 border-gray-700 text-white",
+        isDarkMode && "bg-sky-950/80 border-sky-800 text-white",
         isSelected && "ring-2 ring-primary",
         isBestMatch && "ring-2 ring-green-500",
         "cursor-pointer"
@@ -448,7 +448,7 @@ const HeadHunter = ({ isDarkMode }: HeadHunterProps) => {
           {/* Upload Section */}
           <Card className={cn(
             "relative overflow-hidden border-dashed hover:border-primary/50 transition-colors",
-            isDarkMode && "bg-gray-900/50 border-gray-700"
+            isDarkMode && "bg-sky-950/80 border-sky-800 shadow-lg"
           )}>
             <CardHeader className="space-y-1">
               <CardTitle className="flex items-center gap-2">
@@ -537,7 +537,7 @@ const HeadHunter = ({ isDarkMode }: HeadHunterProps) => {
               {/* Job Requirements Card */}
               <Card className={cn(
                 "relative",
-                isDarkMode && "bg-gray-900/50 border-gray-700"
+                isDarkMode && "bg-sky-950/80 border-sky-800 shadow-lg"
               )}>
                 <CardHeader>
                   <CardTitle className={cn(
@@ -566,7 +566,7 @@ const HeadHunter = ({ isDarkMode }: HeadHunterProps) => {
                       rows={4}
                       className={cn(
                         "resize-none",
-                        isDarkMode && "bg-gray-900/50 text-white placeholder:text-gray-400"
+                        isDarkMode && "bg-sky-950/90 text-white placeholder:text-gray-400 border-sky-800"
                       )}
                     />
                   </div>
