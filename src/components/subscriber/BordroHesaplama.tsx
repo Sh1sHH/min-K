@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calculator, Info } from 'lucide-react';
+import { Calculator, Info, FileDown, FileText } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -7,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 // Sabit Değerler
@@ -97,6 +101,9 @@ interface AylikSonuc extends BordroSonuc {
   yolBrut: number;
   primBrut: number;
   toplamBrut: number;
+  hesaplananGelirVergisi: number;
+  damgaVergisiMatrahi: number;
+  hesaplananDamgaVergisi: number;
 }
 
 interface BordroSonuc {
@@ -120,6 +127,9 @@ interface BordroSonuc {
   yolBrut: number;
   primBrut: number;
   toplamBrut: number;
+  hesaplananGelirVergisi: number;
+  damgaVergisiMatrahi: number;
+  hesaplananDamgaVergisi: number;
 }
 
 // Engellilik derecesi tipi
@@ -157,7 +167,7 @@ const BordroHesaplama = ({ isDarkMode }: BordroHesaplamaProps) => {
   ): AylikSonuc => {
     const placeholderResult: AylikSonuc = {
       ay,
-      brut: parseTurkishCurrency(temelUcret),
+      brut: 0, // Temel brüt, aşağıda atanacak
       net: 0,
       sgkMatrahi: 0,
       sgkIsci: 0,
@@ -179,19 +189,17 @@ const BordroHesaplama = ({ isDarkMode }: BordroHesaplamaProps) => {
       yolBrut: 0,
       primBrut: 0,
       toplamBrut: 0,
+      hesaplananGelirVergisi: 0,
+      damgaVergisiMatrahi: 0,
+      hesaplananDamgaVergisi: 0,
     };
-    console.log("Hesaplama yapılacak state'ler:", {
-      calisanTipi, maasTipi, temelUcret, normalGun, haftaTatiliGun,
-      yemekGunlukTutar, yolGunlukTutar, engellilikDerecesi, yemekYardimiTipi,
-      yolYardimiTipi, primVarMi, primTutari, besVarMi, hesaplamaYili
-    });
 
-    let aylikTemelBrut = 0;
     const gunlukUcret = maasTipi === 'gunluk' ? parseTurkishCurrency(temelUcret) : 0;
     const aylikUcret = maasTipi === 'aylik' ? parseTurkishCurrency(temelUcret) : 0;
     const calisilanGun = parseInt(normalGun) || 0;
     const toplamGun = calisilanGun + (parseInt(haftaTatiliGun) || 0);
 
+    let aylikTemelBrut = 0;
     if (maasTipi === 'gunluk') {
       aylikTemelBrut = gunlukUcret * toplamGun;
     } else {
@@ -199,52 +207,86 @@ const BordroHesaplama = ({ isDarkMode }: BordroHesaplamaProps) => {
     }
     placeholderResult.brut = aylikTemelBrut;
 
-    const gunlukYemekBrut = yemekYardimiTipi !== 'yok' ? parseTurkishCurrency(yemekGunlukTutar) : 0;
-    const gunlukYolBrut = yolYardimiTipi !== 'yok' ? parseTurkishCurrency(yolGunlukTutar) : 0;
-
-    placeholderResult.yemekBrut = gunlukYemekBrut * calisilanGun;
-    placeholderResult.yolBrut = gunlukYolBrut * calisilanGun;
-
+    placeholderResult.yemekBrut = (yemekYardimiTipi !== 'yok' ? parseTurkishCurrency(yemekGunlukTutar) : 0) * calisilanGun;
+    placeholderResult.yolBrut = (yolYardimiTipi !== 'yok' ? parseTurkishCurrency(yolGunlukTutar) : 0) * calisilanGun;
     placeholderResult.primBrut = primVarMi ? parseTurkishCurrency(primTutari) : 0;
 
+    // Toplam Brüt Ödeme (Tüm yardımlar dahil, kesintilerden önce)
     placeholderResult.toplamBrut = placeholderResult.brut + placeholderResult.yemekBrut + placeholderResult.yolBrut + placeholderResult.primBrut;
+    placeholderResult.damgaVergisiMatrahi = placeholderResult.toplamBrut;
 
-    placeholderResult.sgkMatrahi = Math.min(placeholderResult.toplamBrut, RATES.SSK.TAVAN);
+    // SGK Matrahı Hesaplanması
+    let sgkMatrahinaTabiTutar = placeholderResult.brut + placeholderResult.primBrut;
+
+    // Yemek Yardımı SGK Matrahı Katkısı
+    if (placeholderResult.yemekBrut > 0) {
+        const aylikSgkYemekIstisnaSiniri = ISTISNALAR_LIMITLER_2024.SGK_YEMEK_ISTISNASI_GUNLUK * calisilanGun;
+        sgkMatrahinaTabiTutar += Math.max(0, placeholderResult.yemekBrut - aylikSgkYemekIstisnaSiniri);
+    }
+
+    // Yol Yardımı SGK Matrahı Katkısı (Nakdi yol yardımı SGK'ya tabidir)
+    if (yolYardimiTipi === 'nakdi' && placeholderResult.yolBrut > 0) {
+        sgkMatrahinaTabiTutar += placeholderResult.yolBrut;
+    }
+    placeholderResult.sgkMatrahi = Math.min(sgkMatrahinaTabiTutar, RATES.SSK.TAVAN);
 
     const sgkOrani = calisanTipi === 'normal' ? RATES.SSK.NORMAL : RATES.SSK.EMEKLI;
     const issizlikOrani = calisanTipi === 'normal' ? RATES.ISSIZLIK.NORMAL : RATES.ISSIZLIK.EMEKLI;
     placeholderResult.sgkIsci = placeholderResult.sgkMatrahi * sgkOrani;
     placeholderResult.issizlikIsci = placeholderResult.sgkMatrahi * issizlikOrani;
 
-    placeholderResult.gvMatrahi = placeholderResult.toplamBrut - placeholderResult.sgkIsci - placeholderResult.issizlikIsci;
+    // Gelir Vergisi Matrahı Hesaplanması
+    let gelirVergisiMatrahinaEsasTutar = placeholderResult.toplamBrut - placeholderResult.sgkIsci - placeholderResult.issizlikIsci;
 
-    placeholderResult.gelirVergisiIstisnasi = ISTISNALAR_LIMITLER_2024.GELIR_VERGISI_ISTISNASI_AYLIK;
-    placeholderResult.damgaVergisiIstisnasi = ISTISNALAR_LIMITLER_2024.DAMGA_VERGISI_ISTISNASI_AYLIK;
+    // Ayni Yemek Yardımı GV İstisnası
+    if (yemekYardimiTipi === 'ayni' && placeholderResult.yemekBrut > 0) {
+        const aylikGvYemekIstisnaSiniri = ISTISNALAR_LIMITLER_2024.YEMEK_ISTISNASI_GUNLUK * calisilanGun;
+        gelirVergisiMatrahinaEsasTutar -= Math.min(placeholderResult.yemekBrut, aylikGvYemekIstisnaSiniri);
+    }
+    
+    // Ayni Yol Yardımı GV İstisnası
+    if (yolYardimiTipi === 'ayni' && placeholderResult.yolBrut > 0) {
+        const aylikGvYolIstisnaSiniri = ISTISNALAR_LIMITLER_2024.YOL_ISTISNASI_GUNLUK * calisilanGun;
+        gelirVergisiMatrahinaEsasTutar -= Math.min(placeholderResult.yolBrut, aylikGvYolIstisnaSiniri);
+    }
 
     placeholderResult.engellilikIndirimi = engellilikDerecesi !== 'yok' ? ISTISNALAR_LIMITLER_2024.ENGELLILIK_INDIRIMI_AYLIK[engellilikDerecesi] : 0;
-    placeholderResult.gvMatrahi -= placeholderResult.engellilikIndirimi;
+    gelirVergisiMatrahinaEsasTutar -= placeholderResult.engellilikIndirimi;
+    
+    placeholderResult.gvMatrahi = Math.max(0, gelirVergisiMatrahinaEsasTutar);
 
-    placeholderResult.kumulatifVergiMatrahi = oncekiKumulatifMatrah + Math.max(0, placeholderResult.gvMatrahi);
-    const gvHesapSonucu = hesaplaGelirVergisiDetayli(Math.max(0, placeholderResult.gvMatrahi), oncekiKumulatifMatrah);
-    placeholderResult.gelirVergisi = Math.max(0, gvHesapSonucu.toplamVergi - placeholderResult.gelirVergisiIstisnasi);
+    // Gelir Vergisi ve Damga Vergisi İstisnaları (Asgari Ücret Bazlı)
+    placeholderResult.gelirVergisiIstisnasi = ISTISNALAR_LIMITLER_2024.GELIR_VERGISI_ISTISNASI_AYLIK;
+    placeholderResult.damgaVergisiIstisnasi = ISTISNALAR_LIMITLER_2024.DAMGA_VERGISI_ISTISNASI_AYLIK;
+    
+    // Kümülatif GV Matrahı ve Gelir Vergisi Hesaplanması
+    placeholderResult.kumulatifVergiMatrahi = oncekiKumulatifMatrah + placeholderResult.gvMatrahi; // Math.max(0, ...) gvMatrahi zaten içeriyor
+    const gvHesapSonucu = hesaplaGelirVergisiDetayli(placeholderResult.gvMatrahi, oncekiKumulatifMatrah);
+    placeholderResult.hesaplananGelirVergisi = gvHesapSonucu.toplamVergi;
+    placeholderResult.gelirVergisi = Math.max(0, placeholderResult.hesaplananGelirVergisi - placeholderResult.gelirVergisiIstisnasi);
     placeholderResult.gv1 = gvHesapSonucu.dilimler.gv1;
     placeholderResult.gv2 = gvHesapSonucu.dilimler.gv2;
     placeholderResult.gv3 = gvHesapSonucu.dilimler.gv3;
     placeholderResult.gv4 = gvHesapSonucu.dilimler.gv4;
     placeholderResult.gv5 = gvHesapSonucu.dilimler.gv5;
 
-    const hesaplananDamgaVergisi = placeholderResult.toplamBrut * RATES.DAMGA;
-    placeholderResult.damgaVergisi = Math.max(0, hesaplananDamgaVergisi - placeholderResult.damgaVergisiIstisnasi);
+    // Damga Vergisi Hesaplanması
+    const hesaplananDamgaVergisiTemp = placeholderResult.damgaVergisiMatrahi * RATES.DAMGA; // DV Matrahı toplamBrut
+    placeholderResult.hesaplananDamgaVergisi = hesaplananDamgaVergisiTemp;
+    placeholderResult.damgaVergisi = Math.max(0, placeholderResult.hesaplananDamgaVergisi - placeholderResult.damgaVergisiIstisnasi);
 
+    // BES Kesintisi
     placeholderResult.besKesintisi = besVarMi ? placeholderResult.sgkMatrahi * RATES.BES_ORAN : 0;
 
+    // Net Ücret
     placeholderResult.net = placeholderResult.toplamBrut
                           - placeholderResult.sgkIsci
                           - placeholderResult.issizlikIsci
-                          - placeholderResult.gelirVergisi
-                          - placeholderResult.damgaVergisi
+                          - placeholderResult.gelirVergisi // İstisna sonrası GV
+                          - placeholderResult.damgaVergisi // İstisna sonrası DV
                           - placeholderResult.besKesintisi;
 
+    // İşveren Maliyeti
     const sskIsverenOrani = calisanTipi === 'normal' ? RATES.ISVEREN_SGK_NORMAL : RATES.ISVEREN_SGK_EMEKLI;
     const issizlikIsverenOrani = calisanTipi === 'normal' ? RATES.ISVEREN_ISSIZLIK_NORMAL : RATES.ISVEREN_ISSIZLIK_EMEKLI;
     placeholderResult.sskIsveren = placeholderResult.sgkMatrahi * sskIsverenOrani;
@@ -257,7 +299,7 @@ const BordroHesaplama = ({ isDarkMode }: BordroHesaplamaProps) => {
   }, [
     calisanTipi, maasTipi, temelUcret, normalGun, haftaTatiliGun,
     yemekGunlukTutar, yolGunlukTutar, engellilikDerecesi, yemekYardimiTipi,
-    yolYardimiTipi, primVarMi, primTutari, besVarMi, hesaplamaYili
+    yolYardimiTipi, primVarMi, primTutari, besVarMi, hesaplamaYili, // hesaplaGelirVergisiDetayli bağımlılıklara eklendi implicit olarak
   ]);
 
   const hesaplaGelirVergisiDetayli = (matrah: number, kumulatifMatrah: number): {
@@ -349,57 +391,166 @@ const BordroHesaplama = ({ isDarkMode }: BordroHesaplamaProps) => {
     setter(value);
   };
 
+  const formatCurrency = (value: number | undefined) => {
+    if (value === undefined || isNaN(value)) return '0,00';
+    return value.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  // Excel'e aktarma fonksiyonu
+  const handleExcelExport = useCallback(() => {
+    if (aylikSonuclar.length === 0) return;
+
+    const ws = XLSX.utils.json_to_sheet(aylikSonuclar.map(sonuc => ({
+      'Ay': sonuc.ay,
+      'Brüt Ücret': sonuc.brut,
+      'Yemek Brüt': sonuc.yemekBrut,
+      'Yol Brüt': sonuc.yolBrut,
+      'Prim Brüt': sonuc.primBrut,
+      'Toplam Brüt': sonuc.toplamBrut,
+      'SGK Matrahı': sonuc.sgkMatrahi,
+      'SGK İşçi': sonuc.sgkIsci,
+      'İşsizlik İşçi': sonuc.issizlikIsci,
+      'SGK İşveren': sonuc.sskIsveren,
+      'İşsizlik İşveren': sonuc.issizlikIsveren,
+      'GV Matrahı': sonuc.gvMatrahi,
+      'Kümülatif GV Mat.': sonuc.kumulatifVergiMatrahi,
+      'Hesaplanan GV': sonuc.hesaplananGelirVergisi,
+      'GV İstisnası': sonuc.gelirVergisiIstisnasi,
+      'Kesilecek GV': sonuc.gelirVergisi,
+      'DV Matrahı': sonuc.damgaVergisiMatrahi,
+      'Hesaplanan DV': sonuc.hesaplananDamgaVergisi,
+      'DV İstisnası': sonuc.damgaVergisiIstisnasi,
+      'Kesilecek DV': sonuc.damgaVergisi,
+      'BES Kesintisi': sonuc.besKesintisi,
+      'Net Ücret': sonuc.net,
+      'İşveren Maliyeti': sonuc.toplamMaliyet,
+    })));
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Bordro Detayları');
+
+    // Excel dosyasını oluştur ve indir
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    saveAs(data, 'bordro_detaylari.xlsx');
+  }, [aylikSonuclar]);
+
+  // PDF'e aktarma fonksiyonu
+  const handlePdfExport = useCallback(() => {
+    if (aylikSonuclar.length === 0) return;
+
+    const doc = new jsPDF('l', 'mm', 'a4');
+    doc.setFont('helvetica');
+    doc.setFontSize(12);
+
+    // Başlık
+    doc.text('Bordro Detayları', 15, 15);
+    doc.setFontSize(10);
+
+    // Tablo başlıkları
+    const headers = ['Ay', 'Brüt', 'Net', 'SGK İşçi', 'GV', 'DV', 'Toplam Maliyet'];
+    let y = 25;
+    const rowHeight = 8;
+
+    // Başlıkları yazdır
+    headers.forEach((header, i) => {
+      doc.text(header, 15 + (i * 35), y);
+    });
+
+    // Verileri yazdır
+    aylikSonuclar.forEach((sonuc, index) => {
+      y = 25 + ((index + 1) * rowHeight);
+      doc.text(sonuc.ay.toString(), 15, y);
+      doc.text(formatCurrency(sonuc.brut), 50, y);
+      doc.text(formatCurrency(sonuc.net), 85, y);
+      doc.text(formatCurrency(sonuc.sgkIsci), 120, y);
+      doc.text(formatCurrency(sonuc.gelirVergisi), 155, y);
+      doc.text(formatCurrency(sonuc.damgaVergisi), 190, y);
+      doc.text(formatCurrency(sonuc.toplamMaliyet), 225, y);
+    });
+
+    // PDF'i indir
+    doc.save('bordro_detaylari.pdf');
+  }, [aylikSonuclar]);
+
   return (
     <TooltipProvider>
-    <div className={cn(
-      "rounded-xl shadow-lg p-6 md:p-8 backdrop-blur-sm border transition-colors",
-      isDarkMode 
-        ? "bg-gray-900/50 border-white/10 text-white" 
-        : "bg-white border-gray-200"
-    )}>
-      <div className="flex items-center gap-3 mb-6">
-        <Calculator className="w-6 h-6 text-blue-400" />
-        <h2 className={cn(
-          "text-xl font-semibold",
-          isDarkMode ? "text-white" : "text-gray-900"
-        )}>Detaylı Bordro Hesaplama ({hesaplamaYili})</h2>
-      </div>
+      <div className={cn(
+        "min-h-screen p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8",
+        isDarkMode ? "bg-slate-900 text-slate-100" : "bg-slate-50 text-slate-900"
+      )}>
+        <header className="mb-6 md:mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Calculator className={cn("w-7 h-7 md:w-8 md:h-8", isDarkMode ? "text-primary" : "text-primary")} />
+              <h1 className={cn(
+                "text-2xl md:text-3xl font-semibold tracking-tight",
+                isDarkMode ? "text-white" : "text-slate-900"
+              )}>
+                Detaylı Bordro Hesaplama ({hesaplamaYili})
+              </h1>
+            </div>
+            
+            {/* Dışa Aktarma Butonları */}
+            {aylikSonuclar.length > 0 && (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExcelExport}
+                  className={cn(
+                    "flex items-center gap-2",
+                    isDarkMode ? "bg-green-900/20 hover:bg-green-900/30 text-green-400 border-green-900" : "bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                  )}
+                >
+                  <FileDown className="w-4 h-4" />
+                  Excel
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePdfExport}
+                  className={cn(
+                    "flex items-center gap-2",
+                    isDarkMode ? "bg-red-900/20 hover:bg-red-900/30 text-red-400 border-red-900" : "bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
+                  )}
+                >
+                  <FileText className="w-4 h-4" />
+                  PDF
+                </Button>
+              </div>
+            )}
+          </div>
+          <p className={cn(
+            "text-sm md:text-base mt-2",
+            isDarkMode ? "text-slate-400" : "text-slate-600"
+          )}>
+            Maaş, yardım ve kesintilerinizi girerek aylık ve yıllık bordro detaylarınızı görün.
+          </p>
+        </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="space-y-4">
-          <h3 className={cn(
-            "text-lg font-medium border-b pb-2 mb-4",
-            isDarkMode 
-              ? "text-white/80 border-white/10" 
-              : "text-gray-900 border-gray-200"
-          )}>Maaş Bilgileri</h3>
-
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className={cn(isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200 shadow-md")}>
+            <CardHeader>
+              <CardTitle className={cn("text-lg font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>Maaş Bilgileri</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label className={cn(
-              "text-sm font-medium",
-              isDarkMode ? "text-white/70" : "text-gray-700"
-            )}>Maaş Tipi</Label>
+                <Label className={cn("text-sm font-medium", isDarkMode ? "text-slate-300" : "text-slate-700")}>Maaş Tipi</Label>
             <RadioGroup value={maasTipi} onValueChange={(value: string) => setMaasTipi(value as MaasTipi)} className="flex gap-4">
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="aylik" id="r_aylik" />
-                <Label htmlFor="r_aylik" className={cn(
-                  isDarkMode ? "text-white/80" : "text-gray-700"
-                )}>Aylık</Label>
+                    <RadioGroupItem value="aylik" id="r_aylik" className={cn(isDarkMode && "border-slate-600 text-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground")} />
+                    <Label htmlFor="r_aylik" className={cn("font-normal", isDarkMode ? "text-slate-300" : "text-slate-700")}>Aylık</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="gunluk" id="r_gunluk" />
-                <Label htmlFor="r_gunluk" className={cn(
-                  isDarkMode ? "text-white/80" : "text-gray-700"
-                )}>Günlük</Label>
+                    <RadioGroupItem value="gunluk" id="r_gunluk" className={cn(isDarkMode && "border-slate-600 text-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground")} />
+                    <Label htmlFor="r_gunluk" className={cn("font-normal", isDarkMode ? "text-slate-300" : "text-slate-700")}>Günlük</Label>
               </div>
             </RadioGroup>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="temelUcret" className={cn(
-              "text-sm font-medium",
-              isDarkMode ? "text-white/70" : "text-gray-700"
-            )}>
+                <Label htmlFor="temelUcret" className={cn("text-sm font-medium", isDarkMode ? "text-slate-300" : "text-slate-700")}>
               {maasTipi === 'aylik' ? 'Aylık Brüt Ücret' : 'Günlük Brüt Ücret'}
             </Label>
             <div className="relative">
@@ -407,102 +558,66 @@ const BordroHesaplama = ({ isDarkMode }: BordroHesaplamaProps) => {
                 id="temelUcret"
                 type="text"
                 inputMode="numeric"
-                pattern="[0-9]*"
                 value={temelUcret}
                 onChange={(e) => setTemelUcret(smartFormat(e.target.value))}
                 className={cn(
-                  "w-full px-4 py-2 rounded-lg transition-all",
+                      "w-full pr-8",
                   isDarkMode 
-                    ? "bg-black/20 border-white/10 text-blue-400 placeholder:text-white/30 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50" 
-                    : "bg-white border-gray-200 text-blue-600 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
+                        ? "bg-slate-700/50 border-slate-600 placeholder:text-slate-400 text-slate-50 focus:border-primary" 
+                        : "bg-white border-slate-300 placeholder:text-slate-400 focus:border-primary"
                 )}
                 placeholder="0,00"
               />
-              <span className={cn(
-                "absolute right-4 top-1/2 -translate-y-1/2",
-                isDarkMode ? "text-white/40" : "text-gray-400"
-              )}>₺</span>
+                  <span className={cn("absolute right-3 top-1/2 -translate-y-1/2 text-sm", isDarkMode ? "text-slate-400" : "text-slate-500")}>₺</span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
              <div className="space-y-2">
-               <Label htmlFor="normalGun" className={cn(
-                 "text-sm font-medium",
-                 isDarkMode ? "text-white/70" : "text-gray-700"
-               )}>Normal Gün</Label>
+                   <Label htmlFor="normalGun" className={cn("text-sm font-medium",isDarkMode ? "text-slate-300" : "text-slate-700")}>Normal Gün</Label>
                <Input
                  id="normalGun"
                  type="number"
                  value={normalGun}
                  onChange={(e) => handleNumericInputChange(setNormalGun)(e)}
-                 className={cn(
-                   "w-full px-4 py-2 rounded-lg transition-all",
-                   isDarkMode 
-                     ? "bg-black/20 border-white/10 text-white placeholder:text-white/30 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50" 
-                     : "bg-white border-gray-200 text-gray-800 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
-                 )}
+                     className={cn(isDarkMode ? "bg-slate-700/50 border-slate-600 placeholder:text-slate-400 text-slate-50 focus:border-primary" : "bg-white border-slate-300 placeholder:text-slate-400 focus:border-primary")}
                  placeholder="22"
                />
              </div>
              <div className="space-y-2">
-                <Label htmlFor="haftaTatiliGun" className={cn(
-                  "text-sm font-medium",
-                  isDarkMode ? "text-white/70" : "text-gray-700"
-                )}>Hafta Tatili</Label>
+                    <Label htmlFor="haftaTatiliGun" className={cn("text-sm font-medium",isDarkMode ? "text-slate-300" : "text-slate-700")}>Hafta Tatili</Label>
                 <Input
                   id="haftaTatiliGun"
                   type="number"
                   value={haftaTatiliGun}
                   onChange={(e) => handleNumericInputChange(setHaftaTatiliGun)(e)}
-                  className={cn(
-                    "w-full px-4 py-2 rounded-lg transition-all",
-                    isDarkMode 
-                      ? "bg-black/20 border-white/10 text-white placeholder:text-white/30 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50" 
-                      : "bg-white border-gray-200 text-gray-800 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
-                  )}
+                      className={cn(isDarkMode ? "bg-slate-700/50 border-slate-600 placeholder:text-slate-400 text-slate-50 focus:border-primary" : "bg-white border-slate-300 placeholder:text-slate-400 focus:border-primary")}
                   placeholder="8"
                 />
              </div>
           </div>
 
            <div className="space-y-2">
-            <Label className={cn(
-              "text-sm font-medium",
-              isDarkMode ? "text-white/70" : "text-gray-700"
-            )}>Çalışan Tipi</Label>
+                <Label className={cn("text-sm font-medium", isDarkMode ? "text-slate-300" : "text-slate-700")}>Çalışan Tipi</Label>
              <RadioGroup value={calisanTipi} onValueChange={(value: string) => setCalisanTipi(value as 'normal' | 'emekli')} className="flex gap-4">
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="normal" id="r_normal" />
-                <Label htmlFor="r_normal" className={cn(
-                  isDarkMode ? "text-white/80" : "text-gray-700"
-                )}>Normal</Label>
+                    <RadioGroupItem value="normal" id="r_normal" className={cn(isDarkMode && "border-slate-600 text-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground")}/>
+                    <Label htmlFor="r_normal" className={cn("font-normal",isDarkMode ? "text-slate-300" : "text-slate-700")}>Normal</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="emekli" id="r_emekli" />
-                <Label htmlFor="r_emekli" className={cn(
-                  isDarkMode ? "text-white/80" : "text-gray-700"
-                )}>Emekli</Label>
+                    <RadioGroupItem value="emekli" id="r_emekli" className={cn(isDarkMode && "border-slate-600 text-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground")}/>
+                    <Label htmlFor="r_emekli" className={cn("font-normal",isDarkMode ? "text-slate-300" : "text-slate-700")}>Emekli</Label>
               </div>
             </RadioGroup>
           </div>
 
           <div className="space-y-2">
-            <Label className={cn(
-              "text-sm font-medium",
-              isDarkMode ? "text-white/70" : "text-gray-700"
-            )}>Engellilik Durumu</Label>
+                <Label className={cn("text-sm font-medium", isDarkMode ? "text-slate-300" : "text-slate-700")}>Engellilik Durumu</Label>
             <Select value={engellilikDerecesi} onValueChange={(value: string) => setEngellilikDerecesi(value as EngellilikDerecesi)}>
-                <SelectTrigger className={cn(
-                  "w-full bg-white/5 border-white/10 text-white/80",
-                  isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
-                )}>
+                    <SelectTrigger className={cn(isDarkMode ? "bg-slate-700/50 border-slate-600 text-slate-50 focus:border-primary" : "bg-white border-slate-300 focus:border-primary")}>
                     <SelectValue placeholder="Seçiniz" />
                 </SelectTrigger>
-                <SelectContent className={cn(
-                  "bg-gray-800 border-white/20 text-white",
-                  isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
-                )}>
+                    <SelectContent className={cn(isDarkMode ? "bg-slate-800 border-slate-700 text-slate-50" : "bg-white")}>
                     <SelectItem value="yok">Engellilik Yok</SelectItem>
                     <SelectItem value="1">1. Derece</SelectItem>
                     <SelectItem value="2">2. Derece</SelectItem>
@@ -510,531 +625,372 @@ const BordroHesaplama = ({ isDarkMode }: BordroHesaplamaProps) => {
                 </SelectContent>
             </Select>
              {engellilikDerecesi !== 'yok' && (
-               <p className={cn(
-                 "text-xs",
-                 isDarkMode ? "text-white/50" : "text-gray-500"
-               )}>
+                   <p className={cn("text-xs", isDarkMode ? "text-slate-400" : "text-slate-500")}>
                  Aylık İndirim: {ISTISNALAR_LIMITLER_2024.ENGELLILIK_INDIRIMI_AYLIK[engellilikDerecesi].toLocaleString('tr-TR')} ₺
                </p>
              )}
           </div>
+            </CardContent>
+          </Card>
 
-        </div>
-
-        <div className="space-y-4">
-          <h3 className={cn(
-            "text-lg font-medium border-b pb-2 mb-4",
-            isDarkMode 
-              ? "text-white/80 border-white/10" 
-              : "text-gray-900 border-gray-200"
-          )}>Yardımlar</h3>
-
-           <div className={cn(
-             "space-y-2 p-3 bg-white/5 rounded-lg border border-white/10",
-             isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
-           )}>
-             <Label className={cn(
-               "text-sm font-medium flex items-center gap-1",
-               isDarkMode ? "text-white/70" : "text-gray-700"
-             )}>
+          <Card className={cn(isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200 shadow-md")}>
+            <CardHeader>
+              <CardTitle className={cn("text-lg font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>Yardımlar</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className={cn("space-y-3 p-3 rounded-md", isDarkMode ? "bg-slate-700/30 border border-slate-700" : "bg-slate-100 border border-slate-200")}>
+                 <Label className={cn("text-sm font-medium flex items-center gap-1.5",isDarkMode ? "text-slate-300" : "text-slate-700")}>
                Yemek Yardımı
                 <Tooltip>
-                  <TooltipTrigger><Info className="w-3 h-3 text-white/50"/></TooltipTrigger>
-                  <TooltipContent className={cn(
-                    "bg-gray-800 text-white border-white/20",
-                    isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
-                  )}>
-                    <p className="text-xs">Ayni: Kart/Çek. Nakdi: Nakit ödeme.</p>
-                    <p className="text-xs">2024 GV İstisnası (Ayni): {ISTISNALAR_LIMITLER_2024.YEMEK_ISTISNASI_GUNLUK.toLocaleString('tr-TR')} ₺/gün</p>
-                     <p className="text-xs">2024 SGK İstisnası: {ISTISNALAR_LIMITLER_2024.SGK_YEMEK_ISTISNASI_GUNLUK.toLocaleString('tr-TR')} ₺/gün</p>
+                      <TooltipTrigger><Info className="w-3.5 h-3.5 text-slate-500"/></TooltipTrigger>
+                      <TooltipContent className={cn("text-xs", isDarkMode ? "bg-slate-900 text-slate-200 border-slate-700" : "bg-white text-slate-700")}>
+                        <p>Ayni: Kart/Çek. Nakdi: Nakit ödeme.</p>
+                        <p>2024 GV İstisnası (Ayni): {ISTISNALAR_LIMITLER_2024.YEMEK_ISTISNASI_GUNLUK.toLocaleString('tr-TR')} ₺/gün</p>
+                         <p>2024 SGK İstisnası: {ISTISNALAR_LIMITLER_2024.SGK_YEMEK_ISTISNASI_GUNLUK.toLocaleString('tr-TR')} ₺/gün</p>
                   </TooltipContent>
                 </Tooltip>
              </Label>
-             <RadioGroup value={yemekYardimiTipi} onValueChange={(value: string) => setYemekYardimiTipi(value as YardimTipi)} className="flex gap-4 mb-2">
-               <div className="flex items-center space-x-2"> <RadioGroupItem value="yok" id="y_yok"/> <Label htmlFor="y_yok" className={cn(
-                 isDarkMode ? "text-white/80" : "text-gray-700"
-               )}>Yok</Label> </div>
-               <div className="flex items-center space-x-2"> <RadioGroupItem value="nakdi" id="y_nakdi"/> <Label htmlFor="y_nakdi" className={cn(
-                 isDarkMode ? "text-white/80" : "text-gray-700"
-               )}>Nakdi</Label> </div>
-               <div className="flex items-center space-x-2"> <RadioGroupItem value="ayni" id="y_ayni"/> <Label htmlFor="y_ayni" className={cn(
-                 isDarkMode ? "text-white/80" : "text-gray-700"
-               )}>Ayni</Label> </div>
+                 <RadioGroup value={yemekYardimiTipi} onValueChange={(value: string) => setYemekYardimiTipi(value as YardimTipi)} className="flex gap-4">
+                  <div className="flex items-center space-x-2"> <RadioGroupItem value="yok" id="y_yok" className={cn(isDarkMode && "border-slate-600 text-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground")}/> <Label htmlFor="y_yok" className={cn("font-normal",isDarkMode ? "text-slate-300" : "text-slate-700")}>Yok</Label> </div>
+                  <div className="flex items-center space-x-2"> <RadioGroupItem value="nakdi" id="y_nakdi" className={cn(isDarkMode && "border-slate-600 text-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground")}/> <Label htmlFor="y_nakdi" className={cn("font-normal",isDarkMode ? "text-slate-300" : "text-slate-700")}>Nakdi</Label> </div>
+                  <div className="flex items-center space-x-2"> <RadioGroupItem value="ayni" id="y_ayni" className={cn(isDarkMode && "border-slate-600 text-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground")}/> <Label htmlFor="y_ayni" className={cn("font-normal",isDarkMode ? "text-slate-300" : "text-slate-700")}>Ayni</Label> </div>
              </RadioGroup>
              {yemekYardimiTipi !== 'yok' && (
-               <div className="relative">
-                 <Label htmlFor="yemekGunluk" className={cn(
-                   "text-xs font-medium text-white/60 mb-1 block",
-                   isDarkMode ? "text-white/60" : "text-gray-600"
-                 )}>Günlük Brüt Tutar</Label>
-                 <Input id="yemekGunluk" type="text" inputMode="numeric" pattern="[0-9]*" value={yemekGunlukTutar} onChange={(e) => setYemekGunlukTutar(smartFormat(e.target.value))} className={cn(
-                   "w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/50 text-blue-300 text-sm",
-                   isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
-                 )} placeholder="0,00" />
-                 <span className={cn(
-                   "absolute right-4 bottom-2 text-white/40 text-sm",
-                   isDarkMode ? "text-white/40" : "text-gray-400"
-                 )}>₺</span>
+                   <div className="relative mt-2">
+                     <Label htmlFor="yemekGunluk" className={cn("text-xs font-medium mb-1 block", isDarkMode ? "text-slate-400" : "text-slate-600")}>Günlük Brüt Tutar</Label>
+                     <Input id="yemekGunluk" type="text" inputMode="numeric" value={yemekGunlukTutar} onChange={(e) => setYemekGunlukTutar(smartFormat(e.target.value))} 
+                            className={cn("w-full pr-8 text-sm", isDarkMode ? "bg-slate-700 border-slate-600 placeholder:text-slate-400 text-slate-50 focus:border-primary" : "bg-white border-slate-300 placeholder:text-slate-400 focus:border-primary")} placeholder="0,00" />
+                     <span className={cn("absolute right-3 top-1/2 mt-px translate-y-1 text-xs",isDarkMode ? "text-slate-400" : "text-slate-500")}>₺</span>
                </div>
              )}
            </div>
 
-            <div className={cn(
-              "space-y-2 p-3 bg-white/5 rounded-lg border border-white/10",
-              isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
-            )}>
-             <Label className={cn(
-               "text-sm font-medium flex items-center gap-1",
-               isDarkMode ? "text-white/70" : "text-gray-700"
-             )}>
+                <div className={cn("space-y-3 p-3 rounded-md", isDarkMode ? "bg-slate-700/30 border border-slate-700" : "bg-slate-100 border border-slate-200")}>
+                 <Label className={cn("text-sm font-medium flex items-center gap-1.5",isDarkMode ? "text-slate-300" : "text-slate-700")}>
                Yol Yardımı
                 <Tooltip>
-                  <TooltipTrigger><Info className="w-3 h-3 text-white/50"/></TooltipTrigger>
-                   <TooltipContent className={cn(
-                     "bg-gray-800 text-white border-white/20",
-                     isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
-                   )}>
-                    <p className="text-xs">Ayni: Servis/Kart. Nakdi: Nakit ödeme.</p>
-                    <p className="text-xs">2024 GV İstisnası (Ayni): {ISTISNALAR_LIMITLER_2024.YOL_ISTISNASI_GUNLUK.toLocaleString('tr-TR')} ₺/gün</p>
-                    <p className="text-xs">SGK İstisnası Yoktur.</p>
+                      <TooltipTrigger><Info className="w-3.5 h-3.5 text-slate-500"/></TooltipTrigger>
+                       <TooltipContent className={cn("text-xs", isDarkMode ? "bg-slate-900 text-slate-200 border-slate-700" : "bg-white text-slate-700")}>
+                        <p>Ayni: Servis/Kart. Nakdi: Nakit ödeme.</p>
+                        <p>2024 GV İstisnası (Ayni): {ISTISNALAR_LIMITLER_2024.YOL_ISTISNASI_GUNLUK.toLocaleString('tr-TR')} ₺/gün</p>
+                        <p>SGK İstisnası Yoktur.</p>
                   </TooltipContent>
                 </Tooltip>
              </Label>
-             <RadioGroup value={yolYardimiTipi} onValueChange={(value: string) => setYolYardimiTipi(value as YardimTipi)} className="flex gap-4 mb-2">
-               <div className="flex items-center space-x-2"> <RadioGroupItem value="yok" id="yo_yok"/> <Label htmlFor="yo_yok" className={cn(
-                 isDarkMode ? "text-white/80" : "text-gray-700"
-               )}>Yok</Label> </div>
-               <div className="flex items-center space-x-2"> <RadioGroupItem value="nakdi" id="yo_nakdi"/> <Label htmlFor="yo_nakdi" className={cn(
-                 isDarkMode ? "text-white/80" : "text-gray-700"
-               )}>Nakdi</Label> </div>
-               <div className="flex items-center space-x-2"> <RadioGroupItem value="ayni" id="yo_ayni"/> <Label htmlFor="yo_ayni" className={cn(
-                 isDarkMode ? "text-white/80" : "text-gray-700"
-               )}>Ayni</Label> </div>
+                 <RadioGroup value={yolYardimiTipi} onValueChange={(value: string) => setYolYardimiTipi(value as YardimTipi)} className="flex gap-4">
+                  <div className="flex items-center space-x-2"> <RadioGroupItem value="yok" id="yo_yok" className={cn(isDarkMode && "border-slate-600 text-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground")}/> <Label htmlFor="yo_yok" className={cn("font-normal",isDarkMode ? "text-slate-300" : "text-slate-700")}>Yok</Label> </div>
+                  <div className="flex items-center space-x-2"> <RadioGroupItem value="nakdi" id="yo_nakdi" className={cn(isDarkMode && "border-slate-600 text-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground")}/> <Label htmlFor="yo_nakdi" className={cn("font-normal",isDarkMode ? "text-slate-300" : "text-slate-700")}>Nakdi</Label> </div>
+                  <div className="flex items-center space-x-2"> <RadioGroupItem value="ayni" id="yo_ayni" className={cn(isDarkMode && "border-slate-600 text-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground")}/> <Label htmlFor="yo_ayni" className={cn("font-normal",isDarkMode ? "text-slate-300" : "text-slate-700")}>Ayni</Label> </div>
              </RadioGroup>
              {yolYardimiTipi !== 'yok' && (
-               <div className="relative">
-                 <Label htmlFor="yolGunluk" className={cn(
-                   "text-xs font-medium text-white/60 mb-1 block",
-                   isDarkMode ? "text-white/60" : "text-gray-600"
-                 )}>Günlük Brüt Tutar</Label>
-                 <Input id="yolGunluk" type="text" inputMode="numeric" pattern="[0-9]*" value={yolGunlukTutar} onChange={(e) => setYolGunlukTutar(smartFormat(e.target.value))} className={cn(
-                   "w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/50 text-blue-300 text-sm",
-                   isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
-                 )} placeholder="0,00" />
-                 <span className={cn(
-                   "absolute right-4 bottom-2 text-white/40 text-sm",
-                   isDarkMode ? "text-white/40" : "text-gray-400"
-                 )}>₺</span>
+                   <div className="relative mt-2">
+                     <Label htmlFor="yolGunluk" className={cn("text-xs font-medium mb-1 block",isDarkMode ? "text-slate-400" : "text-slate-600")}>Günlük Brüt Tutar</Label>
+                     <Input id="yolGunluk" type="text" inputMode="numeric" value={yolGunlukTutar} onChange={(e) => setYolGunlukTutar(smartFormat(e.target.value))} 
+                            className={cn("w-full pr-8 text-sm",isDarkMode ? "bg-slate-700 border-slate-600 placeholder:text-slate-400 text-slate-50 focus:border-primary" : "bg-white border-slate-300 placeholder:text-slate-400 focus:border-primary")} placeholder="0,00" />
+                     <span className={cn("absolute right-3 top-1/2 mt-px translate-y-1 text-xs",isDarkMode ? "text-slate-400" : "text-slate-500")}>₺</span>
                </div>
              )}
            </div>
+            </CardContent>
+          </Card>
 
-        </div>
-
-        <div className="space-y-4">
-            <h3 className={cn(
-              "text-lg font-medium border-b pb-2 mb-4",
-              isDarkMode ? "text-white/80 border-white/10" : "text-gray-900 border-gray-200"
-            )}>Ek Gelir & Kesintiler</h3>
-
-            <div className={cn(
-              "space-y-2 p-3 bg-white/5 rounded-lg border border-white/10",
-              isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
-            )}>
+          <Card className={cn(isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200 shadow-md")}>
+            <CardHeader>
+              <CardTitle className={cn("text-lg font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>Ek Gelir & Kesintiler</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className={cn("space-y-3 p-3 rounded-md", isDarkMode ? "bg-slate-700/30 border border-slate-700" : "bg-slate-100 border border-slate-200")}>
                 <div className="flex items-center justify-between">
-                    <Label htmlFor="primVarMi" className={cn(
-                      "text-sm font-medium",
-                      isDarkMode ? "text-white/70" : "text-gray-700"
-                    )}>Prim / İkramiye</Label>
-                    <Switch id="primVarMi" checked={primVarMi} onCheckedChange={setPrimVarMi} />
+                        <Label htmlFor="primVarMi" className={cn("text-sm font-medium",isDarkMode ? "text-slate-300" : "text-slate-700")}>Prim / İkramiye</Label>
+                        <Switch id="primVarMi" checked={primVarMi} onCheckedChange={setPrimVarMi} 
+                                className={cn(isDarkMode && "data-[state=checked]:bg-primary data-[state=unchecked]:bg-slate-600")}/>
                 </div>
                  {primVarMi && (
                     <div className="relative mt-2">
-                        <Label htmlFor="primTutari" className={cn(
-                          "text-xs font-medium text-white/60 mb-1 block",
-                          isDarkMode ? "text-white/60" : "text-gray-600"
-                        )}>Aylık Brüt Tutar</Label>
-                        <Input id="primTutari" type="text" inputMode="numeric" pattern="[0-9]*" value={primTutari} onChange={(e) => setPrimTutari(smartFormat(e.target.value))} className={cn(
-                          "w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/50 text-blue-300 text-sm",
-                          isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
-                        )} placeholder="0,00" />
-                        <span className={cn(
-                          "absolute right-4 bottom-2 text-white/40 text-sm",
-                          isDarkMode ? "text-white/40" : "text-gray-400"
-                        )}>₺</span>
+                            <Label htmlFor="primTutari" className={cn("text-xs font-medium mb-1 block",isDarkMode ? "text-slate-400" : "text-slate-600")}>Aylık Brüt Tutar</Label>
+                            <Input id="primTutari" type="text" inputMode="numeric" value={primTutari} onChange={(e) => setPrimTutari(smartFormat(e.target.value))} 
+                                   className={cn("w-full pr-8 text-sm",isDarkMode ? "bg-slate-700 border-slate-600 placeholder:text-slate-400 text-slate-50 focus:border-primary" : "bg-white border-slate-300 placeholder:text-slate-400 focus:border-primary")} placeholder="0,00" />
+                            <span className={cn("absolute right-3 top-1/2 mt-px translate-y-1 text-xs",isDarkMode ? "text-slate-400" : "text-slate-500")}>₺</span>
                     </div>
                 )}
             </div>
-
-             <div className={cn(
-               "space-y-2 p-3 bg-white/5 rounded-lg border border-white/10",
-               isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
-             )}>
+                <div className={cn("space-y-3 p-3 rounded-md", isDarkMode ? "bg-slate-700/30 border border-slate-700" : "bg-slate-100 border border-slate-200")}>
                 <div className="flex items-center justify-between">
-                    <Label htmlFor="besVarMi" className={cn(
-                      "text-sm font-medium flex items-center gap-1",
-                      isDarkMode ? "text-white/70" : "text-gray-700"
-                    )}>
+                        <Label htmlFor="besVarMi" className={cn("text-sm font-medium flex items-center gap-1.5",isDarkMode ? "text-slate-300" : "text-slate-700")}>
                         BES Kesintisi (%{RATES.BES_ORAN * 100})
                          <Tooltip>
-                           <TooltipTrigger><Info className="w-3 h-3 text-white/50"/></TooltipTrigger>
-                           <TooltipContent className={cn(
-                             "bg-gray-800 text-white border-white/20",
-                             isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
-                           )}>
-                             <p className="text-xs">Otomatik Katılım Sistemi kesintisi.</p>
-                             <p className="text-xs">SGK Matrahı üzerinden hesaplanır.</p>
+                               <TooltipTrigger><Info className="w-3.5 h-3.5 text-slate-500"/></TooltipTrigger>
+                               <TooltipContent className={cn("text-xs",isDarkMode ? "bg-slate-900 text-slate-200 border-slate-700" : "bg-white text-slate-700")}>
+                                 <p>Otomatik Katılım Sistemi kesintisi.</p>
+                                 <p>SGK Matrahı üzerinden hesaplanır.</p>
                            </TooltipContent>
                          </Tooltip>
                     </Label>
-                    <Switch id="besVarMi" checked={besVarMi} onCheckedChange={setBesVarMi} />
+                        <Switch id="besVarMi" checked={besVarMi} onCheckedChange={setBesVarMi} 
+                                className={cn(isDarkMode && "data-[state=checked]:bg-primary data-[state=unchecked]:bg-slate-600")}/>
                 </div>
             </div>
-
-        </div>
+            </CardContent>
+          </Card>
       </div>
 
-      {/* Hesapla Butonu - Kaldırıldı */}
-      {/* 
-      <Button
-        onClick={hesaplaBordro}
-        disabled={parseTurkishCurrency(temelUcret) <= 0 || loading}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-6 text-base"
-      >
-        {loading ? 'Hesaplanıyor...' : 'Hesapla'}
-      </Button>
-      */}
-
-      {/* Sonuçlar - Tabs Yapısı */}
       {loading && (
-        <div className={cn(
-          "mt-8 text-center",
-          isDarkMode ? "text-white/60" : "text-gray-600"
-        )}>
+          <div className={cn("mt-8 text-center", isDarkMode ? "text-slate-400" : "text-slate-600")}>
           Hesaplanıyor...
         </div>
       )}
       {aylikSonuclar.length > 0 && !loading && (
         <Tabs defaultValue="genel" className="mt-8">
-          {/* Sekme Başlıkları */}
           <TabsList className={cn(
-            "grid w-full grid-cols-3 md:grid-cols-6 gap-1 h-auto mb-4 p-1",
-            isDarkMode ? "bg-black/20" : "bg-gray-100"
-          )}>
-            <TabsTrigger value="genel" className={cn(
-              "text-xs md:text-sm px-2 py-1.5",
-              isDarkMode 
-                ? "data-[state=active]:bg-blue-600 data-[state=active]:text-white" 
-                : "data-[state=active]:bg-blue-500 data-[state=active]:text-white"
-            )}>Genel Sonuçlar</TabsTrigger>
-            <TabsTrigger value="yemekNakdi" className={cn(
-              "text-xs md:text-sm px-2 py-1.5",
-              isDarkMode 
-                ? "data-[state=active]:bg-blue-600 data-[state=active]:text-white" 
-                : "data-[state=active]:bg-blue-500 data-[state=active]:text-white"
-            )}>Yemek Nakdi</TabsTrigger>
-            <TabsTrigger value="yemekAyni" className={cn(
-              "text-xs md:text-sm px-2 py-1.5",
-              isDarkMode 
-                ? "data-[state=active]:bg-blue-600 data-[state=active]:text-white" 
-                : "data-[state=active]:bg-blue-500 data-[state=active]:text-white"
-            )}>Yemek Ayni</TabsTrigger>
-            <TabsTrigger value="prim" className={cn(
-              "text-xs md:text-sm px-2 py-1.5",
-              isDarkMode 
-                ? "data-[state=active]:bg-blue-600 data-[state=active]:text-white" 
-                : "data-[state=active]:bg-blue-500 data-[state=active]:text-white"
-            )}>Prim/İkramiye</TabsTrigger>
-            <TabsTrigger value="yolNakdi" className={cn(
-              "text-xs md:text-sm px-2 py-1.5",
-              isDarkMode 
-                ? "data-[state=active]:bg-blue-600 data-[state=active]:text-white" 
-                : "data-[state=active]:bg-blue-500 data-[state=active]:text-white"
-            )}>Yol Nakdi</TabsTrigger>
-            <TabsTrigger value="yolAyni" className={cn(
-              "text-xs md:text-sm px-2 py-1.5",
-              isDarkMode 
-                ? "data-[state=active]:bg-blue-600 data-[state=active]:text-white" 
-                : "data-[state=active]:bg-blue-500 data-[state=active]:text-white"
-            )}>Yol Ayni</TabsTrigger>
+              "grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1 h-auto mb-4 p-1 rounded-lg",
+              isDarkMode ? "bg-slate-800" : "bg-slate-100"
+            )}>
+              <TabsTrigger value="genel" className={cn("text-xs md:text-sm px-2 py-1.5 rounded-md", isDarkMode ? "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-slate-700" : "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-slate-200")}>Genel</TabsTrigger>
+              <TabsTrigger value="yemekNakdi" className={cn("text-xs md:text-sm px-2 py-1.5 rounded-md", isDarkMode ? "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-slate-700" : "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-slate-200")}>Yemek Nakdi</TabsTrigger>
+              <TabsTrigger value="yemekAyni" className={cn("text-xs md:text-sm px-2 py-1.5 rounded-md", isDarkMode ? "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-slate-700" : "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-slate-200")}>Yemek Ayni</TabsTrigger>
+              <TabsTrigger value="prim" className={cn("text-xs md:text-sm px-2 py-1.5 rounded-md", isDarkMode ? "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-slate-700" : "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-slate-200")}>Prim</TabsTrigger>
+              <TabsTrigger value="yolNakdi" className={cn("text-xs md:text-sm px-2 py-1.5 rounded-md", isDarkMode ? "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-slate-700" : "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-slate-200")}>Yol Nakdi</TabsTrigger>
+              <TabsTrigger value="yolAyni" className={cn("text-xs md:text-sm px-2 py-1.5 rounded-md", isDarkMode ? "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-slate-700" : "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-slate-200")}>Yol Ayni</TabsTrigger>
           </TabsList>
 
-          {/* Genel Sonuçlar İçeriği */}
           <TabsContent value="genel">
-             <div className="space-y-6">
-                 {/* Özet Bilgiler (Zaten vardı)*/}
+              <Card className={cn(isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200 shadow-md")}>
+                <CardHeader>
+                  <CardTitle className={cn("text-lg font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>Genel Yıllık Özet</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className={cn(
-                      "rounded-xl p-4 border",
-                      isDarkMode ? "bg-black/20 border-white/10" : "bg-white border-gray-200"
-                    )}>
-                        <p className={cn(
-                          "text-sm",
-                          isDarkMode ? "text-white/60" : "text-gray-600"
-                        )}>Aylık Toplam Brüt</p>
-                        <p className={cn(
-                          "text-lg font-semibold mt-1",
-                          isDarkMode ? "text-white" : "text-gray-900"
-                        )}>
-                        {aylikSonuclar[0]?.toplamBrut?.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) || '0,00'} ₺
+                      <div className={cn("rounded-lg p-4 border", isDarkMode ? "bg-slate-700/30 border-slate-700" : "bg-slate-100 border-slate-200")}>
+                          <p className={cn("text-sm", isDarkMode ? "text-slate-400" : "text-slate-600")}>Yıllık Toplam Brüt</p>
+                          <p className={cn("text-xl font-semibold mt-1", isDarkMode ? "text-white" : "text-slate-900")}>
+                          {aylikSonuclar.reduce((acc, curr) => acc + curr.toplamBrut, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺
                         </p>
                     </div>
-                    <div className={cn(
-                      "rounded-xl p-4 border border-green-500/20",
-                      isDarkMode ? "bg-black/20 border-white/10" : "bg-white border-gray-200"
-                    )}>
-                        <p className={cn(
-                          "text-sm",
-                          isDarkMode ? "text-white/60" : "text-gray-600"
-                        )}>Ortalama Net Ücret</p>
-                        <p className={cn(
-                          "text-lg font-semibold mt-1",
-                          isDarkMode ? "text-green-400" : "text-gray-900"
-                        )}>
-                        {(aylikSonuclar.reduce((acc, curr) => acc + curr.net, 0) / 12).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                      <div className={cn("rounded-lg p-4 border", isDarkMode ? "bg-slate-700/30 border-green-500/30" : "bg-slate-100 border-green-500/30")}>
+                          <p className={cn("text-sm", isDarkMode ? "text-slate-400" : "text-slate-600")}>Yıllık Ortalama Net</p>
+                          <p className={cn("text-xl font-semibold mt-1", isDarkMode ? "text-green-400" : "text-green-600")}>
+                          {(aylikSonuclar.reduce((acc, curr) => acc + curr.net, 0) / aylikSonuclar.length).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺
                         </p>
                     </div>
-                        <div className={cn(
-                          "rounded-xl p-4 border border-red-500/20",
-                          isDarkMode ? "bg-black/20 border-white/10" : "bg-white border-gray-200"
-                        )}>
-                        <p className={cn(
-                          "text-sm",
-                          isDarkMode ? "text-white/60" : "text-gray-600"
-                        )}>Ortalama İşveren Maliyeti</p>
-                        <p className={cn(
-                          "text-lg font-semibold mt-1",
-                          isDarkMode ? "text-red-400" : "text-gray-900"
-                        )}>
-                        {(aylikSonuclar.reduce((acc, curr) => acc + curr.toplamMaliyet, 0) / 12).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                          <div className={cn("rounded-lg p-4 border", isDarkMode ? "bg-slate-700/30 border-red-500/30" : "bg-slate-100 border-red-500/30")}>
+                          <p className={cn("text-sm", isDarkMode ? "text-slate-400" : "text-slate-600")}>Yıllık Ortalama Maliyet</p>
+                          <p className={cn("text-xl font-semibold mt-1", isDarkMode ? "text-red-400" : "text-red-600")}>
+                          {(aylikSonuclar.reduce((acc, curr) => acc + curr.toplamMaliyet, 0) / aylikSonuclar.length).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺
                         </p>
                     </div>
                 </div>
 
-                {/* 12 Aylık Detay Tablosu (Zaten vardı) */}
-                <div className={cn(
-                  "rounded-xl p-4 border overflow-x-auto",
-                  isDarkMode ? "bg-black/20 border-white/10" : "bg-white border-gray-200"
-                )}>
-                  <h3 className={cn(
-                    "text-lg font-medium mb-4",
-                    isDarkMode ? "text-white/80" : "text-gray-900"
-                  )}>Aylık Detaylar (Genel)</h3>
-                  <table className={cn(
-                    "w-full min-w-[1800px] text-sm whitespace-nowrap",
-                    isDarkMode ? "text-white/70" : "text-gray-600"
-                  )}>
-                     {/* ... thead ve tbody içeriği aynı kalıyor ... */}
-                     <thead>
-                       <tr className="border-b border-white/10">
-                         <th className="py-2 px-2 text-right sticky left-0 bg-white/5 z-10">Ay</th>
-                         <th className="py-2 px-2 text-right">Toplam Brüt</th>
-                         <th className="py-2 px-2 text-right">SGK Matrahı</th>
-                         <th className="py-2 px-2 text-right text-red-400">SGK İşçi (%{calisanTipi === 'normal' ? RATES.SSK.NORMAL*100 : RATES.SSK.EMEKLI*100})</th>
-                         <th className="py-2 px-2 text-right text-red-400">İşsizlik İşçi (%{calisanTipi === 'normal' ? RATES.ISSIZLIK.NORMAL*100 : RATES.ISSIZLIK.EMEKLI*100})</th>
-                         <th className="py-2 px-2 text-right">GV Matrahı (İnd. Sonrası)</th>
-                         <th className="py-2 px-2 text-right">Kümülatif Matrah</th>
-                          <th className="py-2 px-2 text-right text-yellow-400">Eng. İnd.</th>
-                         <th className="py-2 px-2 text-right text-green-400">GV İstisnası</th>
-                         <th className="py-2 px-2 text-right text-green-400">Hesaplanan GV</th>
-                         <th className="py-2 px-2 text-right text-green-400">Kesilen GV</th>
-                          <th className="py-2 px-2 text-right text-yellow-400">DV İstisnası</th>
-                         <th className="py-2 px-2 text-right text-yellow-400">Kesilen DV</th>
-                          <th className="py-2 px-2 text-right text-purple-400">BES Kesintisi</th>
-                         <th className="py-2 px-2 text-right font-semibold text-blue-400 sticky right-0 bg-white/5 z-10">Net Ücret</th>
-                         <th className="py-2 px-2 text-right text-orange-400">SGK İşveren</th>
-                         <th className="py-2 px-2 text-right text-orange-400">İşsizlik İşveren</th>
-                         <th className="py-2 px-2 text-right font-semibold text-red-400">Toplam Maliyet</th>
+                  <div className={cn("rounded-lg border overflow-x-auto", isDarkMode ? "border-slate-700" : "border-slate-200")}>
+                    <h3 className={cn("text-md font-medium p-4 border-b",isDarkMode ? "text-slate-200 bg-slate-700/50 border-slate-700" : "text-slate-700 bg-slate-100 border-slate-200")}>
+                        Aylık Detaylar (Genel)
+                    </h3>
+                    <table className={cn("w-full min-w-[3600px] text-sm whitespace-nowrap", isDarkMode ? "divide-slate-700" : "divide-slate-200")}>
+                      <thead className={cn(isDarkMode ? "bg-slate-700/50" : "bg-slate-100")}>
+                         <tr className={cn(isDarkMode ? "border-b-slate-700" : "border-b-slate-200")}>
+                           <th className={cn("py-2.5 px-2 text-left sticky left-0 z-10 font-medium", isDarkMode ? "bg-slate-700/50 text-slate-300" : "bg-slate-100 text-slate-600")}>Ay</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>Brüt Ücret</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>Yemek Brüt</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>Yol Brüt</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>Prim Brüt</th>
+                           <th className={cn("py-2.5 px-2 text-right font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>Toplam Brüt</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>SGK Matrahı</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>SGK İşçi ({((calisanTipi === 'normal' ? RATES.SSK.NORMAL : RATES.SSK.EMEKLI) * 100).toFixed(1)}%)</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>İşsizlik İşçi ({((calisanTipi === 'normal' ? RATES.ISSIZLIK.NORMAL : RATES.ISSIZLIK.EMEKLI) * 100).toFixed(0)}%)</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>SGK İşveren ({((calisanTipi === 'normal' ? RATES.ISVEREN_SGK_NORMAL : RATES.ISVEREN_SGK_EMEKLI) * 100).toFixed(calisanTipi === 'normal' ? 1:2)}%)</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>İşsizlik İşveren ({((calisanTipi === 'normal' ? RATES.ISVEREN_ISSIZLIK_NORMAL : RATES.ISVEREN_ISSIZLIK_EMEKLI) * 100).toFixed(0)}%)</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>GV Matrahı</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>Kümülatif GV Mat.</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>GV %15</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>GV %20</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>GV %27</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>GV %35</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>GV %40</th>
+                           <th className={cn("py-2.5 px-2 text-right font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>Hesaplanan GV</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>Engellilik İnd.</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>GV İstisnası</th>
+                           <th className={cn("py-2.5 px-2 text-right font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>Kesilecek GV</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>DV Matrahı</th>
+                           <th className={cn("py-2.5 px-2 text-right font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>Hesaplanan DV</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>DV İstisnası</th>
+                           <th className={cn("py-2.5 px-2 text-right font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>Kesilecek DV</th>
+                           <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>BES Kesintisi</th>
+                           <th className={cn("py-2.5 px-2 text-right font-semibold sticky right-0 z-10", isDarkMode ? "bg-slate-700/50 text-primary" : "bg-slate-100 text-primary")}>Net Ücret</th>
+                           <th className={cn("py-2.5 px-2 text-right font-semibold", isDarkMode ? "text-red-400" : "text-red-600")}>İşveren Maliyeti</th>
                        </tr>
                     </thead>
-                     <tbody>
-                      {aylikSonuclar.map((sonuc) => (
-                         <tr key={sonuc.ay} className="border-b border-white/5 hover:bg-white/10 transition-colors">
-                           <td className="py-2 px-2 text-right sticky left-0 bg-inherit z-10">{sonuc.ay}</td>
-                           <td className="py-2 px-2 text-right">{sonuc.toplamBrut.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                           <td className="py-2 px-2 text-right">{sonuc.sgkMatrahi.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                           <td className="py-2 px-2 text-right text-red-400">{sonuc.sgkIsci.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                           <td className="py-2 px-2 text-right text-red-400">{sonuc.issizlikIsci.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                           <td className="py-2 px-2 text-right">{sonuc.gvMatrahi.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                           <td className="py-2 px-2 text-right">{sonuc.kumulatifVergiMatrahi.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                            <td className="py-2 px-2 text-right text-yellow-400">{sonuc.engellilikIndirimi.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                           <td className="py-2 px-2 text-right text-green-400">{sonuc.gelirVergisiIstisnasi.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                            <td className="py-2 px-2 text-right text-green-500/70">{(sonuc.gelirVergisi + sonuc.gelirVergisiIstisnasi).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                           <td className="py-2 px-2 text-right text-green-400 font-medium">{sonuc.gelirVergisi.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                           <td className="py-2 px-2 text-right text-yellow-400">{sonuc.damgaVergisiIstisnasi.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                           <td className="py-2 px-2 text-right text-yellow-400 font-medium">{sonuc.damgaVergisi.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                           <td className="py-2 px-2 text-right text-purple-400">{sonuc.besKesintisi.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                           <td className="py-2 px-2 text-right font-semibold text-blue-400 sticky right-0 bg-inherit z-10">{sonuc.net.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                           <td className="py-2 px-2 text-right text-orange-400">{sonuc.sskIsveren.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                           <td className="py-2 px-2 text-right text-orange-400">{sonuc.issizlikIsveren.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                           <td className="py-2 px-2 text-right font-semibold text-red-400">{sonuc.toplamMaliyet.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
+                       <tbody className={cn("divide-y", isDarkMode ? "divide-slate-700 bg-slate-800" : "divide-slate-200 bg-white")}>
+                        {aylikSonuclar.map((sonuc, index) => (
+                           <tr key={sonuc.ay} className={cn("hover:bg-opacity-50", isDarkMode ? "hover:bg-slate-700" : "hover:bg-slate-50", index % 2 === 1 && (isDarkMode ? "bg-slate-800/50" : "bg-slate-50/50"))}>
+                             <td className={cn("py-2 px-2 text-left sticky left-0 z-10", isDarkMode ? `${index % 2 === 1 ? "bg-slate-800/50" : "bg-slate-800"} group-hover:bg-slate-700 text-slate-300` : `${index % 2 === 1 ? "bg-slate-50/50" : "bg-white"} group-hover:bg-slate-50 text-slate-500`)}>{sonuc.ay}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.brut)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.yemekBrut)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.yolBrut)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.primBrut)}</td>
+                             <td className={cn("py-2 px-2 text-right font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>{formatCurrency(sonuc.toplamBrut)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.sgkMatrahi)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.sgkIsci)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.issizlikIsci)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.sskIsveren)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.issizlikIsveren)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.gvMatrahi)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.kumulatifVergiMatrahi)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.gv1)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.gv2)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.gv3)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.gv4)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.gv5)}</td>
+                             <td className={cn("py-2 px-2 text-right font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>{formatCurrency(sonuc.hesaplananGelirVergisi)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.engellilikIndirimi)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.gelirVergisiIstisnasi)}</td>
+                             <td className={cn("py-2 px-2 text-right font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>{formatCurrency(sonuc.gelirVergisi)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.damgaVergisiMatrahi)}</td>
+                             <td className={cn("py-2 px-2 text-right font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>{formatCurrency(sonuc.hesaplananDamgaVergisi)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.damgaVergisiIstisnasi)}</td>
+                             <td className={cn("py-2 px-2 text-right font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>{formatCurrency(sonuc.damgaVergisi)}</td>
+                             <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.besKesintisi)}</td>
+                             <td className={cn("py-2 px-2 text-right font-semibold sticky right-0 z-10", isDarkMode ? `${index % 2 === 1 ? "bg-slate-800/50" : "bg-slate-800"} group-hover:bg-slate-700 text-primary` : `${index % 2 === 1 ? "bg-slate-50/50" : "bg-white"} group-hover:bg-slate-50 text-primary`)}>{formatCurrency(sonuc.net)}</td>
+                             <td className={cn("py-2 px-2 text-right font-semibold", isDarkMode ? "text-red-400" : "text-red-600")}>{formatCurrency(sonuc.toplamMaliyet)}</td>
                         </tr>
                       ))}
-                       {/* Toplam Satırı (Genel) */}
-                       <tr className="font-semibold border-t-2 border-white/20">
-                        <td className="py-2 px-2 text-right sticky left-0 bg-inherit z-10">Toplam</td>
-                         <td className="py-2 px-2 text-right">{aylikSonuclar.reduce((acc, curr) => acc + curr.toplamBrut, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                         <td className="py-2 px-2 text-right">{aylikSonuclar.reduce((acc, curr) => acc + curr.sgkMatrahi, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                         <td className="py-2 px-2 text-right text-red-400">{aylikSonuclar.reduce((acc, curr) => acc + curr.sgkIsci, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                         <td className="py-2 px-2 text-right text-red-400">{aylikSonuclar.reduce((acc, curr) => acc + curr.issizlikIsci, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                         <td className="py-2 px-2 text-right">{aylikSonuclar.reduce((acc, curr) => acc + curr.gvMatrahi, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                         <td className="py-2 px-2 text-right">-</td> {/* Kümülatif Toplam anlamsız */}
-                         <td className="py-2 px-2 text-right text-yellow-400">{aylikSonuclar.reduce((acc, curr) => acc + curr.engellilikIndirimi, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                         <td className="py-2 px-2 text-right text-green-400">{aylikSonuclar.reduce((acc, curr) => acc + curr.gelirVergisiIstisnasi, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                          <td className="py-2 px-2 text-right text-green-500/70">{aylikSonuclar.reduce((acc, curr) => acc + curr.gelirVergisi + curr.gelirVergisiIstisnasi, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                         <td className="py-2 px-2 text-right text-green-400">{aylikSonuclar.reduce((acc, curr) => acc + curr.gelirVergisi, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                         <td className="py-2 px-2 text-right text-yellow-400">{aylikSonuclar.reduce((acc, curr) => acc + curr.damgaVergisiIstisnasi, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                         <td className="py-2 px-2 text-right text-yellow-400">{aylikSonuclar.reduce((acc, curr) => acc + curr.damgaVergisi, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                         <td className="py-2 px-2 text-right text-purple-400">{aylikSonuclar.reduce((acc, curr) => acc + curr.besKesintisi, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                         <td className="py-2 px-2 text-right font-semibold text-blue-400 sticky right-0 bg-inherit z-10">{aylikSonuclar.reduce((acc, curr) => acc + curr.net, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                         <td className="py-2 px-2 text-right text-orange-400">{aylikSonuclar.reduce((acc, curr) => acc + curr.sskIsveren, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                         <td className="py-2 px-2 text-right text-orange-400">{aylikSonuclar.reduce((acc, curr) => acc + curr.issizlikIsveren, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                         <td className="py-2 px-2 text-right font-semibold text-red-400">{aylikSonuclar.reduce((acc, curr) => acc + curr.toplamMaliyet, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
+                         <tr className={cn("font-semibold border-t-2", isDarkMode ? "bg-slate-700/50 border-slate-600 text-slate-100" : "bg-slate-100 border-slate-300 text-slate-800")}>
+                          <td className={cn("py-2.5 px-2 text-left sticky left-0 z-10", isDarkMode ? "bg-slate-700/50" : "bg-slate-100")}>Toplam</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.brut, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.yemekBrut, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.yolBrut, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.primBrut, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.toplamBrut, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{/* SGK Matrahı toplamı anlamsız */}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.sgkIsci, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.issizlikIsci, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.sskIsveren, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.issizlikIsveren, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{/* GV Matrahı toplamı anlamsız */}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{/* Kümülatif GV Matrahı toplamı anlamsız */}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.gv1, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.gv2, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.gv3, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.gv4, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.gv5, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.hesaplananGelirVergisi, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.engellilikIndirimi, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.gelirVergisiIstisnasi, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.gelirVergisi, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{/* DV Matrahı toplamı anlamsız */}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.hesaplananDamgaVergisi, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.damgaVergisiIstisnasi, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.damgaVergisi, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.besKesintisi, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right sticky right-0 z-10", isDarkMode ? "bg-slate-700/50 text-primary" : "bg-slate-100 text-primary")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.net, 0))}</td>
+                           <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.toplamMaliyet, 0))}</td>
                        </tr>
                     </tbody>
                   </table>
                 </div>
-            </div>
+                </CardContent>
+              </Card>
           </TabsContent>
 
-          {/* Diğer Sekme İçerikleri (Placeholder) */}
-          <TabsContent value="yemekNakdi">
-             <div className={cn(
-               "bg-white/5 rounded-xl p-4 border border-white/10",
-               isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
-             )}>
-               <h3 className={cn(
-                 "text-lg font-medium mb-4",
-                 isDarkMode ? "text-white/80" : "text-gray-900"
-               )}>Aylık Detaylar (Yemek Nakdi Etkisi)</h3>
-               {yemekYardimiTipi === 'nakdi' && parseTurkishCurrency(yemekGunlukTutar) > 0 ? (
-                 <p className={cn(
-                   "text-white/70",
-                   isDarkMode ? "text-white/70" : "text-gray-700"
-                 )}>Nakdi yemek yardımının aylık brüt, kesinti ve net etki tablosu burada gösterilecek.</p>
-                 // TODO: Buraya Yemek Nakdi mini tablosu gelecek
-               ) : (
-                 <p className={cn(
-                   "text-white/50",
-                   isDarkMode ? "text-white/50" : "text-gray-500"
-                 )}>Nakdi yemek yardımı seçili değil veya tutar girilmemiş.</p>
-               )}
+            {[ "yemekNakdi", "yemekAyni", "prim", "yolNakdi", "yolAyni"].map(tabKey => {
+              const isYemekNakdiTab = tabKey === "yemekNakdi";
+              const isPrimTab = tabKey === "prim";
+              // Diğer tablar için benzer koşullar eklenebilir
+
+              const shouldDisplayTable = 
+                (isYemekNakdiTab && yemekYardimiTipi === 'nakdi' && parseTurkishCurrency(yemekGunlukTutar) > 0) ||
+                (isPrimTab && primVarMi && parseTurkishCurrency(primTutari) > 0) // Prim tablosu için örnek koşul
+                // Diğer tablar için koşullar buraya eklenecek
+                ;
+
+              let cardTitle = `${tabKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} Etkisi`;
+              if (isYemekNakdiTab) cardTitle = "Aylık Detaylar (Yemek Nakdi)";
+              // Diğer tab başlıkları da özelleştirilebilir
+
+              return (
+                <TabsContent key={tabKey} value={tabKey}>
+                     <Card className={cn(isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200 shadow-md")}>
+                        <CardHeader>
+                            <CardTitle className={cn("text-lg font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>
+                                {cardTitle}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {shouldDisplayTable && isYemekNakdiTab ? (
+                                <div className={cn("rounded-lg border overflow-x-auto", isDarkMode ? "border-slate-700" : "border-slate-200")}>
+                                <table className={cn("w-full min-w-[1800px] text-sm whitespace-nowrap", isDarkMode ? "divide-slate-700" : "divide-slate-200")}>
+                                  <thead className={cn(isDarkMode ? "bg-slate-700/50" : "bg-slate-100")}>
+                                     <tr className={cn(isDarkMode ? "border-b-slate-700" : "border-b-slate-200")}>
+                                       <th className={cn("py-2.5 px-2 text-left sticky left-0 z-10 font-medium", isDarkMode ? "bg-slate-700/50 text-slate-300" : "bg-slate-100 text-slate-600")}>Ay</th>
+                                       <th className={cn("py-2.5 px-2 text-right font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>Brüt Maaş (Nakdi Yemek Dahil)</th>
+                                       <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>SGK Matrahı</th>
+                                       <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>SSK İşçi</th>
+                                       <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>İşsizlik İşçi</th>
+                                       <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>GV Matrahı</th>
+                                       <th className={cn("py-2.5 px-2 text-right font-medium", isDarkMode ? "text-slate-300" : "text-slate-600")}>Kümülatif GV Mat.</th>
+                                       <th className={cn("py-2.5 px-2 text-right font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>Gelir Vergisi</th>
+                                       <th className={cn("py-2.5 px-2 text-right font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>Damga Vergisi</th>
+                                       <th className={cn("py-2.5 px-2 text-right font-semibold sticky right-0 z-10", isDarkMode ? "bg-slate-700/50 text-primary" : "bg-slate-100 text-primary")}>Net Ücret</th>
+                                     </tr>
+                                  </thead>
+                                   <tbody className={cn("divide-y", isDarkMode ? "divide-slate-700 bg-slate-800" : "divide-slate-200 bg-white")}>
+                                    {aylikSonuclar.map((sonuc, index) => {
+                                      // Bu tab için "Brüt Maaş", temel brüt + nakdi yemek brütüdür. Diğer yardımlar bu özel görünümde hariç tutulur.
+                                      const brutMaasNakdiYemekDahil = sonuc.brut + (yemekYardimiTipi === 'nakdi' ? sonuc.yemekBrut : 0);
+                                      return (
+                                       <tr key={sonuc.ay} className={cn("hover:bg-opacity-50", isDarkMode ? "hover:bg-slate-700" : "hover:bg-slate-50", index % 2 === 1 && (isDarkMode ? "bg-slate-800/50" : "bg-slate-50/50"))}>
+                                         <td className={cn("py-2 px-2 text-left sticky left-0 z-10", isDarkMode ? `${index % 2 === 1 ? "bg-slate-800/50" : "bg-slate-800"} group-hover:bg-slate-700 text-slate-300` : `${index % 2 === 1 ? "bg-slate-50/50" : "bg-white"} group-hover:bg-slate-50 text-slate-500`)}>{sonuc.ay}</td>
+                                         <td className={cn("py-2 px-2 text-right font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>{formatCurrency(brutMaasNakdiYemekDahil)}</td>
+                                         <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.sgkMatrahi)}</td>
+                                         <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.sgkIsci)}</td>
+                                         <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.issizlikIsci)}</td>
+                                         <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.gvMatrahi)}</td>
+                                         <td className={cn("py-2 px-2 text-right", isDarkMode ? "text-slate-200" : "text-slate-700")}>{formatCurrency(sonuc.kumulatifVergiMatrahi)}</td>
+                                         <td className={cn("py-2 px-2 text-right font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>{formatCurrency(sonuc.gelirVergisi)}</td>
+                                         <td className={cn("py-2 px-2 text-right font-semibold", isDarkMode ? "text-slate-100" : "text-slate-800")}>{formatCurrency(sonuc.damgaVergisi)}</td>
+                                         <td className={cn("py-2 px-2 text-right font-semibold sticky right-0 z-10", isDarkMode ? `${index % 2 === 1 ? "bg-slate-800/50" : "bg-slate-800"} group-hover:bg-slate-700 text-primary` : `${index % 2 === 1 ? "bg-slate-50/50" : "bg-white"} group-hover:bg-slate-50 text-primary`)}>{formatCurrency(sonuc.net)}</td>
+                                      </tr>
+                                    );
+                                    })}
+                                     <tr className={cn("font-semibold border-t-2", isDarkMode ? "bg-slate-700/50 border-slate-600 text-slate-100" : "bg-slate-100 border-slate-300 text-slate-800")}>
+                                      <td className={cn("py-2.5 px-2 text-left sticky left-0 z-10", isDarkMode ? "bg-slate-700/50" : "bg-slate-100")}>Toplam</td>
+                                       <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + (curr.brut + (yemekYardimiTipi === 'nakdi' ? curr.yemekBrut : 0)), 0))}</td>
+                                       <td className={cn("py-2.5 px-2 text-right")}>{/* SGK Matrahı toplamı anlamsız */}</td>
+                                       <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.sgkIsci, 0))}</td>
+                                       <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.issizlikIsci, 0))}</td>
+                                       <td className={cn("py-2.5 px-2 text-right")}>{/* GV Matrahı toplamı anlamsız */}</td>
+                                       <td className={cn("py-2.5 px-2 text-right")}>{/* Kümülatif GV Matrahı toplamı anlamsız */}</td>
+                                       <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.gelirVergisi, 0))}</td>
+                                       <td className={cn("py-2.5 px-2 text-right")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.damgaVergisi, 0))}</td>
+                                       <td className={cn("py-2.5 px-2 text-right sticky right-0 z-10", isDarkMode ? "bg-slate-700/50 text-primary" : "bg-slate-100 text-primary")}>{formatCurrency(aylikSonuclar.reduce((acc, curr) => acc + curr.net, 0))}</td>
+                                     </tr>
+                                  </tbody>
+                                </table>
              </div>
+                            ) : (
+                                <p className={cn(isDarkMode ? "text-slate-400" : "text-slate-600")}>
+                                    {(tabKey.includes("yemek") && !((yemekYardimiTipi === 'nakdi' && tabKey.includes("Nakdi")) || (yemekYardimiTipi === 'ayni' && tabKey.includes("Ayni")) && parseTurkishCurrency(yemekGunlukTutar) > 0)) ||
+                                     (tabKey.includes("prim") && !(primVarMi && parseTurkishCurrency(primTutari) > 0)) ||
+                                     (tabKey.includes("yol") && !((yolYardimiTipi === 'nakdi' && tabKey.includes("Nakdi")) || (yolYardimiTipi === 'ayni' && tabKey.includes("Ayni")) && parseTurkishCurrency(yolGunlukTutar) > 0))
+                                     ? "İlgili yardım/prim seçili değil veya tutar girilmemiş."
+                                     : `${tabKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} için detaylı hesaplama ve etki bilgileri bu alanda gösterilecektir.`
+                                    }
+                                </p>
+                            )}
+                        </CardContent>
+                    </Card>
            </TabsContent>
-
-          <TabsContent value="yemekAyni">
-             <div className={cn(
-               "bg-white/5 rounded-xl p-4 border border-white/10",
-               isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
-             )}>
-               <h3 className={cn(
-                 "text-lg font-medium mb-4",
-                 isDarkMode ? "text-white/80" : "text-gray-900"
-               )}>Aylık Detaylar (Yemek Ayni Etkisi)</h3>
-                {yemekYardimiTipi === 'ayni' && parseTurkishCurrency(yemekGunlukTutar) > 0 ? (
-                  <p className={cn(
-                    "text-white/70",
-                    isDarkMode ? "text-white/70" : "text-gray-700"
-                  )}>Ayni yemek yardımının (istisnalar sonrası) aylık brüt, kesinti ve net etki tablosu burada gösterilecek.</p>
-                  // TODO: Buraya Yemek Ayni mini tablosu gelecek
-                ) : (
-                  <p className={cn(
-                    "text-white/50",
-                    isDarkMode ? "text-white/50" : "text-gray-500"
-                  )}>Ayni yemek yardımı seçili değil veya tutar girilmemiş.</p>
-                )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="prim">
-            <div className={cn(
-              "bg-white/5 rounded-xl p-4 border border-white/10",
-              isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
-            )}>
-              <h3 className={cn(
-                "text-lg font-medium mb-4",
-                isDarkMode ? "text-white/80" : "text-gray-900"
-              )}>Aylık Detaylar (Prim/İkramiye Etkisi)</h3>
-              {primVarMi && parseTurkishCurrency(primTutari) > 0 ? (
-                <p className={cn(
-                  "text-white/70",
-                  isDarkMode ? "text-white/70" : "text-gray-700"
-                )}>Prim/İkramiyenin aylık brüt, kesinti ve net etki tablosu burada gösterilecek.</p>
-                 // TODO: Buraya Prim mini tablosu gelecek
-               ) : (
-                 <p className={cn(
-                   "text-white/50",
-                   isDarkMode ? "text-white/50" : "text-gray-500"
-                 )}>Prim/İkramiye seçili değil veya tutar girilmemiş.</p>
-               )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="yolNakdi">
-             <div className={cn(
-               "bg-white/5 rounded-xl p-4 border border-white/10",
-               isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
-             )}>
-               <h3 className={cn(
-                 "text-lg font-medium mb-4",
-                 isDarkMode ? "text-white/80" : "text-gray-900"
-               )}>Aylık Detaylar (Yol Nakdi Etkisi)</h3>
-               {yolYardimiTipi === 'nakdi' && parseTurkishCurrency(yolGunlukTutar) > 0 ? (
-                 <p className={cn(
-                   "text-white/70",
-                   isDarkMode ? "text-white/70" : "text-gray-700"
-                 )}>Nakdi yol yardımının aylık brüt, kesinti ve net etki tablosu burada gösterilecek.</p>
-                 // TODO: Buraya Yol Nakdi mini tablosu gelecek
-               ) : (
-                 <p className={cn(
-                   "text-white/50",
-                   isDarkMode ? "text-white/50" : "text-gray-500"
-                 )}>Nakdi yol yardımı seçili değil veya tutar girilmemiş.</p>
-               )}
-             </div>
-           </TabsContent>
-
-           <TabsContent value="yolAyni">
-             <div className={cn(
-               "bg-white/5 rounded-xl p-4 border border-white/10",
-               isDarkMode ? "bg-black/20 border-white/10" : "bg-gray-200 border-gray-200"
-             )}>
-               <h3 className={cn(
-                 "text-lg font-medium mb-4",
-                 isDarkMode ? "text-white/80" : "text-gray-900"
-               )}>Aylık Detaylar (Yol Ayni Etkisi)</h3>
-                {yolYardimiTipi === 'ayni' && parseTurkishCurrency(yolGunlukTutar) > 0 ? (
-                  <p className={cn(
-                    "text-white/70",
-                    isDarkMode ? "text-white/70" : "text-gray-700"
-                  )}>Ayni yol yardımının (istisnalar sonrası) aylık brüt, kesinti ve net etki tablosu burada gösterilecek.</p>
-                  // TODO: Buraya Yol Ayni mini tablosu gelecek
-                ) : (
-                  <p className={cn(
-                    "text-white/50",
-                    isDarkMode ? "text-white/50" : "text-gray-500"
-                  )}>Ayni yol yardımı seçili değil veya tutar girilmemiş.</p>
-                )}
-            </div>
-           </TabsContent>
+              )
+            })}
 
         </Tabs>
       )}
 
-      {/* Henüz hesaplama yapılmadıysa mesajlar (Tabs dışı) */}
       {aylikSonuclar.length === 0 && !loading && parseTurkishCurrency(temelUcret) > 0 && (
-          <div className={cn(
-            "mt-8 text-center",
-            isDarkMode ? "text-white/60" : "text-gray-600"
-          )}>
+          <div className={cn("mt-8 text-center", isDarkMode ? "text-slate-400" : "text-slate-600")}>
               Hesaplama yapılamadı. Lütfen girdileri kontrol edin.
           </div>
        )}
         {parseTurkishCurrency(temelUcret) <= 0 && !loading && (
-             <div className={cn(
-               "mt-8 text-center",
-               isDarkMode ? "text-white/60" : "text-gray-600"
-             )}>
+             <div className={cn("mt-8 text-center", isDarkMode ? "text-slate-400" : "text-slate-600")}>
                 Lütfen geçerli bir brüt ücret girerek hesaplamayı başlatın.
             </div>
         )}
