@@ -27,22 +27,52 @@ const BlogSection = () => {
   const fetchLatestPosts = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/posts`);
-      
+      // API URL'sini loglamayı şimdilik kaldırabilir veya bırakabiliriz, önemli olan doğru URL'i kullanmak.
+      // console.log('Kullanılan API URL:', import.meta.env.VITE_API_URL); 
+
+      // BlogPage.tsx'deki çalışan URL ve ayarları kullanalım
+      const response = await fetch('https://blog-7fl3duvywa-uc.a.run.app/posts', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        mode: 'cors'
+      });
+
       if (!response.ok) {
-        throw new Error('Blog yazıları alınamadı');
+        const errorText = await response.text();
+        console.error('API Hatası:', response.status, response.statusText, errorText);
+        // Kullanıcıya daha anlamlı bir hata mesajı göstermek için toast'ı burada da kullanabiliriz.
+        toast.error(`Blog yazıları alınamadı: ${response.status}`);
+        throw new Error(`Blog yazıları alınamadı: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
+      // response.json() kullanmaya geri dönelim, çünkü Accept header ile JSON beklediğimizi belirttik.
+      // HTML gelirse yine hata verecektir ama bu durumda sorun API'nin Accept header'a uymaması olur.
+      const data = await response.json(); 
+
       // Son 3 postu al ve tarihe göre sırala
-      const latestPosts = data
-        .sort((a: BlogPost, b: BlogPost) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        .slice(0, 3);
-      
-      setPosts(latestPosts);
+      // Gelen data'nın bir dizi olduğundan emin olalım (BlogPage.tsx'deki gibi)
+      if (Array.isArray(data)) {
+        const latestPosts = data
+          .sort((a: BlogPost, b: BlogPost) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          .slice(0, 3);
+        setPosts(latestPosts);
+      } else {
+        console.error('Geçersiz veri formatı:', data);
+        toast.error('Blog yazıları yüklenirken geçersiz veri formatı alındı.');
+        throw new Error('Geçersiz veri formatı');
+      }
+
     } catch (error) {
       console.error('Blog yazıları alınırken hata:', error);
-      toast.error('Blog yazıları yüklenirken bir hata oluştu');
+      // Hatanın zaten toast ile gösterilip gösterilmediğini kontrol etmeye gerek yok,
+      // yukarıdaki toast.error daha spesifik olacak.
+      // Sadece genel bir fallback olarak bırakılabilir veya tamamen kaldırılabilir.
+      if (!(error instanceof Error && error.message.startsWith('Blog yazıları alınamadı')) && !(error instanceof Error && error.message === 'Geçersiz veri formatı')) {
+         toast.error('Blog yazıları yüklenirken beklenmedik bir hata oluştu.');
+      }
     } finally {
       setLoading(false);
     }

@@ -44,23 +44,48 @@ const BlogDetail = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/posts/by-slug/${slug}`, {
+      const apiUrl = import.meta.env.VITE_API_URL;
+
+      if (!apiUrl) {
+        console.error('API URL (BlogDetail) bulunamadı! Lütfen .env dosyasını kontrol edin.');
+        toast.error('API konfigürasyon hatası (BlogDetail).');
+        throw new Error('API URL not configured for BlogDetail');
+      }
+
+      const response = await fetch(`${apiUrl}/posts/by-slug/${slug}`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        mode: 'cors'
       });
 
       if (!response.ok) {
-        throw new Error(`Blog yazısı alınamadı. Hata kodu: ${response.status}`);
+        const errorText = await response.text();
+        console.error('API Hatası (BlogDetail):', response.status, response.statusText, errorText);
+        toast.error(`Blog yazısı alınamadı: ${response.status}`);
+        throw new Error(`Blog yazısı alınamadı (BlogDetail): ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      setPost(data.post);
+      
+      if (data && data.post) {
+        setPost(data.post);
+      } else {
+        console.error('Geçersiz blog yazısı verisi (BlogDetail):', data);
+        toast.error('Blog yazısı formatı geçersiz.');
+        throw new Error('Invalid post data structure from API (BlogDetail)');
+      }
+
     } catch (error) {
-      console.error('Blog yazısı alınırken hata oluştu:', error);
-      setError(error instanceof Error ? error.message : 'Blog yazısı yüklenirken bir hata oluştu');
-      toast.error(error instanceof Error ? error.message : 'Blog yazısı yüklenirken bir hata oluştu');
+      console.error('Blog yazısı alınırken hata oluştu (BlogDetail):', error);
+      if (error instanceof Error && 
+          !error.message.startsWith('API URL not configured for BlogDetail') &&
+          !error.message.startsWith('Blog yazısı alınamadı (BlogDetail):') &&
+          !error.message.startsWith('Invalid post data structure from API (BlogDetail)')) {
+        toast.error('Blog yazısı yüklenirken bir hata oluştu.');
+      }
     } finally {
       setLoading(false);
     }
