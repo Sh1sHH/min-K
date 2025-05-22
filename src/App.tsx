@@ -23,10 +23,10 @@ import Profile from '@/components/Profile';
 import BordroHesaplamaPage from './pages/BordroHesaplamaPage';
 import DanismanlikPage from './pages/DanismanlikPage';
 import HakkimizdaPage from './pages/HakkimizdaPage';
-
 import PerformansYonetimiPage from './pages/PerformansYonetimiPage';
 import IseAlimPage from './pages/IseAlimPage';
 import MevzuatsalIslemlerPage from './pages/MevzuatsalIslemlerPage';
+import SssPage from './pages/SssPage';
 
 function App() {
   const location = useLocation();
@@ -143,6 +143,7 @@ function App() {
             <Route path="/performans-yonetimi" element={<PerformansYonetimiPage />} />
             <Route path="/ise-alim" element={<IseAlimPage />} />
             <Route path="/mevzuatsal-islemler" element={<MevzuatsalIslemlerPage />} />
+            <Route path="/sss" element={<SssPage />} />
             <Route path="/" element={
               <>
                 <Hero />

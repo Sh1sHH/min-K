@@ -4,29 +4,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-
-const faqs = [
-  {
-    question: "İK süreçlerini dijitalleştirmek işimizi nasıl kolaylaştırır?",
-    answer: "İK süreçlerinin dijitalleştirilmesi, manuel işlemlerde harcanan zamanı azaltır, hata oranlarını düşürür ve verimliliği artırır."
-  },
-  {
-    question: "Hangi ödeme planları mevcut?",
-    answer: "Küçük işletmelerden kurumsal firmalara kadar farklı ihtiyaçlara uygun esnek ödeme planlarımız bulunmaktadır."
-  },
-  {
-    question: "Sistemin kullanımı için eğitim desteği sağlıyor musunuz?",
-    answer: "Evet, tüm müşterilerimize ücretsiz eğitim ve teknik destek hizmeti sunuyoruz."
-  },
-  {
-    question: "Verilerimizin güvenliği nasıl sağlanıyor?",
-    answer: "En son güvenlik protokolleri ve şifreleme teknolojileri ile verileriniz güvende tutulur."
-  },
-  {
-    question: "Mevcut sistemimizle entegrasyon mümkün mü?",
-    answer: "Yaygın kullanılan İK ve muhasebe yazılımlarıyla entegrasyon sağlayabiliyoruz."
-  }
-];
+import { Link } from 'react-router-dom';
+import { faqs } from '@/lib/faqData';
 
 const FAQ = () => {
   const containerVariants = {
@@ -114,18 +93,22 @@ const FAQ = () => {
               variants={containerVariants}
               className="space-y-4"
             >
-              {faqs.map((faq, index) => (
+              {faqs.map((faq) => (
                 <motion.div
-                  key={index}
+                  key={faq.id} 
                   variants={itemVariants}
-                  className="bg-white rounded-2xl p-6 shadow-sm border border-[#1F2A44]/10 hover:border-[#4DA3FF]/30 hover:shadow-md transition-all duration-300 group cursor-pointer"
+                  className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 hover:border-[#4DA3FF]/50 hover:shadow-lg transition-all duration-300 group"
                 >
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-[#1F2A44] group-hover:text-[#4DA3FF] transition-colors">
+                  <Link 
+                    to={`/sss#${faq.id}`}
+                    className="flex items-center justify-between p-4 sm:p-5 lg:p-6 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4DA3FF] rounded-xl lg:rounded-2xl"
+                    aria-label={`Soru: ${faq.question}, tüm sıkça sorulan soruları görüntüle`}
+                  >
+                    <h3 className="text-base sm:text-lg font-semibold text-[#1F2A44] group-hover:text-[#4DA3FF] transition-colors duration-200">
                       {faq.question}
                     </h3>
-                    <ChevronRight className="w-5 h-5 text-[#4DA3FF] transform transition-transform group-hover:translate-x-1" />
-                  </div>
+                    <ChevronRight className="w-5 h-5 text-[#4DA3FF] flex-shrink-0 transform transition-transform group-hover:translate-x-1 duration-200" />
+                  </Link>
                 </motion.div>
               ))}
             </motion.div>
@@ -134,12 +117,15 @@ const FAQ = () => {
               variants={itemVariants}
               className="pt-8"
             >
-              <Button 
-                className="bg-[#4DA3FF] hover:bg-[#4DA3FF]/90 text-white px-8 py-6 rounded-full text-lg font-medium group"
-              >
-                Tüm Soruları Görüntüle
-                <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
-              </Button>
+              <Link to="/sss" className="inline-block">
+                <Button 
+                  className="bg-[#4DA3FF] hover:bg-[#4DA3FF]/90 text-white px-8 py-6 rounded-full text-lg font-medium group w-full sm:w-auto flex items-center justify-center"
+                  aria-label="Tüm sıkça sorulan soruları görüntüle"
+                >
+                  Tüm Soruları Görüntüle
+                  <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
             </motion.div>
           </motion.div>
         </motion.div>
