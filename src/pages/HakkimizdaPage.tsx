@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Users, Rocket, Heart, Clock } from 'lucide-react';
+import { Check, Users, Clock } from 'lucide-react';
 import Footer from '@/components/Footer';
 
 const HakkimizdaPage = () => {
@@ -19,30 +19,6 @@ const HakkimizdaPage = () => {
     }
   ];
 
-  // Şirket değerleri - startup değerlerine daha uygun
-  const degerler = [
-    {
-      baslik: "Çeviklik",
-      icerik: "Küçük ekibimizle hızlı kararlar alır, müşteri ihtiyaçlarına anında yanıt veririz.",
-      icon: <Rocket className="h-8 w-8 text-[#4DA3FF]" />
-    },
-    {
-      baslik: "Kişiselleştirme",
-      icerik: "Her müşterimize özel çözümler sunar, şablonlara bağlı kalmayız.",
-      icon: <Heart className="h-8 w-8 text-[#4DA3FF]" />
-    },
-    {
-      baslik: "Erişilebilirlik",
-      icerik: "İK teknolojilerini küçük işletmelerin de erişebileceği şekilde sunuyoruz.",
-      icon: <Users className="h-8 w-8 text-[#4DA3FF]" />
-    },
-    {
-      baslik: "Sürekli İyileştirme",
-      icerik: "Ürünümüzü sürekli olarak geliştiriyor, geri bildirimleri hızla uygulamaya alıyoruz.",
-      icon: <Clock className="h-8 w-8 text-[#4DA3FF]" />
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Bölümü */}
@@ -59,60 +35,61 @@ const HakkimizdaPage = () => {
 
       {/* Hikayemiz */}
       <section className="py-16 container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-20">
-          <div>
-            <h2 className="text-3xl font-semibold text-[#1F2A44] mb-6">Biz Kimiz?</h2>
-            <div className="space-y-4">
-              <p className="text-[#1F2A44]/70">
-                İKyardim, iki tutkulu profesyonelin - bir İK uzmanı ve bir yazılım geliştiricinin - 
-                2022 yılında bir araya gelerek İK süreçlerini daha kolay ve erişilebilir hale getirme 
-                hayaliyle kurduğu bir startup'tır.
-              </p>
-              <p className="text-[#1F2A44]/70">
-                İK alanında yıllarca çalışan Ayşe, karmaşık İK süreçlerinin küçük işletmeler için ne kadar 
-                zorlu olduğunu fark etti. Yazılım geliştirici Mehmet ile tanışmasıyla birlikte, bu sorunu 
-                çözmek için kullanıcı dostu bir platform oluşturma fikri doğdu.
-              </p>
-              <p className="text-[#1F2A44]/70">
-                İki kişilik küçük bir ekip olmamız, aslında en büyük gücümüz. Müşterilerimizi birer numara 
-                olarak değil, gerçek insanlar olarak görüyor ve onlara kişisel ilgi gösteriyoruz. Hızlı 
-                hareket edebiliyor ve geri bildirimlere anında yanıt verebiliyoruz.
-              </p>
+        {/* Modernleştirilmiş "Biz Kimiz?" bölümü */}
+        <div className="mb-20 bg-gradient-to-r from-[#4DA3FF]/5 to-white p-10 rounded-xl">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-8">
+            <h2 className="text-3xl font-semibold text-[#1F2A44]">Biz Kimiz?</h2>
+            <img src="/logo.webp" alt="iKyardim Logo" className="w-48 h-auto" />
+          </div>
+          <div className="max-w-4xl">
+            <p className="text-xl leading-relaxed text-[#1F2A44]/80">
+              İKyardim, 2022 yılında bir İK uzmanı ve bir yazılım geliştiricinin bir araya gelerek İK süreçlerini 
+              küçük işletmeler için daha erişilebilir kılma hayaliyle kurduğu bir startup'tır. 
+              İki kişilik küçük ekibimizle, müşterilerimize kişisel ilgi gösteriyor, hızlı hareket ediyor ve 
+              geri bildirimlere anında yanıt veriyoruz. Teknoloji ile İK uzmanlığını birleştirerek, 
+              karmaşık süreçleri basitleştiriyor ve işletmenize değer katıyoruz.
+            </p>
+          </div>
+        </div>
+
+        {/* İyileştirilmiş Misyonumuz - Siteye uygun renklerle */}
+        <div className="my-20 relative overflow-hidden rounded-xl bg-[#4DA3FF]/10 shadow-sm">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#4DA3FF]/20 rounded-full filter blur-3xl"></div>
+          <div className="relative z-10 p-12 text-center">
+            <h2 className="text-3xl font-semibold text-[#1F2A44] mb-8">Misyonumuz</h2>
+            <p className="text-xl text-[#1F2A44]/80 max-w-3xl mx-auto leading-relaxed">
+              İK süreçlerini daha az stresli, daha az zaman alıcı ve daha az karmaşık hale getirerek, 
+              küçük ve orta ölçekli işletmelerin kaynaklarını büyümeye ve çalışanlarına odaklamasını sağlamak.
+            </p>
+          </div>
+        </div>
+
+        {/* Yeniden Tasarlanmış Startup Yolculuğumuz */}
+        <div className="my-20 py-12 relative overflow-hidden">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-semibold text-[#1F2A44] mb-4">Startup Yolculuğumuz</h2>
+            <p className="text-[#1F2A44]/70 max-w-2xl mx-auto">
+              Küçük adımlarla başladık, her gün büyümeye devam ediyoruz.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="text-center p-8 bg-gradient-to-b from-[#4DA3FF]/10 to-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <div className="text-5xl font-bold text-[#4DA3FF] mb-3">50+</div>
+              <p className="text-[#1F2A44] font-medium">Mutlu Müşteri</p>
             </div>
-          </div>
-          <div className="relative">
-            <div className="absolute -top-10 -left-10 w-64 h-64 bg-[#4DA3FF]/10 rounded-full filter blur-xl opacity-60 z-0" />
-            <img 
-              src="/aboutus.webp" 
-              alt="İKyardim Ekibi" 
-              className="rounded-xl shadow-xl max-w-full relative z-10"
-            />
-            <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-[#4DA3FF]/20 rounded-full filter blur-xl opacity-60 z-0" />
-          </div>
-        </div>
-
-        {/* Misyonumuz */}
-        <div className="my-20 p-8 bg-[#1F2A44]/5 rounded-xl">
-          <h2 className="text-3xl font-semibold text-center text-[#1F2A44] mb-6">Misyonumuz</h2>
-          <p className="text-center text-lg text-[#1F2A44]/70 max-w-3xl mx-auto">
-            İK süreçlerini daha az stresli, daha az zaman alıcı ve daha az karmaşık hale getirerek, 
-            küçük ve orta ölçekli işletmelerin kaynaklarını büyümeye ve çalışanlarına odaklamasını sağlamak.
-          </p>
-        </div>
-
-        {/* Değerlerimiz */}
-        <div className="my-20">
-          <h2 className="text-3xl font-semibold text-center text-[#1F2A44] mb-12">Startup Değerlerimiz</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {degerler.map((deger, index) => (
-              <div key={index} className="p-6 rounded-xl bg-[#1F2A44]/5 hover:bg-[#4DA3FF]/10 transition-colors duration-300">
-                <div className="mb-4 p-3 bg-white inline-block rounded-lg shadow-sm">
-                  {deger.icon}
-                </div>
-                <h3 className="text-xl font-semibold text-[#1F2A44] mb-2">{deger.baslik}</h3>
-                <p className="text-[#1F2A44]/70">{deger.icerik}</p>
-              </div>
-            ))}
+            <div className="text-center p-8 bg-gradient-to-b from-[#4DA3FF]/10 to-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <div className="text-5xl font-bold text-[#4DA3FF] mb-3">2</div>
+              <p className="text-[#1F2A44] font-medium">Tutkulu Kurucu</p>
+            </div>
+            <div className="text-center p-8 bg-gradient-to-b from-[#4DA3FF]/10 to-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <div className="text-5xl font-bold text-[#4DA3FF] mb-3">1000+</div>
+              <p className="text-[#1F2A44] font-medium">Hesaplanan Bordro</p>
+            </div>
+            <div className="text-center p-8 bg-gradient-to-b from-[#4DA3FF]/10 to-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <div className="text-5xl font-bold text-[#4DA3FF] mb-3">∞</div>
+              <p className="text-[#1F2A44] font-medium">Büyüme Potansiyeli</p>
+            </div>
           </div>
         </div>
 
@@ -139,29 +116,6 @@ const HakkimizdaPage = () => {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Startup Yolculuğumuz */}
-        <div className="my-20 py-16 bg-[#1F2A44]/5 rounded-3xl">
-          <h2 className="text-3xl font-semibold text-center text-[#1F2A44] mb-12">Startup Yolculuğumuz</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-[#4DA3FF] mb-2">50+</div>
-              <p className="text-[#1F2A44]/70">Mutlu Müşteri</p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-[#4DA3FF] mb-2">2</div>
-              <p className="text-[#1F2A44]/70">Tutkulu Kurucu</p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-[#4DA3FF] mb-2">1000+</div>
-              <p className="text-[#1F2A44]/70">Hesaplanan Bordro</p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-[#4DA3FF] mb-2">∞</div>
-              <p className="text-[#1F2A44]/70">Büyüme Potansiyeli</p>
-            </div>
           </div>
         </div>
 
