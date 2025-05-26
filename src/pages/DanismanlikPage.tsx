@@ -47,7 +47,7 @@ const DanismanlikPage = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Bölümü */}
-      <section className="bg-gradient-to-b from-[#4DA3FF]/10 to-white pt-32 pb-16">
+      <section className="bg-gradient-to-b from-[#4DA3FF]/10 to-white pt-36 pb-16">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl md:text-5xl font-semibold text-center text-[#1F2A44] mb-6">
             İK Danışmanlık Hizmetlerimiz

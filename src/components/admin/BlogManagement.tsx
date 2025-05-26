@@ -369,10 +369,18 @@ const BlogManagement = () => {
     }
   };
 
-  const filteredPosts = posts.filter(post =>
-    post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    post.content.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPosts = posts.filter(post => {
+    // Kategoriye göre filtreleme
+    if (searchTerm.startsWith('category:')) {
+      const categoryFilter = searchTerm.substring(9); // 'category:' kısmını kaldır
+      return post.category === categoryFilter;
+    }
+    
+    // Normal metin araması
+    return post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.summary.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   return (
     <div className="space-y-6">

@@ -2,11 +2,20 @@ import { Timestamp } from 'firebase/firestore';
 
 // Blog yazısı için kategori seçenekleri
 export const CATEGORIES = [
-  'Teknoloji',
-  'Yazılım Geliştirme',
-  'Tasarım',
-  'İş Dünyası',
-  'Eğitim',
+  'İnsan Kaynakları',
+  'Çalışma Hayatı',
+  'Ücret ve Yan Haklar',
+  'Fazla Mesai ve Çalışma Süreleri',
+  'İşveren Rehberi',
+  'Bordro Yönetimi',
+  'İşe Alım Süreçleri',
+  'Performans Yönetimi',
+  'Çalışan Hakları',
+  'Kariyer Gelişimi',
+  'İK Teknolojileri',
+  'Mevzuat Değişiklikleri',
+  'Şirket Kültürü',
+  'Eğitim ve Gelişim',
   'Diğer'
 ] as const;
 
