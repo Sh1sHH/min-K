@@ -36,36 +36,19 @@ function App() {
 
   const pricingPlans = [
     {
-      id: "plus",
-      name: "Plus",
-      description: "Perfect for small teams",
-      monthlyPrice: "$29",
-      yearlyPrice: "$24",
-      features: [
-        { text: "Up to 10 team members" },
-        { text: "All basic features" },
-        { text: "Priority email support" },
-        { text: "5GB storage space" },
-      ],
-      button: {
-        text: "Get Plus",
-        url: "#",
-      },
-    },
-    {
       id: "pro",
       name: "Pro",
-      description: "For growing businesses",
-      monthlyPrice: "$79",
-      yearlyPrice: "$65",
+      description: "Büyüyen işletmeler için",
+      monthlyPrice: "299₺",
+      yearlyPrice: "239₺",
       features: [
-        { text: "Unlimited team members" },
-        { text: "Advanced analytics" },
-        { text: "24/7 priority support" },
-        { text: "50GB storage space" },
+        { text: "5 çalışan kaydı" },
+        { text: "Gelişmiş bordro  aracı" },
+        { text: "CV değerlendirme (5 adet)" },
+        { text: "Temel danışmanlık (3 soru)" },
       ],
       button: {
-        text: "Get Pro",
+        text: "Satın Al",
         url: "#",
       },
       isPopular: true
@@ -73,19 +56,18 @@ function App() {
     {
       id: "enterprise",
       name: "Enterprise",
-      description: "For large organizations",
-      monthlyPrice: "$149",
-      yearlyPrice: "$129",
+      description: "Büyük kurumlar için",
+      monthlyPrice: "999₺",
+      yearlyPrice: "799₺",
       features: [
-        { text: "Unlimited team members" },
-        { text: "Enterprise analytics" },
-        { text: "24/7 VIP support" },
-        { text: "Unlimited storage" },
-        { text: "Custom integrations" },
-        { text: "Dedicated account manager" },
+        { text: "Sınırsız çalışan kaydı" },
+        { text: "Gelişmiş bordro aracı" },
+        { text: "CV değerlendirme (sınırsız)" },
+        { text: "Sınırsız danışmanlık" },
+        { text: "7/24 destek" },
       ],
       button: {
-        text: "Contact Sales",
+        text: "Satın Al",
         url: "#",
       },
     },

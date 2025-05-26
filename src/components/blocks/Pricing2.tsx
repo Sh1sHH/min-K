@@ -118,7 +118,7 @@ export const Pricing2 = ({
             </div>
 
             {/* Pricing Cards */}
-            <div className="mt-16 grid w-full grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-16 grid w-full grid-cols-1 gap-8 md:grid-cols-2 max-w-3xl mx-auto">
               {plans.map((plan) => (
                 <Card
                   key={plan.id}
@@ -139,12 +139,12 @@ export const Pricing2 = ({
                     <p className="text-[#1F2A44]/70">{plan.description}</p>
                   </CardHeader>
 
-                  <div className="mt-4 flex items-baseline text-[#1F2A44]">
+                  <div className="mt-4 flex items-baseline text-[#1F2A44] justify-center">
                     <span className="text-4xl font-bold tracking-tight">
                       {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
                     </span>
                     <span className="ml-1 text-sm font-semibold text-[#1F2A44]/70">
-                      /month
+                      /aylık
                     </span>
                   </div>
 
