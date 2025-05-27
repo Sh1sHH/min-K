@@ -67,262 +67,142 @@ const BordroHesaplamaPage = () => {
     const ORAN_3 = 0.27; // 27% oranı
     const ORAN_4 = 0.35; // 35% oranı
     const ORAN_5 = 0.40; // 40% oranı
-    const STANDART_İSTİSNA = 22104.68;
+    // const STANDART_İSTİSNA = 22104.68; // Bu değer artık doğrudan kullanılmayacak, referans olarak kalabilir.
     
-    // Önce temel hesaplamaları yapalım
-    const aylikSonuclar = AYLAR.map((ay, index) => {
-      if (ay === 'TOPLAM') {
-        // Tüm ayların toplamını hesapla
-        return {
-          brut: brutMaas * 12,
-          sgkIsci: brutMaas * 0.14 * 12,
-          issizlikIsci: brutMaas * 0.01 * 12,
-          aylikGelirVergisi: brutMaas * 0.15 * 12,
-          damgaVergisi: brutMaas * 0.00759 * 12,
-          kumulatifVergiMatrahi: (brutMaas - brutMaas * 0.14 - brutMaas * 0.01) * 12,
-          net: brutMaas * 0.7 * 12,
-          asgariGecimIndirimi: 1000 * 12,
-          asgariUcretGelirVergisiIstisnasi: 0, // Geçici değer, sonra güncellenecek
-          asgariUcretDamgaVergisiIstisnasi: 100 * 12,
-          netOdenecekTutar: (brutMaas * 0.7 + 1000) * 12,
-          sgkIsveren: brutMaas * (sgkIndirim5 ? 0.155 - 0.05 : sgkIndirim4 ? 0.155 - 0.04 : 0.155) * 12,
-          issizlikIsveren: brutMaas * 0.02 * 12,
-          toplamMaliyet: (brutMaas * (1 + (sgkIndirim5 ? 0.155 - 0.05 : sgkIndirim4 ? 0.155 - 0.04 : 0.155) + 0.02)) * 12
-        };
-      } else {
-        // Her ay için hesapla
-        const aylikMatrah = brutMaas - brutMaas * 0.14 - brutMaas * 0.01;
-        const kumulatifMatrah = aylikMatrah * (index + 1);
-        
-        return {
-          brut: brutMaas,
-          sgkIsci: brutMaas * 0.14,
-          issizlikIsci: brutMaas * 0.01,
-          aylikGelirVergisi: brutMaas * 0.15,
-          damgaVergisi: brutMaas * 0.00759,
-          kumulatifVergiMatrahi: kumulatifMatrah,
-          net: brutMaas * 0.7,
-          asgariGecimIndirimi: 1000,
-          asgariUcretGelirVergisiIstisnasi: 0, // Geçici değer, sonra güncellenecek
-          asgariUcretDamgaVergisiIstisnasi: 100,
-          netOdenecekTutar: brutMaas * 0.7 + 1000,
-          sgkIsveren: brutMaas * (sgkIndirim5 ? 0.155 - 0.05 : sgkIndirim4 ? 0.155 - 0.04 : 0.155),
-          issizlikIsveren: brutMaas * 0.02,
-          toplamMaliyet: brutMaas * (1 + (sgkIndirim5 ? 0.155 - 0.05 : sgkIndirim4 ? 0.155 - 0.04 : 0.155) + 0.02)
-        };
+    // 1. Adım: Temel aylık değerleri hesapla (Gelir Vergisi ve Kesilecek GV hariç)
+    const aylikSonuclarTemel = AYLAR.slice(0, 12).map((ay, index) => {
+      const sgkIsciPayi = brutMaas * 0.14;
+      const issizlikIsciPayi = brutMaas * 0.01;
+      const aylikGelirVergisiMatrahi = brutMaas - sgkIsciPayi - issizlikIsciPayi;
+      const kumulatifMatrah = aylikGelirVergisiMatrahi * (index + 1);
+
+      let aylikSabitGelirVergisiIstisnasi = 0;
+      if (index <= 6) { // Ocak - Temmuz
+        aylikSabitGelirVergisiIstisnasi = 3315.70;
+      } else if (index === 7) { // Ağustos
+        aylikSabitGelirVergisiIstisnasi = 4257.57;
+      } else if (index >= 8 && index <= 11) { // Eylül - Aralık
+        aylikSabitGelirVergisiIstisnasi = 4420.94;
       }
+
+      const aylikDamgaVergisi = brutMaas * 0.00759;
+      const aylikDamgaVergisiIstisnasi = 197.38;
+      const aylikKesilecekDamgaVergisi = aylikDamgaVergisi - aylikDamgaVergisiIstisnasi;
+
+      // Aylık SGK İşveren ve İşsizlik İşveren Payları
+      const aylikSgkIsverenPayi = brutMaas * ((): number => {
+        if (sgkIndirim5) return 0.1775;
+        if (sgkIndirim4) return 0.1675;
+        return 0.155;
+      })();
+      const aylikIssizlikIsverenPayi = brutMaas * 0.02;
+
+      return {
+        ay,
+        brut: brutMaas,
+        sgkIsci: sgkIsciPayi,
+        issizlikIsci: issizlikIsciPayi,
+        gelirVergisiMatrahi: aylikGelirVergisiMatrahi,
+        kumulatifVergiMatrahi: kumulatifMatrah, 
+        asgariUcretGelirVergisiIstisnasi: aylikSabitGelirVergisiIstisnasi, // Sabit istisna
+        damgaVergisi: aylikDamgaVergisi,
+        asgariUcretDamgaVergisiIstisnasi: aylikDamgaVergisiIstisnasi,
+        kesilecekDamgaVergisi: aylikKesilecekDamgaVergisi,
+        aylikGelirVergisi: 0, // Adım 2'de hesaplanıp güncellenecek
+        kesilecekGelirVergisi: 0, // Adım 2'de hesaplanıp güncellenecek
+        net: brutMaas * 0.7,
+        asgariGecimIndirimi: 1000,
+        netOdenecekTutar: brutMaas * 0.7 + 1000,
+        sgkIsveren: aylikSgkIsverenPayi,
+        issizlikIsveren: aylikIssizlikIsverenPayi,
+        toplamMaliyet: brutMaas + aylikSgkIsverenPayi + aylikIssizlikIsverenPayi
+      };
     });
-    
-    // Şimdi vergi istisnası değerlerini hesaplayalım
+
+    // 2. Adım: Detaylı Aylık Gelir Vergisi ve Kesilecek Gelir Vergisini Hesapla
+    let oncekiAyMatrah = 0;
     let ilkKezDilim1Asildi = false;
     let ilkKezDilim2Asildi = false;
     let ilkKezDilim3Asildi = false;
     let ilkKezDilim4Asildi = false;
-    let dilim1AsildiAy = -1;
-    let dilim2AsildiAy = -1;
-    let dilim3AsildiAy = -1;
-    let dilim4AsildiAy = -1;
-    let oncekiAyMatrah = 0;
-    let farkİcin15YüzdeDeğer = 0;
-    let farkİcin20YüzdeDeğer = 0;
-    let farkİcin27YüzdeDeğer = 0;
-    let farkİcin35YüzdeDeğer = 0;
-    let aktifOran = ORAN_1; // Başlangıçta %15 kullanılır
-    
-    // Aylık değerleri güncelle
-    for (let i = 0; i < aylikSonuclar.length - 1; i++) { // Toplam hariç
-      const sonuc = aylikSonuclar[i];
+
+    for (let i = 0; i < aylikSonuclarTemel.length; i++) {
+      const sonuc = aylikSonuclarTemel[i];
       const kumulatifMatrah = sonuc.kumulatifVergiMatrahi;
-      
-      // Gelir vergisi istisnası hesaplama
-      let gelirVergisiIstisnasi = 0;
+      let hesaplananAylikGelirVergisi = 0;
       
       if (kumulatifMatrah <= VERGİ_DİLİMİ_1) {
-        // 158.000 TL'ye kadar olan kısım için %15 ve standart istisna
-        gelirVergisiIstisnasi = STANDART_İSTİSNA * ORAN_1;
-        aktifOran = ORAN_1;
+        hesaplananAylikGelirVergisi = sonuc.gelirVergisiMatrahi * ORAN_1;
       } else if (kumulatifMatrah <= VERGİ_DİLİMİ_2) {
-        // 158.000 TL ile 330.000 TL arasındaki kısım
         if (!ilkKezDilim1Asildi) {
-          // İlk kez 158.000 TL aşıldı
           ilkKezDilim1Asildi = true;
-          dilim1AsildiAy = i;
-          
-          // 158.000 TL ile önceki ay matrahı arasındaki farkın %15'i
           const dilimAsimFarki = VERGİ_DİLİMİ_1 - oncekiAyMatrah;
-          farkİcin15YüzdeDeğer = dilimAsimFarki * ORAN_1;
-          
-          // 158.000 TL'yi aşan kısmın %20'si
-          const yuksekDilimFarki = kumulatifMatrah - VERGİ_DİLİMİ_1;
-          gelirVergisiIstisnasi = farkİcin15YüzdeDeğer + (yuksekDilimFarki * ORAN_2);
-          aktifOran = ORAN_2;
+          const yuksekDilimFarki = sonuc.gelirVergisiMatrahi - dilimAsimFarki; // Bu ayın matrahının ne kadarı %15, ne kadarı %20
+          hesaplananAylikGelirVergisi = (dilimAsimFarki * ORAN_1) + (yuksekDilimFarki * ORAN_2);
         } else {
-          // 158.000 TL aşıldıktan sonraki aylar için standart istisnanın %20'si
-          gelirVergisiIstisnasi = STANDART_İSTİSNA * ORAN_2;
-          aktifOran = ORAN_2;
+          hesaplananAylikGelirVergisi = sonuc.gelirVergisiMatrahi * ORAN_2;
         }
       } else if (kumulatifMatrah <= VERGİ_DİLİMİ_3) {
-        // 330.000 TL ile 1.200.000 TL arasındaki kısım
         if (!ilkKezDilim2Asildi) {
-          // İlk kez 330.000 TL aşıldı
           ilkKezDilim2Asildi = true;
-          dilim2AsildiAy = i;
-          
-          // 330.000 TL ile önceki ay matrahı arasındaki farkın %20'si
           const dilimAsimFarki = VERGİ_DİLİMİ_2 - oncekiAyMatrah;
-          farkİcin20YüzdeDeğer = dilimAsimFarki * ORAN_2;
-          
-          // 330.000 TL'yi aşan kısmın %27'si
-          const yuksekDilimFarki = kumulatifMatrah - VERGİ_DİLİMİ_2;
-          gelirVergisiIstisnasi = farkİcin20YüzdeDeğer + (yuksekDilimFarki * ORAN_3);
-          aktifOran = ORAN_3;
+          const yuksekDilimFarki = sonuc.gelirVergisiMatrahi - dilimAsimFarki;
+          hesaplananAylikGelirVergisi = (dilimAsimFarki * ORAN_2) + (yuksekDilimFarki * ORAN_3);
         } else {
-          // 330.000 TL aşıldıktan sonraki aylar için standart istisnanın %27'si
-          gelirVergisiIstisnasi = STANDART_İSTİSNA * ORAN_3;
-          aktifOran = ORAN_3;
+          hesaplananAylikGelirVergisi = sonuc.gelirVergisiMatrahi * ORAN_3;
         }
       } else if (kumulatifMatrah <= VERGİ_DİLİMİ_4) {
-        // 1.200.000 TL ile 4.300.000 TL arasındaki kısım
         if (!ilkKezDilim3Asildi) {
-          // İlk kez 1.200.000 TL aşıldı
           ilkKezDilim3Asildi = true;
-          dilim3AsildiAy = i;
-          
-          // 1.200.000 TL ile önceki ay matrahı arasındaki farkın %27'si
           const dilimAsimFarki = VERGİ_DİLİMİ_3 - oncekiAyMatrah;
-          farkİcin27YüzdeDeğer = dilimAsimFarki * ORAN_3;
-          
-          // 1.200.000 TL'yi aşan kısmın %35'i
-          const yuksekDilimFarki = kumulatifMatrah - VERGİ_DİLİMİ_3;
-          gelirVergisiIstisnasi = farkİcin27YüzdeDeğer + (yuksekDilimFarki * ORAN_4);
-          aktifOran = ORAN_4;
+          const yuksekDilimFarki = sonuc.gelirVergisiMatrahi - dilimAsimFarki;
+          hesaplananAylikGelirVergisi = (dilimAsimFarki * ORAN_3) + (yuksekDilimFarki * ORAN_4);
         } else {
-          // 1.200.000 TL aşıldıktan sonraki aylar için standart istisnanın %35'i
-          gelirVergisiIstisnasi = STANDART_İSTİSNA * ORAN_4;
-          aktifOran = ORAN_4;
+          hesaplananAylikGelirVergisi = sonuc.gelirVergisiMatrahi * ORAN_4;
         }
       } else {
-        // 4.300.000 TL'yi aşan kısım için %40 oran kullanılır
         if (!ilkKezDilim4Asildi) {
-          // İlk kez 4.300.000 TL aşıldı
           ilkKezDilim4Asildi = true;
-          dilim4AsildiAy = i;
-          
-          // 4.300.000 TL'yi aştığı ay doğrudan %40 uygulanır
-          gelirVergisiIstisnasi = STANDART_İSTİSNA * ORAN_5;
-          aktifOran = ORAN_5;
+          const dilimAsimFarki = VERGİ_DİLİMİ_4 - oncekiAyMatrah;
+          const yuksekDilimFarki = sonuc.gelirVergisiMatrahi - dilimAsimFarki;
+          hesaplananAylikGelirVergisi = (dilimAsimFarki * ORAN_4) + (yuksekDilimFarki * ORAN_5);
         } else {
-          // 4.300.000 TL aşıldıktan sonraki aylar için standart istisnanın %40'ı
-          gelirVergisiIstisnasi = STANDART_İSTİSNA * ORAN_5;
-          aktifOran = ORAN_5;
+          hesaplananAylikGelirVergisi = sonuc.gelirVergisiMatrahi * ORAN_5;
         }
       }
-      
-      // Sonucu güncelle
-      aylikSonuclar[i].asgariUcretGelirVergisiIstisnasi = gelirVergisiIstisnasi;
-      
-      // Bir sonraki ay için mevcut matrahı kaydet
+      aylikSonuclarTemel[i].aylikGelirVergisi = hesaplananAylikGelirVergisi;
+      aylikSonuclarTemel[i].kesilecekGelirVergisi = hesaplananAylikGelirVergisi - sonuc.asgariUcretGelirVergisiIstisnasi;
+
+      // NET ÜCRET HESAPLAMASI
+      aylikSonuclarTemel[i].net = sonuc.brut - sonuc.sgkIsci - sonuc.issizlikIsci - aylikSonuclarTemel[i].kesilecekGelirVergisi - sonuc.kesilecekDamgaVergisi;
+
       oncekiAyMatrah = kumulatifMatrah;
     }
-    
-    // TOPLAM değerini güncelle
-    if (dilim4AsildiAy !== -1) {
-      // 4.300.000 TL dilimi aşıldıysa
-      let toplamIstisna = 0;
-      
-      // İlk dilim aşılmadan önceki aylar için %15
-      for (let i = 0; i < dilim1AsildiAy; i++) {
-        toplamIstisna += STANDART_İSTİSNA * ORAN_1;
-      }
-      
-      // 158.000 TL dilimin aşıldığı ay için özel hesaplama
-      if (dilim1AsildiAy >= 0) {
-        toplamIstisna += aylikSonuclar[dilim1AsildiAy].asgariUcretGelirVergisiIstisnasi;
-      }
-      
-      // İlk ve ikinci dilim arasındaki aylar için %20
-      for (let i = dilim1AsildiAy + 1; i < dilim2AsildiAy; i++) {
-        toplamIstisna += STANDART_İSTİSNA * ORAN_2;
-      }
-      
-      // 330.000 TL dilimin aşıldığı ay için özel hesaplama
-      if (dilim2AsildiAy >= 0) {
-        toplamIstisna += aylikSonuclar[dilim2AsildiAy].asgariUcretGelirVergisiIstisnasi;
-      }
-      
-      // İkinci ve üçüncü dilim arasındaki aylar için %27
-      for (let i = dilim2AsildiAy + 1; i < dilim3AsildiAy; i++) {
-        toplamIstisna += STANDART_İSTİSNA * ORAN_3;
-      }
-      
-      // 1.200.000 TL dilimin aşıldığı ay için özel hesaplama
-      if (dilim3AsildiAy >= 0) {
-        toplamIstisna += aylikSonuclar[dilim3AsildiAy].asgariUcretGelirVergisiIstisnasi;
-      }
-      
-      // Üçüncü ve dördüncü dilim arasındaki aylar için %35
-      for (let i = dilim3AsildiAy + 1; i < dilim4AsildiAy; i++) {
-        toplamIstisna += STANDART_İSTİSNA * ORAN_4;
-      }
-      
-      // 4.300.000 TL dilimin aşıldığı ay için özel hesaplama
-      if (dilim4AsildiAy >= 0) {
-        toplamIstisna += aylikSonuclar[dilim4AsildiAy].asgariUcretGelirVergisiIstisnasi;
-      }
-      
-      // Dördüncü dilim aşıldıktan sonraki aylar için %40
-      for (let i = dilim4AsildiAy + 1; i < 12; i++) {
-        toplamIstisna += STANDART_İSTİSNA * ORAN_5;
-      }
-      
-      aylikSonuclar[aylikSonuclar.length - 1].asgariUcretGelirVergisiIstisnasi = toplamIstisna;
-    } else if (dilim3AsildiAy !== -1) {
-      // 1.200.000 TL dilimi aşıldıysa
-      let toplamIstisna = 0;
-      
-      // İlk dilim aşılmadan önceki aylar için %15
-      for (let i = 0; i < dilim1AsildiAy; i++) {
-        toplamIstisna += STANDART_İSTİSNA * ORAN_1;
-      }
-      
-      // Dilimin aşıldığı ay için özel hesaplama
-      if (dilim1AsildiAy >= 0) {
-        toplamIstisna += aylikSonuclar[dilim1AsildiAy].asgariUcretGelirVergisiIstisnasi;
-      }
-      
-      // Dilim aşıldıktan sonraki aylar için %20
-      for (let i = dilim1AsildiAy + 1; i < 12; i++) {
-        toplamIstisna += STANDART_İSTİSNA * ORAN_2;
-      }
-      
-      aylikSonuclar[aylikSonuclar.length - 1].asgariUcretGelirVergisiIstisnasi = toplamIstisna;
-    } else if (dilim2AsildiAy !== -1) {
-      // 330.000 TL dilimi aşıldıysa
-      let toplamIstisna = 0;
-      
-      // İlk dilim aşılmadan önceki aylar için %15
-      for (let i = 0; i < dilim1AsildiAy; i++) {
-        toplamIstisna += STANDART_İSTİSNA * ORAN_1;
-      }
-      
-      // Dilimin aşıldığı ay için özel hesaplama
-      if (dilim1AsildiAy >= 0) {
-        toplamIstisna += aylikSonuclar[dilim1AsildiAy].asgariUcretGelirVergisiIstisnasi;
-      }
-      
-      // Dilim aşıldıktan sonraki aylar için %20
-      for (let i = dilim1AsildiAy + 1; i < 12; i++) {
-        toplamIstisna += STANDART_İSTİSNA * ORAN_2;
-      }
-      
-      aylikSonuclar[aylikSonuclar.length - 1].asgariUcretGelirVergisiIstisnasi = toplamIstisna;
-    } else {
-      // Hiçbir dilim aşılmadıysa standart değeri kullan
-      aylikSonuclar[aylikSonuclar.length - 1].asgariUcretGelirVergisiIstisnasi = 
-        STANDART_İSTİSNA * ORAN_1 * 12;
-    }
 
-    setSonuclar(aylikSonuclar);
+    // 3. Adım: TOPLAM satırını oluştur
+    const toplamSonuc = {
+      ay: 'TOPLAM',
+      brut: aylikSonuclarTemel.reduce((sum, s) => sum + s.brut, 0),
+      sgkIsci: aylikSonuclarTemel.reduce((sum, s) => sum + s.sgkIsci, 0),
+      issizlikIsci: aylikSonuclarTemel.reduce((sum, s) => sum + s.issizlikIsci, 0),
+      gelirVergisiMatrahi: aylikSonuclarTemel.reduce((sum, s) => sum + s.gelirVergisiMatrahi, 0),
+      kumulatifVergiMatrahi: aylikSonuclarTemel[aylikSonuclarTemel.length - 1].kumulatifVergiMatrahi, // Son ayın kümülatifi
+      asgariUcretGelirVergisiIstisnasi: aylikSonuclarTemel.reduce((sum, s) => sum + s.asgariUcretGelirVergisiIstisnasi, 0),
+      damgaVergisi: aylikSonuclarTemel.reduce((sum, s) => sum + s.damgaVergisi, 0),
+      aylikGelirVergisi: aylikSonuclarTemel.reduce((sum, s) => sum + s.aylikGelirVergisi, 0),
+      kesilecekGelirVergisi: aylikSonuclarTemel.reduce((sum, s) => sum + s.kesilecekGelirVergisi, 0),
+      net: aylikSonuclarTemel.reduce((sum, s) => sum + s.net, 0), // Güncellenecek
+      asgariGecimIndirimi: aylikSonuclarTemel.reduce((sum, s) => sum + s.asgariGecimIndirimi, 0),
+      asgariUcretDamgaVergisiIstisnasi: aylikSonuclarTemel.reduce((sum, s) => sum + s.asgariUcretDamgaVergisiIstisnasi, 0),
+      kesilecekDamgaVergisi: aylikSonuclarTemel.reduce((sum, s) => sum + s.kesilecekDamgaVergisi, 0), // YENİ EKLENDİ
+      netOdenecekTutar: aylikSonuclarTemel.reduce((sum, s) => sum + s.netOdenecekTutar, 0), // Güncellenecek
+      sgkIsveren: aylikSonuclarTemel.reduce((sum, s) => sum + s.sgkIsveren, 0),
+      issizlikIsveren: aylikSonuclarTemel.reduce((sum, s) => sum + s.issizlikIsveren, 0),
+      toplamMaliyet: aylikSonuclarTemel.reduce((sum, s) => sum + s.toplamMaliyet, 0),
+    };
+
+    const sonuclarNihai = [...aylikSonuclarTemel, toplamSonuc];
+    setSonuclar(sonuclarNihai);
   };
 
   return (
@@ -342,7 +222,7 @@ const BordroHesaplamaPage = () => {
 
       {/* Ana Bordro Hesaplama Alanı (Büyük Alan) */}
       <section className="py-6 container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <Card className="border-[#1F2A44]/10 shadow-2xl bg-white overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-[#4DA3FF]/30 to-[#B1E5D3]/30 border-b border-[#1F2A44]/10 pb-6">
               <div className="flex items-center gap-3 mb-2">
@@ -509,23 +389,27 @@ const BordroHesaplamaPage = () => {
                   <div className="text-lg font-semibold text-[#1F2A44] mb-2">Brütten Nete Maaş Hesabı</div>
                   
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm border-collapse">
+                    <table className="w-full text-[10px] border-collapse">
                       <thead>
                         <tr className="bg-[#F9FAFC]">
-                          <th className="border border-[#1F2A44]/20 p-2 text-left font-medium"></th>
-                          <th className="border border-[#1F2A44]/20 p-2 text-left font-medium">Brüt</th>
-                          <th className="border border-[#1F2A44]/20 p-2 text-left font-medium">SSK İşçi</th>
-                          <th className="border border-[#1F2A44]/20 p-2 text-left font-medium">İşsizlik İşçi</th>
-                          <th className="border border-[#1F2A44]/20 p-2 text-left font-medium">Aylık Gelir Vergisi</th>
-                          <th className="border border-[#1F2A44]/20 p-2 text-left font-medium">Gelir Vergisi İstisnası</th>
-                          <th className="border border-[#1F2A44]/20 p-2 text-left font-medium">Damga Vergisi</th>
-                          <th className="border border-[#1F2A44]/20 p-2 text-left font-medium">Kümülatif Vergi Matrahı</th>
-                          <th className="border border-[#1F2A44]/20 p-2 text-left font-medium">Net</th>
+                          <th className="border border-[#1F2A44]/20 p-2 text-left text-[10px] font-medium uppercase"></th>
+                          <th className="border border-[#1F2A44]/20 p-2 text-left text-[10px] font-medium uppercase">BRÜT</th>
+                          <th className="border border-[#1F2A44]/20 p-2 text-left text-[10px] font-medium uppercase">SGK İŞÇİ</th>
+                          <th className="border border-[#1F2A44]/20 p-2 text-left text-[10px] font-medium uppercase">İŞSİZLİK İŞÇİ</th>
+                          <th className="border border-[#1F2A44]/20 p-2 text-left text-[10px] font-medium uppercase">GELİR VERGİSİ MATRAHI</th>
+                          <th className="border border-[#1F2A44]/20 p-2 text-left text-[10px] font-medium uppercase">KÜMÜLATİF VERGİ MATRAHI</th>
+                          <th className="border border-[#1F2A44]/20 p-2 text-left text-[10px] font-medium uppercase">GELİR VERGİSİ</th>
+                          <th className="border border-[#1F2A44]/20 p-2 text-left text-[10px] font-medium uppercase">GELİR VERGİSİ İSTİSNASI</th>
+                          <th className="border border-[#1F2A44]/20 p-2 text-left text-[10px] font-medium uppercase">KESİLECEK GELİR VERGİSİ</th>
+                          <th className="border border-[#1F2A44]/20 p-2 text-left text-[10px] font-medium uppercase">DAMGA VERGİSİ</th>
+                          <th className="border border-[#1F2A44]/20 p-2 text-left text-[10px] font-medium uppercase">DAMGA VERGİSİ İSTİSNASI</th>
+                          <th className="border border-[#1F2A44]/20 p-2 text-left text-[10px] font-medium uppercase">KESİLECEK DAMGA VERGİSİ</th>
+                          <th className="border border-[#1F2A44]/20 p-2 text-left text-[10px] font-medium uppercase">NET ÜCRET</th>
                           {iseGostergeMaliyeti && (
                             <>
-                              <th className="border border-[#1F2A44]/20 p-2 text-left font-medium">SSK İşveren</th>
-                              <th className="border border-[#1F2A44]/20 p-2 text-left font-medium">İşsizlik İşveren</th>
-                              <th className="border border-[#1F2A44]/20 p-2 text-left font-medium">Toplam Maliyet</th>
+                              <th className="border border-[#1F2A44]/20 p-2 text-left text-[10px] font-medium uppercase">SGK İŞVEREN</th>
+                              <th className="border border-[#1F2A44]/20 p-2 text-left text-[10px] font-medium uppercase">SGK İŞSİZLİK İŞVEREN</th>
+                              <th className="border border-[#1F2A44]/20 p-2 text-left text-[10px] font-medium uppercase">TOPLAM MALİYET</th>
                             </>
                           )}
                         </tr>
@@ -544,16 +428,28 @@ const BordroHesaplamaPage = () => {
                               {sonuclar && formatNumber(sonuclar[index]?.issizlikIsci || 0)}
                             </td>
                             <td className="border border-[#1F2A44]/20 p-2 text-right">
+                              {sonuclar && formatNumber(sonuclar[index]?.gelirVergisiMatrahi || 0)}
+                            </td>
+                            <td className="border border-[#1F2A44]/20 p-2 text-right">
+                              {sonuclar && formatNumber(sonuclar[index]?.kumulatifVergiMatrahi || 0)}
+                            </td>
+                            <td className="border border-[#1F2A44]/20 p-2 text-right">
                               {sonuclar && formatNumber(sonuclar[index]?.aylikGelirVergisi || 0)}
                             </td>
                             <td className="border border-[#1F2A44]/20 p-2 text-right">
                               {sonuclar && formatNumber(sonuclar[index]?.asgariUcretGelirVergisiIstisnasi || 0)}
                             </td>
                             <td className="border border-[#1F2A44]/20 p-2 text-right">
+                              {sonuclar && formatNumber(sonuclar[index]?.kesilecekGelirVergisi || 0)}
+                            </td>
+                            <td className="border border-[#1F2A44]/20 p-2 text-right">
                               {sonuclar && formatNumber(sonuclar[index]?.damgaVergisi || 0)}
                             </td>
                             <td className="border border-[#1F2A44]/20 p-2 text-right">
-                              {sonuclar && formatNumber(sonuclar[index]?.kumulatifVergiMatrahi || 0)}
+                              {sonuclar && formatNumber(sonuclar[index]?.asgariUcretDamgaVergisiIstisnasi || 0)}
+                            </td>
+                            <td className="border border-[#1F2A44]/20 p-2 text-right">
+                              {sonuclar && formatNumber(sonuclar[index]?.kesilecekDamgaVergisi || 0)}
                             </td>
                             <td className="border border-[#1F2A44]/20 p-2 text-right">
                               {sonuclar && formatNumber(sonuclar[index]?.net || 0)}
