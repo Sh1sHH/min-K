@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Clock, Calendar, User, Tag, ArrowLeft } from 'lucide-react';
+import { Clock, Calendar, User, Tag, ArrowLeft, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
 import { Helmet } from 'react-helmet';
@@ -27,6 +27,144 @@ interface BlogPost {
     robots?: string;
   };
 }
+
+const SonYazilar = ({ currentPostId }: { currentPostId: string }) => {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchRecentPosts = async () => {
+      try {
+        setLoading(true);
+        const apiUrl = import.meta.env.VITE_API_URL;
+
+        if (!apiUrl) {
+          console.error('API URL bulunamadı! Lütfen .env dosyasını kontrol edin.');
+          return;
+        }
+
+        const response = await fetch(`${apiUrl}/posts`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          mode: 'cors'
+        });
+
+        if (!response.ok) {
+          throw new Error(`Son yazılar alınamadı. Hata kodu: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (Array.isArray(data)) {
+          // Mevcut yazıyı hariç tut ve en son 3 yazıyı al
+          const filteredPosts = data
+            .filter(post => post.id !== currentPostId)
+            .slice(0, 3);
+          
+          setPosts(filteredPosts);
+        }
+      } catch (error) {
+        console.error('Son yazılar alınırken hata oluştu:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecentPosts();
+  }, [currentPostId]);
+
+  if (loading || posts.length === 0) {
+    return null;
+  }
+
+  const formatDate = (dateString: string | { seconds: number }) => {
+    try {
+      // Firebase Timestamp'i kontrol et
+      if (typeof dateString === 'object' && 'seconds' in dateString) {
+        const date = new Date(dateString.seconds * 1000);
+        return date.toLocaleDateString('tr-TR', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      }
+      
+      // Normal tarih string'i
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Tarih belirtilmemiş';
+      }
+      
+      return date.toLocaleDateString('tr-TR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Tarih formatlanırken hata:', error);
+      return 'Tarih belirtilmemiş';
+    }
+  };
+
+  return (
+    <div className="mt-24 border-t border-[#1F2A44]/10 pt-12">
+      <h2 className="text-2xl font-semibold text-[#1F2A44] mb-8">Diğer Yazılar</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {posts.map((post) => (
+          <motion.div
+            key={post.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-xl shadow-md overflow-hidden border border-[#1F2A44]/5 hover:border-[#4DA3FF]/30 transition-all duration-300 group"
+            onClick={() => navigate(`/blog/${post.slug}`)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && navigate(`/blog/${post.slug}`)}
+          >
+            {/* Image */}
+            <div className="relative aspect-[3/2] overflow-hidden">
+              <img 
+                src={post.image} 
+                alt={post.title}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+              <div className="absolute top-3 left-3">
+                <span className="bg-white/90 backdrop-blur-sm text-[#1F2A44] px-3 py-1 rounded-full text-xs font-medium">
+                  {post.category}
+                </span>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-4">
+              {/* Title */}
+              <h3 className="text-lg font-semibold text-[#1F2A44] group-hover:text-[#4DA3FF] transition-colors line-clamp-2 mb-2">
+                {post.title}
+              </h3>
+
+              {/* Meta Info */}
+              <div className="flex items-center gap-3 text-xs text-[#1F2A44]/60">
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="w-3 h-3" />
+                  <span>{formatDate(post.date)}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <BookOpen className="w-3 h-3" />
+                  <span>{post.readTime}</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const BlogDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -263,6 +401,9 @@ const BlogDetail = () => {
                 prose-img:rounded-xl prose-img:shadow-lg max-w-none"
             />
           </motion.div>
+
+          {/* Son Yazılar Bölümü */}
+          <SonYazilar currentPostId={post.id} />
         </div>
       </section>
     </>
