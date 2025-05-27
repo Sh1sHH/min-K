@@ -1,15 +1,8 @@
 import React from 'react';
-import { Users, TrendingUp, Clock, Shield, Award, BarChart } from 'lucide-react';
+import { Users, TrendingUp, Clock, Shield, Award, BarChart, FileSpreadsheet, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const benefits = [
-  {
-    icon: <TrendingUp className="w-8 h-8 text-[#4DA3FF]" />,
-    title: "Verimlilik Artışı",
-    description: "İK süreçlerinizi otomatikleştirerek %40'a varan verimlilik artışı sağlayın.",
-    highlight: "%40 Verimlilik",
-    delay: 0.2
-  },
   {
     icon: <Clock className="w-8 h-8 text-[#4DA3FF]" />,
     title: "Zaman Tasarrufu",
@@ -25,20 +18,6 @@ const benefits = [
     delay: 0.4
   },
   {
-    icon: <Users className="w-8 h-8 text-[#4DA3FF]" />,
-    title: "Çalışan Memnuniyeti",
-    description: "Şeffaf ve dijital süreçler.",
-    highlight: "Mutlu Çalışanlar",
-    delay: 0.5
-  },
-  {
-    icon: <BarChart className="w-8 h-8 text-[#4DA3FF]" />,
-    title: "Detaylı Raporlama",
-    description: "Gerçek zamanlı İK metrikleri.",
-    highlight: "Anlık Analiz",
-    delay: 0.6
-  },
-  {
     icon: <Award className="w-8 h-8 text-[#4DA3FF]" />,
     title: "Profesyonel Destek",
     description: "7/24 uzman İK danışmanlığı.",
@@ -47,26 +26,28 @@ const benefits = [
   }
 ];
 
-const stats = [
+const expertCards = [
   {
-    number: "500+",
-    label: "Aktif Müşteri",
-    description: "Türkiye'nin önde gelen şirketleri"
+    icon: <FileSpreadsheet className="w-8 h-8 text-white" />,
+    title: "Karmaşık Bordro İşlemlerinde Uzmanlık",
+    description: "ChatGPT cevapları yerine, yasal mevzuata hakim, güncel uygulamaları takip eden uzmanlarımızla bordro süreçlerinizi hatasız ve hızlı şekilde yönetin.",
+    points: [
+      "Vergiler, SGK kesintileri ve yasal hesaplamalar",
+      "Özel durumlar (BES, icra, nafaka kesintileri vb.)",
+      "Kanun değişikliklerine anında uyum"
+    ],
+    gradient: "from-[#52A0FD] to-[#6FC2FF]"
   },
   {
-    number: "50.000+",
-    label: "Yönetilen Çalışan",
-    description: "Mutlu ve üretken ekipler"
-  },
-  {
-    number: "%98",
-    label: "Müşteri Memnuniyeti",
-    description: "Sürekli artan başarı oranı"
-  },
-  {
-    number: "10+",
-    label: "Yıllık Tecrübe",
-    description: "Sektörde kanıtlanmış uzmanlık"
+    icon: <MessageSquare className="w-8 h-8 text-white" />,
+    title: "Gerçek İK Uzmanlarıyla Birebir Danışmanlık",
+    description: "Yapay zeka yanıtları değil, işinizi ve sektörünüzü anlayan gerçek İK profesyonellerinden stratejik tavsiyeler alın.",
+    points: [
+      "İşletmenize özel İK stratejileri",
+      "Sektörel tecrübeye dayalı öneriler",
+      "İhtiyaç duyduğunuz her an erişim"
+    ],
+    gradient: "from-[#4DA3FF] to-[#B1E5D3]"
   }
 ];
 
@@ -127,38 +108,50 @@ const Showcase = () => {
             </p>
           </motion.div>
 
-          {/* Stats Section */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-20"
-          >
-            {stats.map((stat, index) => (
+          {/* Uzman Kartları */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+            {expertCards.map((card, index) => (
               <motion.div
                 key={index}
-                whileHover={{ y: -5 }}
-                className="relative group"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.2 }}
+                className="bg-white rounded-xl shadow-lg overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-[#4DA3FF]/5 to-[#B1E5D3]/5 rounded-3xl transform transition-all duration-300 group-hover:scale-105" />
-                <div className="relative p-8 text-center">
-                  <div className="text-5xl font-bold bg-gradient-to-r from-[#4DA3FF] to-[#B1E5D3] bg-clip-text text-transparent mb-3">
-                    {stat.number}
+                <div className={`p-6 bg-gradient-to-r ${card.gradient}`}>
+                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                    {card.icon}
                   </div>
-                  <h3 className="text-xl font-semibold text-[#1F2A44] mb-2">
-                    {stat.label}
+                  <h3 className="text-xl font-semibold text-white mt-4">
+                    {card.title}
                   </h3>
-                  <p className="text-[#1F2A44]/70 text-sm">
-                    {stat.description}
+                </div>
+                
+                <div className="p-6">
+                  <p className="text-[#1F2A44]/70 mb-6">
+                    {card.description}
                   </p>
+                  
+                  <ul className="space-y-3">
+                    {card.points.map((point, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <div className="mt-1 min-w-[20px]">
+                          <div className="w-4 h-4 rounded-full bg-[#4DA3FF]/20 flex items-center justify-center">
+                            <div className="w-2 h-2 rounded-full bg-[#4DA3FF]"></div>
+                          </div>
+                        </div>
+                        <span className="text-[#1F2A44]/80 text-sm">{point}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </motion.div>
             ))}
-          </motion.div>
+          </div>
 
           {/* Benefits Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {benefits.map((benefit, index) => (
               <motion.div
                 key={index}

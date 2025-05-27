@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Clock, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
@@ -8,37 +8,46 @@ const services = [
     title: "Bordro Yönetimi",
     description: "Maaş, SGK, vergi hesaplamaları ve bordro süreçlerinizi otomatik olarak yönetin.",
     image: "/bordro2.webp",
-    link: "/bordro-hesaplama"
+    link: "/bordro-hesaplama",
+    isAvailable: true
   },
   {
     title: "Online Danışmanlık",
     description: "Uzman İK danışmanlarımızla online görüşmeler yapın, sorularınıza anında yanıt alın.",
     image: "/danismanlik4.webp",
-    link: "/danismanlik"
-  },
-  {
-    title: "İK Analitikleri",
-    description: "Detaylı raporlar ve analizlerle İK süreçlerinizi optimize edin.",
-    image: "/analitik2.webp",
-    link: "/ik-analitikleri"
-  },
-  {
-    title: "Performans Yönetimi",
-    description: "İzin, mesai, performans takibi gibi süreçleri tek platformdan yönetin.",
-    image: "/performans.webp",
-    link: "/performans-yonetimi"
+    link: "/danismanlik",
+    isAvailable: true
   },
   {
     title: "İşe Alım",
     description: "Çalışanlarınızın gelişimi için online eğitimler ve sertifikasyon programları.",
     image: "/isealim2.webp",
-    link: "/ise-alim"
+    link: "/ise-alim",
+    isAvailable: true
+  },
+  {
+    title: "Performans Yönetimi",
+    description: "İzin, mesai, performans takibi gibi süreçleri tek platformdan yönetin.",
+    image: "/performans.webp",
+    link: "/performans-yonetimi",
+    isAvailable: false,
+    comingSoon: true
+  },
+  {
+    title: "İK Analitikleri",
+    description: "Detaylı raporlar ve analizlerle İK süreçlerinizi optimize edin.",
+    image: "/analitik2.webp",
+    link: "/ik-analitikleri",
+    isAvailable: false,
+    comingSoon: true
   },
   {
     title: "Mevzuatsal İşlemler",
     description: "Çalışanlarınızın gelişimi için online eğitimler ve sertifikasyon programları.",
     image: "/mevzuat.webp",
-    link: "/mevzuatsal-islemler"
+    link: "/mevzuatsal-islemler",
+    isAvailable: false,
+    comingSoon: true
   }
 ];
 
@@ -62,6 +71,15 @@ const Services = () => {
         duration: 0.5
       }
     }
+  };
+
+  // Sayfa geçişinde en üste kaydırmak için yardımcı fonksiyon
+  const handleNavigate = () => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "instant"
+    });
   };
 
   return (
@@ -133,14 +151,21 @@ const Services = () => {
               <motion.div 
                 key={index}
                 variants={itemVariants}
-                className="bg-white rounded-3xl p-6 shadow-lg border border-[#1F2A44]/10 hover:shadow-xl transition-all duration-300 group"
+                className={`bg-white rounded-3xl p-6 shadow-lg border border-[#1F2A44]/10 hover:shadow-xl transition-all duration-300 group relative ${service.comingSoon ? 'opacity-80' : ''}`}
               >
+                {service.comingSoon && (
+                  <div className="absolute top-4 right-4 z-10 bg-[#4DA3FF]/10 text-[#4DA3FF] px-3 py-1 rounded-full text-xs font-medium flex items-center">
+                    <Clock className="w-3 h-3 mr-1" />
+                    <span>Yakında</span>
+                  </div>
+                )}
+                
                 {/* Image Container */}
                 <div className="w-full h-48 mb-6 overflow-hidden rounded-2xl">
                   <motion.img 
                     src={service.image}
                     alt={service.title}
-                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                    className={`w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 ${service.comingSoon ? 'filter grayscale-[30%]' : ''}`}
                     initial={{ scale: 1.1, opacity: 0 }}
                     whileInView={{ scale: 1, opacity: 1 }}
                     viewport={{ once: true }}
@@ -149,7 +174,7 @@ const Services = () => {
                 </div>
 
                 {/* Content */}
-                <h3 className="text-xl font-semibold text-[#1F2A44] mb-3">
+                <h3 className="text-xl font-semibold text-[#1F2A44] mb-3 flex items-center">
                   {service.title}
                 </h3>
                 <p className="text-[#1F2A44]/70 mb-6">
@@ -157,16 +182,23 @@ const Services = () => {
                 </p>
 
                 {/* Read More Link */}
-                <Link to={service.link}>
-                  <motion.div 
-                    className="flex items-center text-[#4DA3FF] font-medium group-hover:text-[#B1E5D3] transition-colors duration-300"
-                    whileHover={{ x: 10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <span>Daha Fazla</span>
-                    <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
-                  </motion.div>
-                </Link>
+                {service.isAvailable ? (
+                  <Link to={service.link} onClick={handleNavigate}>
+                    <motion.div 
+                      className="flex items-center text-[#4DA3FF] font-medium group-hover:text-[#B1E5D3] transition-colors duration-300"
+                      whileHover={{ x: 10 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <span>Daha Fazla</span>
+                      <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
+                    </motion.div>
+                  </Link>
+                ) : (
+                  <div className="flex items-center text-[#1F2A44]/60 font-medium">
+                    <span>Çok Yakında Hizmetinizde</span>
+                    <AlertCircle className="w-4 h-4 ml-2" />
+                  </div>
+                )}
               </motion.div>
             ))}
           </motion.div>

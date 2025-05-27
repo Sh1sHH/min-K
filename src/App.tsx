@@ -27,6 +27,7 @@ import PerformansYonetimiPage from './pages/PerformansYonetimiPage';
 import IseAlimPage from './pages/IseAlimPage';
 import MevzuatsalIslemlerPage from './pages/MevzuatsalIslemlerPage';
 import SssPage from './pages/SssPage';
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
   const location = useLocation();
@@ -76,6 +77,7 @@ function App() {
   return (
     <AuthProvider>
       <div className="min-h-screen relative bg-[#0F0F0F] overflow-hidden">
+        <ScrollToTop />
         {/* Enhanced Gradient Background */}
         <div className="absolute inset-0 w-full h-full">
           {/* Main gradient with enhanced color stops */}
