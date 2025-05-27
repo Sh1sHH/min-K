@@ -36,7 +36,7 @@ const AYLAR = [
 
 const BordroHesaplamaPage = () => {
   // Form değerleri
-  const [brutMaas, setBrutMaas] = useState<number>(15000);
+  const [brutMaas, setBrutMaas] = useState<number>(26005.5);
   const [ucretTipi, setUcretTipi] = useState<string>("brütten-nete");
   const [yil, setYil] = useState<string>("2025");
   const [iseGostergeMaliyeti, setIseGostergeMaliyeti] = useState<boolean>(true);
@@ -359,92 +359,99 @@ const BordroHesaplamaPage = () => {
               <div className="space-y-8">
                 {/* Bordro Hesaplama Formu */}
                 <div className="grid grid-cols-1 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-sm font-medium block mb-1.5">Ücret Tipi</Label>
-                      <div className="space-y-2 mt-2">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox 
-                            id="bruttenNete" 
-                            checked={ucretTipi === "brütten-nete"}
-                            onCheckedChange={(checked: boolean | "indeterminate") => {
-                              if (checked) setUcretTipi("brütten-nete");
-                            }}
-                          />
-                          <Label 
-                            htmlFor="bruttenNete" 
-                            className="text-sm text-[#1F2A44]/80"
-                          >
-                            Brütten Nete
-                          </Label>
+                  <div className="space-y-6">
+                    {/* Ücret Tipi, Yıl ve Brüt Maaş - Tek Satırda */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Ücret Tipi */}
+                      <div>
+                        <Label className="text-sm font-medium block mb-3">Ücret Tipi</Label>
+                        <div className="flex flex-row gap-4 mt-1">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="bruttenNete" 
+                              checked={ucretTipi === "brütten-nete"}
+                              onCheckedChange={(checked: boolean | "indeterminate") => {
+                                if (checked) setUcretTipi("brütten-nete");
+                              }}
+                            />
+                            <Label 
+                              htmlFor="bruttenNete" 
+                              className="text-sm text-[#1F2A44]/80"
+                            >
+                              Brütten Nete
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="nettenBrute" 
+                              checked={ucretTipi === "netten-brüte"}
+                              onCheckedChange={(checked: boolean | "indeterminate") => {
+                                if (checked) setUcretTipi("netten-brüte");
+                              }}
+                            />
+                            <Label 
+                              htmlFor="nettenBrute" 
+                              className="text-sm text-[#1F2A44]/80"
+                            >
+                              Netten Brüte
+                            </Label>
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox 
-                            id="nettenBrute" 
-                            checked={ucretTipi === "netten-brüte"}
-                            onCheckedChange={(checked: boolean | "indeterminate") => {
-                              if (checked) setUcretTipi("netten-brüte");
-                            }}
-                          />
-                          <Label 
-                            htmlFor="nettenBrute" 
-                            className="text-sm text-[#1F2A44]/80"
-                          >
-                            Netten Brüte
-                          </Label>
+                      </div>
+
+                      {/* Yıl */}
+                      <div>
+                        <Label className="text-sm font-medium block mb-3">Yıl</Label>
+                        <div className="flex flex-row gap-4 mt-1">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="yil2024" 
+                              checked={yil === "2024"}
+                              onCheckedChange={(checked: boolean | "indeterminate") => {
+                                if (checked) setYil("2024");
+                              }}
+                            />
+                            <Label 
+                              htmlFor="yil2024" 
+                              className="text-sm text-[#1F2A44]/80"
+                            >
+                              2024
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="yil2025" 
+                              checked={yil === "2025"}
+                              onCheckedChange={(checked: boolean | "indeterminate") => {
+                                if (checked) setYil("2025");
+                              }}
+                            />
+                            <Label 
+                              htmlFor="yil2025" 
+                              className="text-sm text-[#1F2A44]/80"
+                            >
+                              2025
+                            </Label>
+                          </div>
                         </div>
+                      </div>
+
+                      {/* Brüt Maaş */}
+                      <div>
+                        <Label htmlFor="brutMaas" className="text-sm font-medium block mb-3">Brüt Maaş</Label>
+                        <Input 
+                          id="brutMaas" 
+                          type="number" 
+                          className="border-[#1F2A44]/20" 
+                          value={brutMaas}
+                          onChange={(e) => setBrutMaas(Number(e.target.value))}
+                        />
                       </div>
                     </div>
 
-                    <div>
-                      <Label className="text-sm font-medium block mb-1.5">Yıl</Label>
-                      <div className="space-y-2 mt-2">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox 
-                            id="yil2024" 
-                            checked={yil === "2024"}
-                            onCheckedChange={(checked: boolean | "indeterminate") => {
-                              if (checked) setYil("2024");
-                            }}
-                          />
-                          <Label 
-                            htmlFor="yil2024" 
-                            className="text-sm text-[#1F2A44]/80"
-                          >
-                            2024
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox 
-                            id="yil2025" 
-                            checked={yil === "2025"}
-                            onCheckedChange={(checked: boolean | "indeterminate") => {
-                              if (checked) setYil("2025");
-                            }}
-                          />
-                          <Label 
-                            htmlFor="yil2025" 
-                            className="text-sm text-[#1F2A44]/80"
-                          >
-                            2025
-                          </Label>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="brutMaas" className="text-sm font-medium block mb-1.5">Brüt Maaş</Label>
-                      <Input 
-                        id="brutMaas" 
-                        type="number" 
-                        className="border-[#1F2A44]/20" 
-                        value={brutMaas}
-                        onChange={(e) => setBrutMaas(Number(e.target.value))}
-                      />
-                    </div>
-
-                    <div className="space-y-3 mt-4">
-                      <div className="flex items-center space-x-2">
+                    {/* SGK İndirimleri ve İşveren Maliyeti */}
+                    <div className="bg-[#F9FAFC] p-4 rounded-lg border border-[#1F2A44]/10">
+                      <div className="flex items-center space-x-2 mb-3">
                         <Checkbox 
                           id="iseGostergeMaliyeti" 
                           checked={iseGostergeMaliyeti}
@@ -458,38 +465,40 @@ const BordroHesaplamaPage = () => {
                         </Label>
                       </div>
 
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="sgkIndirim5" 
-                          checked={sgkIndirim5}
-                          onCheckedChange={(checked: boolean | "indeterminate") => {
-                            setSgkIndirim5(checked as boolean);
-                            if (checked) setSgkIndirim4(false);
-                          }}
-                        />
-                        <Label 
-                          htmlFor="sgkIndirim5" 
-                          className="text-sm text-[#1F2A44]/80"
-                        >
-                          Sigorta primi işveren payının hesabında, 5 puanlık indirim dikkate alınsın.
-                        </Label>
-                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="sgkIndirim5" 
+                            checked={sgkIndirim5}
+                            onCheckedChange={(checked: boolean | "indeterminate") => {
+                              setSgkIndirim5(checked as boolean);
+                              if (checked) setSgkIndirim4(false);
+                            }}
+                          />
+                          <Label 
+                            htmlFor="sgkIndirim5" 
+                            className="text-sm text-[#1F2A44]/80"
+                          >
+                            Sigorta primi işveren payının hesabında, 5 puanlık indirim dikkate alınsın.
+                          </Label>
+                        </div>
 
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="sgkIndirim4" 
-                          checked={sgkIndirim4}
-                          onCheckedChange={(checked: boolean | "indeterminate") => {
-                            setSgkIndirim4(checked as boolean);
-                            if (checked) setSgkIndirim5(false);
-                          }}
-                        />
-                        <Label 
-                          htmlFor="sgkIndirim4" 
-                          className="text-sm text-[#1F2A44]/80"
-                        >
-                          Sigorta primi işveren payının hesabında, 4 puanlık indirim dikkate alınsın.
-                        </Label>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="sgkIndirim4" 
+                            checked={sgkIndirim4}
+                            onCheckedChange={(checked: boolean | "indeterminate") => {
+                              setSgkIndirim4(checked as boolean);
+                              if (checked) setSgkIndirim5(false);
+                            }}
+                          />
+                          <Label 
+                            htmlFor="sgkIndirim4" 
+                            className="text-sm text-[#1F2A44]/80"
+                          >
+                            Sigorta primi işveren payının hesabında, 4 puanlık indirim dikkate alınsın.
+                          </Label>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -568,7 +577,7 @@ const BordroHesaplamaPage = () => {
                     </table>
                   </div>
 
-                  <div className="text-xs text-[#1F2A44]/60 space-y-1 mt-4">
+                  <div className="text-xs text-[#1F2A44]/60 space-y-1 mt-4 bg-[#F9FAFC] p-4 rounded-lg border border-[#1F2A44]/10">
                     <p>1. Yapılan maaş hesaplamalarında para birimi TL ve takip eden yıllarda TL değerleri esas alınmaktadır.</p>
                     <p>2. Yapılan maaş hesaplamaları ile ilgili olarak kesin bordro işlemleri öncesi uzman veya danışman bilgisine başvurulması tavsiye olunur.</p>
                     <p>3. Rakam asgari ücretin altında olduğunda hesaplama yapılmaz.</p>
