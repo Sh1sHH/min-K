@@ -1,13 +1,19 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, ChevronRight } from 'lucide-react';
+import { ArrowRight, ChevronRight, ChevronDown } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
 import { faqs } from '@/lib/faqData';
 
 const FAQ = () => {
+  const [openFaqId, setOpenFaqId] = useState<string | null>(null);
+
+  const toggleFaq = (id: string) => {
+    setOpenFaqId(openFaqId === id ? null : id);
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -97,18 +103,40 @@ const FAQ = () => {
                 <motion.div
                   key={faq.id} 
                   variants={itemVariants}
-                  className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 hover:border-[#4DA3FF]/50 hover:shadow-lg transition-all duration-300 group"
+                  className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 hover:border-[#4DA3FF]/50 transition-all duration-300 group"
                 >
-                  <Link 
-                    to={`/sss#${faq.id}`}
-                    className="flex items-center justify-between p-4 sm:p-5 lg:p-6 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4DA3FF] rounded-xl lg:rounded-2xl"
-                    aria-label={`Soru: ${faq.question}, tüm sıkça sorulan soruları görüntüle`}
-                  >
-                    <h3 className="text-base sm:text-lg font-semibold text-[#1F2A44] group-hover:text-[#4DA3FF] transition-colors duration-200">
-                      {faq.question}
-                    </h3>
-                    <ChevronRight className="w-5 h-5 text-[#4DA3FF] flex-shrink-0 transform transition-transform group-hover:translate-x-1 duration-200" />
-                  </Link>
+                  <div className="flex flex-col">
+                    <button 
+                      onClick={() => toggleFaq(faq.id)}
+                      className="flex items-center justify-between p-4 sm:p-5 lg:p-6 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4DA3FF] rounded-xl lg:rounded-2xl w-full text-left"
+                      aria-expanded={openFaqId === faq.id}
+                      aria-controls={`faq-answer-${faq.id}`}
+                    >
+                      <h3 className="text-base sm:text-lg font-semibold text-[#1F2A44] group-hover:text-[#4DA3FF] transition-colors duration-200">
+                        {faq.question}
+                      </h3>
+                      {openFaqId === faq.id ? (
+                        <ChevronDown className="w-5 h-5 text-[#4DA3FF] flex-shrink-0 transform transition-transform duration-200" />
+                      ) : (
+                        <ChevronRight className="w-5 h-5 text-[#4DA3FF] flex-shrink-0 transform transition-transform group-hover:translate-x-1 duration-200" />
+                      )}
+                    </button>
+                    
+                    {openFaqId === faq.id && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        id={`faq-answer-${faq.id}`}
+                        className="px-4 sm:px-5 lg:px-6 pb-4 sm:pb-5 lg:pb-6 pt-0 text-[#1F2A44]/70"
+                      >
+                        <div className="pt-2 border-t border-slate-100">
+                          <p>{faq.answer}</p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
                 </motion.div>
               ))}
             </motion.div>
