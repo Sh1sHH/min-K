@@ -40,8 +40,8 @@ function App() {
       id: "pro",
       name: "Pro",
       description: "Büyüyen işletmeler için",
-      monthlyPrice: "299₺",
-      yearlyPrice: "239₺",
+      monthlyPrice: "399₺",
+      yearlyPrice: "319₺",
       features: [
         { text: "5 çalışan kaydı" },
         { text: "Gelişmiş bordro  aracı" },
