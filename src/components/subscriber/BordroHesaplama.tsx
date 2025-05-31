@@ -331,18 +331,27 @@ const BordroHesaplama = ({ isDarkMode = false }) => {
                 />
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
 
-            {/* SGK İndirimleri */}
-            <div className="w-full md:w-1/4">
-              <div className="flex items-center mb-2">
-                <Label className={cn(
-                  "text-sm font-medium block",
-                  isDarkMode && "text-white"
-                )}>Hesaplama Seçenekleri</Label>
-              </div>
-              <div className="flex items-center space-x-2 mb-2">
+      {/* Hesaplama Seçenekleri - Yatay Kart */}
+      <div className="w-full">
+        <Card className={cn(
+          "relative overflow-hidden border-dashed",
+          isDarkMode && "bg-sky-950/80 border-sky-800 shadow-lg"
+        )}>
+          <CardHeader className="py-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Calculator className="w-4 h-4 text-primary" />
+              Hesaplama Seçenekleri
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-2">
+            <div className="flex flex-row items-center gap-8">
+              <div className="flex items-center space-x-2">
                 <Checkbox 
-                  id="iseGostergeMaliyeti" 
+                  id="iseGostergeMaliyetiAlt" 
                   checked={iseGostergeMaliyeti}
                   onCheckedChange={(checked) => setIseGostergeMaliyeti(checked === true)}
                   className={cn(
@@ -350,7 +359,7 @@ const BordroHesaplama = ({ isDarkMode = false }) => {
                   )}
                 />
                 <Label 
-                  htmlFor="iseGostergeMaliyeti" 
+                  htmlFor="iseGostergeMaliyetiAlt" 
                   className={cn(
                     "text-sm",
                     isDarkMode && "text-gray-300"
@@ -359,9 +368,9 @@ const BordroHesaplama = ({ isDarkMode = false }) => {
                   İşveren maliyetini göster
                 </Label>
               </div>
-              <div className="flex items-center space-x-2 ml-2">
+              <div className="flex items-center space-x-2">
                 <Checkbox 
-                  id="sgkIndirim5" 
+                  id="sgkIndirim5Alt" 
                   checked={sgkIndirim5}
                   onCheckedChange={(checked) => {
                     setSgkIndirim5(checked === true);
@@ -372,7 +381,7 @@ const BordroHesaplama = ({ isDarkMode = false }) => {
                   )}
                 />
                 <Label 
-                  htmlFor="sgkIndirim5" 
+                  htmlFor="sgkIndirim5Alt" 
                   className={cn(
                     "text-sm cursor-pointer",
                     isDarkMode && "text-gray-300"
@@ -381,9 +390,9 @@ const BordroHesaplama = ({ isDarkMode = false }) => {
                   5 puanlık indirim
                 </Label>
               </div>
-              <div className="flex items-center space-x-2 ml-2">
+              <div className="flex items-center space-x-2">
                 <Checkbox 
-                  id="sgkIndirim4" 
+                  id="sgkIndirim4Alt" 
                   checked={sgkIndirim4}
                   onCheckedChange={(checked) => {
                     setSgkIndirim4(checked === true);
@@ -394,7 +403,7 @@ const BordroHesaplama = ({ isDarkMode = false }) => {
                   )}
                 />
                 <Label 
-                  htmlFor="sgkIndirim4" 
+                  htmlFor="sgkIndirim4Alt" 
                   className={cn(
                     "text-sm cursor-pointer",
                     isDarkMode && "text-gray-300"
@@ -404,9 +413,9 @@ const BordroHesaplama = ({ isDarkMode = false }) => {
                 </Label>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Sonuç Tablosu */}
       {sonuclar && (
@@ -430,29 +439,129 @@ const BordroHesaplama = ({ isDarkMode = false }) => {
             </CardHeader>
             <CardContent className="px-2 pb-4">
               <div className="overflow-x-auto">
-                <table className="w-full text-xs min-w-[1800px]">
+                <table className="w-full text-xs min-w-[1800px] border-separate border-spacing-0">
                   <thead>
+                    <tr>
+                      <th colSpan={1} className={cn(
+                        "p-2 text-center font-medium text-xs uppercase rounded-tl-md",
+                        isDarkMode ? "bg-sky-950 text-sky-100" : "bg-blue-100 text-blue-800"
+                      )}>
+                        Dönem
+                      </th>
+                      <th colSpan={1} className={cn(
+                        "p-2 text-center font-medium text-xs uppercase",
+                        isDarkMode ? "bg-indigo-950 text-indigo-100" : "bg-indigo-100 text-indigo-800"
+                      )}>
+                        Kazanç
+                      </th>
+                      <th colSpan={2} className={cn(
+                        "p-2 text-center font-medium text-xs uppercase",
+                        isDarkMode ? "bg-purple-950 text-purple-100" : "bg-purple-100 text-purple-800"
+                      )}>
+                        Çalışan Primleri
+                      </th>
+                      <th colSpan={2} className={cn(
+                        "p-2 text-center font-medium text-xs uppercase",
+                        isDarkMode ? "bg-rose-950 text-rose-100" : "bg-rose-100 text-rose-800"
+                      )}>
+                        Vergi Matrahı
+                      </th>
+                      <th colSpan={3} className={cn(
+                        "p-2 text-center font-medium text-xs uppercase",
+                        isDarkMode ? "bg-amber-950 text-amber-100" : "bg-amber-100 text-amber-800"
+                      )}>
+                        Gelir Vergisi
+                      </th>
+                      <th colSpan={3} className={cn(
+                        "p-2 text-center font-medium text-xs uppercase",
+                        isDarkMode ? "bg-teal-950 text-teal-100" : "bg-teal-100 text-teal-800"
+                      )}>
+                        Damga Vergisi
+                      </th>
+                      <th colSpan={1} className={cn(
+                        "p-2 text-center font-medium text-xs uppercase",
+                        isDarkMode ? "bg-emerald-950 text-emerald-100" : "bg-emerald-100 text-emerald-800"
+                      )}>
+                        Sonuç
+                      </th>
+                      {iseGostergeMaliyeti && (
+                        <th colSpan={3} className={cn(
+                          "p-2 text-center font-medium text-xs uppercase rounded-tr-md",
+                          isDarkMode ? "bg-cyan-950 text-cyan-100" : "bg-cyan-100 text-cyan-800"
+                        )}>
+                          İşveren Maliyeti
+                        </th>
+                      )}
+                    </tr>
                     <tr className={cn(
-                      isDarkMode ? "bg-sky-950/60 text-gray-200" : "bg-muted/50"
+                      isDarkMode ? "text-gray-200" : "text-gray-700"
                     )}>
-                      <th className="border-b p-2 text-left font-medium uppercase sticky left-0 z-10">AY</th>
-                      <th className="border-b p-2 text-right font-medium uppercase">BRÜT</th>
-                      <th className="border-b p-2 text-right font-medium uppercase">SGK İŞÇİ</th>
-                      <th className="border-b p-2 text-right font-medium uppercase">İŞSİZLİK İŞÇİ</th>
-                      <th className="border-b p-2 text-right font-medium uppercase">GELİR VERGİSİ MATRAHI</th>
-                      <th className="border-b p-2 text-right font-medium uppercase">KÜMÜLATİF VERGİ MATRAHI</th>
-                      <th className="border-b p-2 text-right font-medium uppercase">HESAPLANAN GELİR VERGİSİ</th>
-                      <th className="border-b p-2 text-right font-medium uppercase">GELİR VERGİSİ İSTİSNASI</th>
-                      <th className="border-b p-2 text-right font-medium uppercase">KESİLECEK GELİR VERGİSİ</th>
-                      <th className="border-b p-2 text-right font-medium uppercase">DAMGA VERGİSİ</th>
-                      <th className="border-b p-2 text-right font-medium uppercase">DAMGA VERGİSİ İSTİSNASI</th>
-                      <th className="border-b p-2 text-right font-medium uppercase">KESİLECEK DAMGA VERGİSİ</th>
-                      <th className="border-b p-2 text-right font-medium uppercase sticky right-0 z-10">NET ÜCRET</th>
+                      <th className={cn(
+                        "border-b p-2 text-left font-medium uppercase sticky left-0 z-10 border-l border-t rounded-tl-md",
+                        isDarkMode ? "bg-sky-950/80" : "bg-blue-50"
+                      )}>AY</th>
+                      <th className={cn(
+                        "border-b p-2 text-right font-medium uppercase border-t",
+                        isDarkMode ? "bg-indigo-950/80" : "bg-indigo-50"
+                      )}>BRÜT</th>
+                      <th className={cn(
+                        "border-b p-2 text-right font-medium uppercase border-t",
+                        isDarkMode ? "bg-purple-950/80" : "bg-purple-50"
+                      )}>SGK İŞÇİ</th>
+                      <th className={cn(
+                        "border-b p-2 text-right font-medium uppercase border-t",
+                        isDarkMode ? "bg-purple-950/80" : "bg-purple-50"
+                      )}>İŞSİZLİK İŞÇİ</th>
+                      <th className={cn(
+                        "border-b p-2 text-right font-medium uppercase border-t",
+                        isDarkMode ? "bg-rose-950/80" : "bg-rose-50"
+                      )}>GELİR VERGİSİ MATRAHI</th>
+                      <th className={cn(
+                        "border-b p-2 text-right font-medium uppercase border-t",
+                        isDarkMode ? "bg-rose-950/80" : "bg-rose-50"
+                      )}>KÜM. VERGİ MATRAHI</th>
+                      <th className={cn(
+                        "border-b p-2 text-right font-medium uppercase border-t",
+                        isDarkMode ? "bg-amber-950/80" : "bg-amber-50"
+                      )}>HESAPLANAN G.V.</th>
+                      <th className={cn(
+                        "border-b p-2 text-right font-medium uppercase border-t",
+                        isDarkMode ? "bg-amber-950/80" : "bg-amber-50"
+                      )}>G.V. İSTİSNASI</th>
+                      <th className={cn(
+                        "border-b p-2 text-right font-medium uppercase border-t",
+                        isDarkMode ? "bg-amber-950/80" : "bg-amber-50"
+                      )}>KESİLECEK G.V.</th>
+                      <th className={cn(
+                        "border-b p-2 text-right font-medium uppercase border-t",
+                        isDarkMode ? "bg-teal-950/80" : "bg-teal-50"
+                      )}>DAMGA VERGİSİ</th>
+                      <th className={cn(
+                        "border-b p-2 text-right font-medium uppercase border-t",
+                        isDarkMode ? "bg-teal-950/80" : "bg-teal-50"
+                      )}>D.V. İSTİSNASI</th>
+                      <th className={cn(
+                        "border-b p-2 text-right font-medium uppercase border-t",
+                        isDarkMode ? "bg-teal-950/80" : "bg-teal-50"
+                      )}>KESİLECEK D.V.</th>
+                      <th className={cn(
+                        "border-b p-2 text-right font-medium uppercase sticky right-0 z-10 border-t",
+                        isDarkMode ? "bg-emerald-950/80" : "bg-emerald-50"
+                      )}>NET ÜCRET</th>
                       {iseGostergeMaliyeti && (
                         <>
-                          <th className="border-b p-2 text-right font-medium uppercase">SGK İŞVEREN</th>
-                          <th className="border-b p-2 text-right font-medium uppercase">SGK İŞSİZLİK İŞVEREN</th>
-                          <th className="border-b p-2 text-right font-medium uppercase">TOPLAM MALİYET</th>
+                          <th className={cn(
+                            "border-b p-2 text-right font-medium uppercase border-t",
+                            isDarkMode ? "bg-cyan-950/80" : "bg-cyan-50"
+                          )}>SGK İŞVEREN</th>
+                          <th className={cn(
+                            "border-b p-2 text-right font-medium uppercase border-t",
+                            isDarkMode ? "bg-cyan-950/80" : "bg-cyan-50"
+                          )}>İŞSZ. İŞVEREN</th>
+                          <th className={cn(
+                            "border-b p-2 text-right font-medium uppercase border-t border-r rounded-tr-md",
+                            isDarkMode ? "bg-cyan-950/80" : "bg-cyan-50"
+                          )}>TOPLAM MALİYET</th>
                         </>
                       )}
                     </tr>
@@ -462,82 +571,172 @@ const BordroHesaplama = ({ isDarkMode = false }) => {
                       <tr 
                         key={ay} 
                         className={cn(
-                          index === AYLAR.length - 1 
-                            ? (isDarkMode ? "font-medium bg-sky-900/30 text-white" : "font-medium bg-blue-50")
-                            : isDarkMode 
-                              ? "hover:bg-sky-900/20" 
-                              : index % 2 === 0 
-                                ? "bg-white hover:bg-gray-50" 
-                                : "bg-gray-50 hover:bg-gray-100",
+                          index === AYLAR.length - 1 && "font-medium",
                           isDarkMode && "text-gray-200"
                         )}
                       >
                         <td className={cn(
-                          "border-b p-2 sticky left-0 z-10",
+                          "border-b p-2 sticky left-0 z-10 border-l",
                           index === AYLAR.length - 1 
-                            ? (isDarkMode ? "bg-sky-900/30 font-semibold" : "bg-blue-50 font-semibold")
+                            ? (isDarkMode ? "bg-sky-900/70 font-semibold" : "bg-blue-100/70 font-semibold")
                             : isDarkMode 
                               ? "bg-sky-950/80" 
-                              : index % 2 === 0 
-                                ? "bg-white" 
-                                : "bg-gray-50"
+                              : "bg-blue-50/80",
+                          index === AYLAR.length - 1 && "rounded-bl-md"
                         )}>
                           {ay}
                         </td>
-                        <td className="border-b p-2 text-right">
+                        <td className={cn(
+                          "border-b p-2 text-right",
+                          index === AYLAR.length - 1 
+                            ? (isDarkMode ? "bg-indigo-900/50" : "bg-indigo-100/70")
+                            : isDarkMode 
+                              ? "bg-indigo-950/40 hover:bg-indigo-900/30" 
+                              : "bg-indigo-50/80 hover:bg-indigo-100/50"
+                        )}>
                           {sonuclar && formatNumber(sonuclar[index]?.brut || 0)}
                         </td>
-                        <td className="border-b p-2 text-right">
+                        <td className={cn(
+                          "border-b p-2 text-right",
+                          index === AYLAR.length - 1 
+                            ? (isDarkMode ? "bg-purple-900/50" : "bg-purple-100/70")
+                            : isDarkMode 
+                              ? "bg-purple-950/40 hover:bg-purple-900/30" 
+                              : "bg-purple-50/80 hover:bg-purple-100/50"
+                        )}>
                           {sonuclar && formatNumber(sonuclar[index]?.sgkIsci || 0)}
                         </td>
-                        <td className="border-b p-2 text-right">
+                        <td className={cn(
+                          "border-b p-2 text-right",
+                          index === AYLAR.length - 1 
+                            ? (isDarkMode ? "bg-purple-900/50" : "bg-purple-100/70")
+                            : isDarkMode 
+                              ? "bg-purple-950/40 hover:bg-purple-900/30" 
+                              : "bg-purple-50/80 hover:bg-purple-100/50"
+                        )}>
                           {sonuclar && formatNumber(sonuclar[index]?.issizlikIsci || 0)}
                         </td>
-                        <td className="border-b p-2 text-right">
+                        <td className={cn(
+                          "border-b p-2 text-right",
+                          index === AYLAR.length - 1 
+                            ? (isDarkMode ? "bg-rose-900/50" : "bg-rose-100/70")
+                            : isDarkMode 
+                              ? "bg-rose-950/40 hover:bg-rose-900/30" 
+                              : "bg-rose-50/80 hover:bg-rose-100/50"
+                        )}>
                           {sonuclar && formatNumber(sonuclar[index]?.gelirVergisiMatrahi || 0)}
                         </td>
-                        <td className="border-b p-2 text-right">
+                        <td className={cn(
+                          "border-b p-2 text-right",
+                          index === AYLAR.length - 1 
+                            ? (isDarkMode ? "bg-rose-900/50" : "bg-rose-100/70")
+                            : isDarkMode 
+                              ? "bg-rose-950/40 hover:bg-rose-900/30" 
+                              : "bg-rose-50/80 hover:bg-rose-100/50"
+                        )}>
                           {sonuclar && formatNumber(sonuclar[index]?.kumulatifVergiMatrahi || 0)}
                         </td>
-                        <td className="border-b p-2 text-right">
+                        <td className={cn(
+                          "border-b p-2 text-right",
+                          index === AYLAR.length - 1 
+                            ? (isDarkMode ? "bg-amber-900/50" : "bg-amber-100/70")
+                            : isDarkMode 
+                              ? "bg-amber-950/40 hover:bg-amber-900/30" 
+                              : "bg-amber-50/80 hover:bg-amber-100/50"
+                        )}>
                           {sonuclar && formatNumber(sonuclar[index]?.aylikGelirVergisi || 0)}
                         </td>
-                        <td className="border-b p-2 text-right">
+                        <td className={cn(
+                          "border-b p-2 text-right",
+                          index === AYLAR.length - 1 
+                            ? (isDarkMode ? "bg-amber-900/50" : "bg-amber-100/70")
+                            : isDarkMode 
+                              ? "bg-amber-950/40 hover:bg-amber-900/30" 
+                              : "bg-amber-50/80 hover:bg-amber-100/50"
+                        )}>
                           {sonuclar && formatNumber(sonuclar[index]?.asgariUcretGelirVergisiIstisnasi || 0)}
                         </td>
-                        <td className="border-b p-2 text-right">
+                        <td className={cn(
+                          "border-b p-2 text-right",
+                          index === AYLAR.length - 1 
+                            ? (isDarkMode ? "bg-amber-900/50" : "bg-amber-100/70")
+                            : isDarkMode 
+                              ? "bg-amber-950/40 hover:bg-amber-900/30" 
+                              : "bg-amber-50/80 hover:bg-amber-100/50"
+                        )}>
                           {sonuclar && formatNumber(sonuclar[index]?.kesilecekGelirVergisi || 0)}
                         </td>
-                        <td className="border-b p-2 text-right">
+                        <td className={cn(
+                          "border-b p-2 text-right",
+                          index === AYLAR.length - 1 
+                            ? (isDarkMode ? "bg-teal-900/50" : "bg-teal-100/70")
+                            : isDarkMode 
+                              ? "bg-teal-950/40 hover:bg-teal-900/30" 
+                              : "bg-teal-50/80 hover:bg-teal-100/50"
+                        )}>
                           {sonuclar && formatNumber(sonuclar[index]?.damgaVergisi || 0)}
                         </td>
-                        <td className="border-b p-2 text-right">
+                        <td className={cn(
+                          "border-b p-2 text-right",
+                          index === AYLAR.length - 1 
+                            ? (isDarkMode ? "bg-teal-900/50" : "bg-teal-100/70")
+                            : isDarkMode 
+                              ? "bg-teal-950/40 hover:bg-teal-900/30" 
+                              : "bg-teal-50/80 hover:bg-teal-100/50"
+                        )}>
                           {sonuclar && formatNumber(sonuclar[index]?.asgariUcretDamgaVergisiIstisnasi || 0)}
                         </td>
-                        <td className="border-b p-2 text-right">
+                        <td className={cn(
+                          "border-b p-2 text-right",
+                          index === AYLAR.length - 1 
+                            ? (isDarkMode ? "bg-teal-900/50" : "bg-teal-100/70")
+                            : isDarkMode 
+                              ? "bg-teal-950/40 hover:bg-teal-900/30" 
+                              : "bg-teal-50/80 hover:bg-teal-100/50"
+                        )}>
                           {sonuclar && formatNumber(sonuclar[index]?.kesilecekDamgaVergisi || 0)}
                         </td>
                         <td className={cn(
                           "border-b p-2 text-right sticky right-0 z-10",
                           index === AYLAR.length - 1 
-                            ? (isDarkMode ? "bg-sky-900/30 font-bold" : "bg-blue-50 font-bold")
+                            ? (isDarkMode ? "bg-emerald-900/70 font-bold" : "bg-emerald-100 font-bold")
                             : isDarkMode 
-                              ? "bg-sky-950/80" 
-                              : index % 2 === 0 
-                                ? "bg-white" 
-                                : "bg-gray-50"
+                              ? "bg-emerald-950/80 hover:bg-emerald-900/40" 
+                              : "bg-emerald-50/80 hover:bg-emerald-100/50"
                         )}>
                           {sonuclar && formatNumber(sonuclar[index]?.net || 0)}
                         </td>
                         {iseGostergeMaliyeti && (
                           <>
-                            <td className="border-b p-2 text-right">
+                            <td className={cn(
+                              "border-b p-2 text-right",
+                              index === AYLAR.length - 1 
+                                ? (isDarkMode ? "bg-cyan-900/50" : "bg-cyan-100/70")
+                                : isDarkMode 
+                                  ? "bg-cyan-950/40 hover:bg-cyan-900/30" 
+                                  : "bg-cyan-50/80 hover:bg-cyan-100/50"
+                            )}>
                               {sonuclar && formatNumber(sonuclar[index]?.sgkIsveren || 0)}
                             </td>
-                            <td className="border-b p-2 text-right">
+                            <td className={cn(
+                              "border-b p-2 text-right",
+                              index === AYLAR.length - 1 
+                                ? (isDarkMode ? "bg-cyan-900/50" : "bg-cyan-100/70")
+                                : isDarkMode 
+                                  ? "bg-cyan-950/40 hover:bg-cyan-900/30" 
+                                  : "bg-cyan-50/80 hover:bg-cyan-100/50"
+                            )}>
                               {sonuclar && formatNumber(sonuclar[index]?.issizlikIsveren || 0)}
                             </td>
-                            <td className="border-b p-2 text-right">
+                            <td className={cn(
+                              "border-b p-2 text-right border-r",
+                              index === AYLAR.length - 1 
+                                ? (isDarkMode ? "bg-cyan-900/50" : "bg-cyan-100/70")
+                                : isDarkMode 
+                                  ? "bg-cyan-950/40 hover:bg-cyan-900/30" 
+                                  : "bg-cyan-50/80 hover:bg-cyan-100/50",
+                              index === AYLAR.length - 1 && "rounded-br-md"
+                            )}>
                               {sonuclar && formatNumber(sonuclar[index]?.toplamMaliyet || 0)}
                             </td>
                           </>
@@ -548,22 +747,81 @@ const BordroHesaplama = ({ isDarkMode = false }) => {
                 </table>
               </div>
 
-              <div className={cn(
-                "flex items-center mt-4 p-4 rounded-md border mx-2",
-                isDarkMode ? "bg-sky-950/60 border-sky-800" : "bg-blue-50 border-blue-100"
-              )}>
-                <Info className={cn(
-                  "h-5 w-5 mr-2 shrink-0",
-                  isDarkMode ? "text-sky-400" : "text-blue-500"
-                )} />
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 mx-2">
                 <div className={cn(
-                  "text-xs space-y-1",
-                  isDarkMode ? "text-gray-300" : "text-slate-600"
+                  "p-3 rounded-md border flex flex-col",
+                  isDarkMode ? "bg-sky-950/60 border-sky-800" : "bg-blue-50 border-blue-100"
                 )}>
-                  <p>1. Yapılan maaş hesaplamalarında para birimi TL ve takip eden yıllarda TL değerleri esas alınmaktadır.</p>
-                  <p>2. Yapılan maaş hesaplamaları ile ilgili olarak kesin bordro işlemleri öncesi uzman veya danışman bilgisine başvurulması tavsiye olunur.</p>
-                  <p>3. Rakam asgari ücretin altında olduğunda hesaplama yapılmaz.</p>
-                  <p>4. 2022 Yıl ve sonrası için AGİ hesaplanmaz.</p>
+                  <div className="flex items-center mb-2">
+                    <Info className={cn("h-4 w-4 mr-2", isDarkMode ? "text-sky-400" : "text-blue-500")} />
+                    <p className={cn(
+                      "text-xs font-medium",
+                      isDarkMode ? "text-gray-200" : "text-slate-700"
+                    )}>
+                      Tablonun Renk Kodları
+                    </p>
+                  </div>
+                  <div className={cn(
+                    "text-xs space-y-1",
+                    isDarkMode ? "text-gray-300" : "text-slate-600"
+                  )}>
+                    <div className="grid grid-cols-2 gap-1">
+                      <p className="flex items-center">
+                        <span className={cn("w-3 h-3 rounded-sm mr-1 inline-block", isDarkMode ? "bg-indigo-950" : "bg-indigo-100")}></span>
+                        <span>Kazanç Bilgileri</span>
+                      </p>
+                      <p className="flex items-center">
+                        <span className={cn("w-3 h-3 rounded-sm mr-1 inline-block", isDarkMode ? "bg-purple-950" : "bg-purple-100")}></span>
+                        <span>Çalışan Primleri</span>
+                      </p>
+                      <p className="flex items-center">
+                        <span className={cn("w-3 h-3 rounded-sm mr-1 inline-block", isDarkMode ? "bg-rose-950" : "bg-rose-100")}></span>
+                        <span>Vergi Matrahı</span>
+                      </p>
+                      <p className="flex items-center">
+                        <span className={cn("w-3 h-3 rounded-sm mr-1 inline-block", isDarkMode ? "bg-amber-950" : "bg-amber-100")}></span>
+                        <span>Gelir Vergisi</span>
+                      </p>
+                      <p className="flex items-center">
+                        <span className={cn("w-3 h-3 rounded-sm mr-1 inline-block", isDarkMode ? "bg-teal-950" : "bg-teal-100")}></span>
+                        <span>Damga Vergisi</span>
+                      </p>
+                      <p className="flex items-center">
+                        <span className={cn("w-3 h-3 rounded-sm mr-1 inline-block", isDarkMode ? "bg-emerald-950" : "bg-emerald-100")}></span>
+                        <span>Net Ücret</span>
+                      </p>
+                      {iseGostergeMaliyeti && (
+                        <p className="flex items-center">
+                          <span className={cn("w-3 h-3 rounded-sm mr-1 inline-block", isDarkMode ? "bg-cyan-950" : "bg-cyan-100")}></span>
+                          <span>İşveren Maliyeti</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className={cn(
+                  "p-3 rounded-md border",
+                  isDarkMode ? "bg-sky-950/60 border-sky-800" : "bg-blue-50 border-blue-100"
+                )}>
+                  <div className="flex items-center mb-2">
+                    <Info className={cn("h-4 w-4 mr-2", isDarkMode ? "text-sky-400" : "text-blue-500")} />
+                    <p className={cn(
+                      "text-xs font-medium",
+                      isDarkMode ? "text-gray-200" : "text-slate-700"
+                    )}>
+                      Maaş Hesaplama Bilgileri
+                    </p>
+                  </div>
+                  <div className={cn(
+                    "text-xs space-y-1",
+                    isDarkMode ? "text-gray-300" : "text-slate-600"
+                  )}>
+                    <p>• Maaş hesaplamalarında para birimi TL olarak esas alınmaktadır.</p>
+                    <p>• Hesaplamalar güncel vergi ve SGK kesinti oranlarına göredir.</p>
+                    <p>• Rakam asgari ücretin altında olduğunda hesaplama yapılmaz.</p>
+                    <p>• 2022 yılı ve sonrası için AGİ hesaplanmaz.</p>
+                  </div>
                 </div>
               </div>
             </CardContent>
